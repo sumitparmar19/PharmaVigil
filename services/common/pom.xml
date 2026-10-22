@@ -35,6 +35,11 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.xmlunit</groupId>
+      <artifactId>xmlunit-assertj3</artifactId>
+      <scope>test</scope>
+    </dependency>
     <!-- Test-jar support: shared database containers for every service's repository tests. -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

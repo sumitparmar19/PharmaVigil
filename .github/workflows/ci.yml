@@ -52,23 +52,24 @@ jobs:
         run: mvn -B -ntp -Pmssql verify
 
   e2b-schema-discovery:
-    # Temporary (M7): the build container cannot reach fda.gov or ich.org. This job checks candidate
-    # official download URLs for the ICH E2B(R3) schema set and reports what they contain.
+    # Temporary (M7): the build container cannot reach the E2B(R3) schema hosts. This job checks whether
+    # GitHub's runners can (EMA serves the files at the schemaLocation used in ICSR files; ICH hosts the zip).
     name: E2B(R3) schema link discovery
     runs-on: ubuntu-latest
     steps:
-      - name: Probe pages and candidates
+      - name: Probe EMA and ICH
         run: |
-          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
-          page="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/e2br3-electronic-transmission-individual-case-safety-reports-implementation-guide-data-elements-and"
-          curl -sSL -A "$UA" -o page.html -w "guidance page: %{http_code} %{size_download} bytes\n" "$page" || true
-          grep -oiE '/media/[0-9]+/download[^<]{0,160}' page.html | head -40 || true
-          grep -oiE '[^>]{0,80}(schema|instance)[^<]{0,80}' page.html | head -20 || true
-          for m in 81942 81904; do
-            curl -sSL -A "$UA" -o "m$m" -w "media $m: %{http_code} %{size_download} bytes %{content_type}\n" "https://www.fda.gov/media/$m/download" || true
-            file "m$m" || true
-            unzip -l "m$m" 2>/dev/null | head -60 || true
+          for u in \
+            "https://eudravigilance.ema.europa.eu/XSD/multicacheschemas/MCCI_IN200100UV01.xsd" \
+            "http://eudravigilance.ema.europa.eu/XSD/multicacheschemas/MCCI_IN200100UV01.xsd" \
+            "https://www.ich.org/page/e2br3-individual-case-safety-report-icsr-specification-and-related-files" \
+            "https://database.ich.org/sites/default/files/ICH_ICSR_Schema_Files.zip"; do
+            curl -sSL -o probe.out -w "%{http_code} %{size_download} bytes %{content_type} <- $u\n" "$u" || echo "failed <- $u"
+            head -c 300 probe.out | tr -d '\000' | head -5 || true
+            echo
           done
+          curl -sSL "https://eudravigilance.ema.europa.eu/XSD/multicacheschemas/MCCI_IN200100UV01.xsd" \
+            | grep -oE '(include|import)[^>]*schemaLocation="[^"]+"' | head -20 || true
 
   python:
     name: Python (${{ matrix.package }})
