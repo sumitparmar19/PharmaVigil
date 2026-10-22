@@ -5,7 +5,17 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  server: { port: 5173 },
+  // Dev server: same-origin /api paths go to the service that owns them (the nginx image does the same).
+  server: {
+    port: 5173,
+    proxy: {
+      "/api/cases": "http://localhost:8083",
+      "/api/signals": "http://localhost:8084",
+      "/api/submissions": "http://localhost:8085",
+      "/api/intake": "http://localhost:8082",
+      "/api": "http://localhost:8081",
+    },
+  },
   test: {
     globals: true,
     environment: "jsdom",

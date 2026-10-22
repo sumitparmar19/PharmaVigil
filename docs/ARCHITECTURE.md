@@ -85,5 +85,16 @@ Checked against Maven Central, PyPI and npm when M0 was built.
 | TanStack Query | 5.104.5 | |
 | React Router | 8.5.0 | |
 | ESLint | 10.13.0 | typescript-eslint 8.72.0 |
-| Playwright | 1.64.1 | |
+| Playwright | 1.64.1 | browser smoke test against the compose stack (`frontend/e2e`) |
+| @types/node | 24.19.2 | for the Playwright config and test |
 | Node.js | 24 in CI (some packages need ≥ 22.22.2) | |
+
+### Containers (docker compose)
+
+| Image | Version | Note |
+|---|---|---|
+| Java services | `eclipse-temurin:21-jre-noble` | one image per service from `services/Dockerfile`, non-root (uid 10001) |
+| UI | `node:24-alpine` (build), `nginx:1.29-alpine` (serve) | nginx routes each `/api/...` path to its service (same origin) |
+| Oracle | `gvenzl/oracle-free:23-slim-faststart` | one schema per service, created by `ops/compose/oracle-init.sh` |
+| Kafka | `apache/kafka:4.3.2` | single KRaft node |
+| ActiveMQ Artemis | `apache/activemq-artemis:2.44.0-alpine` | |

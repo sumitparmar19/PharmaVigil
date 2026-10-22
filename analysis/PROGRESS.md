@@ -17,7 +17,7 @@ the repo.
 | M6 | Java platform core | ✅ done (Oracle and SQL Server green locally) | `services/`, ADR-003 |
 | M7 | E2B(R3) and SOAP | ✅ done (exports validate against the official schema set in CI) | `docs/E2B_R3.md`, ADR-009, `services/intake-gateway`, `scripts/fetch-e2b-xsd.sh` |
 | M8 | Kafka, ONNX in Java, JMS, narrative | ✅ done (end-to-end test in CI) | ADR-008, `services/e2e-tests`, `analysis/models/MANIFEST.md` |
-| M9 | Frontend | pending | |
+| M9 | Frontend | ✅ done locally (unit tests and the browser smoke test against the full stack); CI job added | `frontend/`, `docker-compose.yml`, `frontend/e2e/` |
 | M10 | Operations | pending | |
 | M11 | Azure infrastructure (code only) | pending | |
 | M12 | Docs, evidence, report | pending | |
@@ -209,7 +209,7 @@ Tests (local run in this container, Oracle Free via Testcontainers, no schema se
   locally), case-service 13; all green.
 - JaCoCo line coverage (local): common 91.0% (514/565), intake-gateway 87.1% (229/263), case-service 87.6%
   (408/466).
-- Official-schema results come from CI: see "M7 CI evidence" below.
+- Official-schema results come from CI: see "M7 and M8 CI evidence" below.
 
 Problems hit: Spring Boot's web-services auto-configuration backs off when the application declares
 `@EnableWs` (the dispatcher servlet was never registered; fixed by relying on Boot); WSDL generation needs
@@ -261,7 +261,7 @@ Tests (local runs in this container; Oracle Free, Kafka 4.3.2 and Artemis 2.44 v
   1e-5, identical top-5 rankings); replaying every event of a case through Kafka changes nothing; poison
   messages reach `<topic>.dlq` and the broker DLQ; with no models, cases still reach the queue.
 - The end-to-end test needs the official E2B(R3) schemas, which only CI can download; its CI result is recorded
-  under "M8 CI evidence". Locally it was exercised against a permissive stand-in schema (not committed): the
+  under "M7 and M8 CI evidence". Locally it was exercised against a permissive stand-in schema (not committed): the
   main flow reached ACK and the replay and dead-letter checks passed.
 
 Problems hit: an E2B answer could overtake the gateway's own record of the message (fixed by recording the
@@ -269,6 +269,50 @@ message before sending and locking the row while answering); Artemis blocks prod
 host filesystem, which this shared container exceeds (turned off for test brokers only); all five services
 shipped Flyway scripts at the same classpath path (moved to `db/<service>/`); the Anthropic Java SDK 3.1 sends
 the API key as a bearer token (the stand-in test accepts either header).
+
+## M9: frontend and the full stack
+
+Built:
+- **UI** (React 19, TypeScript, Vite, Tailwind, TanStack Query, React Router): sign-in; **pharmacy counter**
+  (synthetic patient + drug, dispense with the lots chosen first-expiry-first-out by the server, the safety
+  evidence panel for that drug with the causation disclaimer, one-click side-effect report); **review queue**
+  (serious first, then the nearest deadline, with a days-left clock); **case detail** (accept or correct each
+  suggested code, seriousness, duplicate flag, edit and approve the narrative, approve, submit E2B(R3), and the
+  submission history); **signals page** (top signals per method, a yearly trend chart with a table view, the
+  reference-set evaluation). Every page carries the banners; pharmacy pages add "Synthetic patients only".
+  Model suggestions always show the model name and version (the test bundle shows as `fixture:`).
+- Typed API client with same-origin `/api` routing: the Vite dev proxy and the production nginx send each
+  path prefix to the service that owns it; the sign-in token lives in sessionStorage (closing the tab signs out).
+- **docker compose** (`docker-compose.yml`): Oracle (one schema per service), Kafka (KRaft), Artemis, the five
+  services (`services/Dockerfile`, non-root) and the UI on port 8080. Demo profile with synthetic data; every
+  secret comes from `.env` and compose refuses to start without them.
+- **Browser smoke test** (Playwright, `frontend/e2e/smoke.spec.ts`): the demo pharmacist sees the three banners,
+  dispenses ibuprofen from lot `DEMO-IBU-200-L1` (never the expired lot), sees the safety-evidence panel and
+  sends a report; the demo reviewer then finds the case in the queue (it travelled pharmacy → intake → Kafka
+  pipeline) and opens it. CI job *Full stack (docker compose + Playwright)* runs it with random throwaway
+  secrets.
+
+Tests (local runs in this container):
+- Vitest: 33 tests in 8 files (pages, trend chart, API client, banners); typecheck, lint and build clean.
+- Playwright against the compose stack: 2/2 passed (pharmacist-to-reviewer flow in 20 s). Locally the UI
+  image was built from the already-built bundle, because `npm ci` inside a Docker build cannot pass this
+  container's TLS proxy; CI builds the real image. No E2B schemas locally, so no submission was attempted
+  in this run.
+
+### M7 and M8 CI evidence
+
+CI run 39763594556 on commit `c4b372a` (GitHub Actions, `ubuntu-latest`, official E2B(R3) schema set fetched
+from EMA in both the Java job and the schema job):
+- Java (Maven verify, Oracle Database Free via Testcontainers): **103 tests, 0 failures, 0 skipped**. common 20,
+  pharmacy-service 25, intake-gateway 11, case-service 34, signal-service 7, submission-gateway 3, e2e-tests 3.
+  With the schemas present nothing is skipped: `E2bRoundTripTest` 6/6 (export valid against the official set,
+  broken message rejected), `SoapIntakeContractTest` 7/7 (schema-invalid ICSR refused).
+- `EndToEndTest` 3/3 against the official schemas: pharmacy report → coded, triaged, reviewed, approved case →
+  E2B(R3) file ACKed by the mock regulator, with a full Kafka replay changing nothing; poison message in the
+  DLQ; invalid file NACKed and the case back in review.
+- JaCoCo gate (≥ 70% line coverage per service) passed for every service module (`e2e-tests` has no main code).
+- Java on SQL Server 2022, Python (data, ml), Frontend, gitleaks and CodeQL: green. *Dependency review* fails
+  only because the repository's Dependency graph is off (owner step 3).
 
 ## Environment re-tests
 

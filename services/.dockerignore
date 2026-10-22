@@ -1,0 +1,3 @@
+# Only the built exec jars go into images.
+**
+!*/target/*-exec.jar
