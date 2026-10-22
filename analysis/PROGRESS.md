@@ -12,7 +12,7 @@ the repo.
 | M1 | Legacy audit | **removed by owner** (Amendment 1, item 1) | n/a |
 | M2 | Data platform | code complete and tested on fixtures; real FAERS/VAERS run pending network (owner step 1); reference sets real | `analysis/m2/refsets.json`, `data/tests/` |
 | M3 | Signal baselines | code complete and tested (synthetic data); real AUCs pending FAERS | `docs/EVALUATION.md`, ADR-005, `ml/tests/` |
-| M4 | SafetyFormer | pending | |
+| M4 | SafetyFormer | code complete and tested (synthetic); real training, time-travel and leakage numbers pending FAERS | `ml/signals/MODEL_CARD.md`, ADR-006, `ml/tests/test_safetyformer.py` |
 | M5 | Coder, triage, duplicates | pending | |
 | M6 | Java platform core | pending | |
 | M7 | E2B(R3) and SOAP | pending | |
@@ -94,6 +94,30 @@ associations. An integration check (Spark-written gold Delta read by the ML pack
 
 Pending: the real AUCs need the FAERS gold tables (blocked host). The published comparison figures in
 `docs/PLAN.md` (Ding & Cohen, AMIA 2020) could not be re-checked because arXiv is blocked too.
+
+## M4: SafetyFormer
+
+Built (`ml/pharmavigil_ml/safetyformer/`):
+- `corpus.py`: unique cases → token sets in CSR numpy arrays; vocabulary from the training window only.
+- `model.py`: set Transformer encoder (type + role embeddings, no positions, pre-norm), PT head, optional
+  drug head.
+- `views.py`: masked-reaction views with soft targets and conditioning dropout; scoring queries.
+- `train.py`: AdamW + warm-up/cosine, seed, held-out recall@10/NLL, MLflow (never blocks training),
+  hashed checkpoints, CUDA when available.
+- `score.py`: ADR-005 score for PTs and outcome PT lists.
+- `timetravel.py`: yearly snapshots, per-drug top-N flags, lead times; SrLC text → (drug, PT, date) pairs.
+- `leakage.py`: shuffled vs time-ordered split with equal sizes.
+- `run.py` + `pv-ml safetyformer | time-travel | leakage`; Kaggle notebook
+  `ml/notebooks/kaggle/safetyformer_full.ipynb`.
+
+Measured: CPU throughput in this container (4 cores, synthetic data, default size, batch 256) about
+750 reports per second (≈ 2.9 steps/s). A one-epoch pass over 10M reports would take about 3.7 hours,
+so the subset run here uses a step budget and the full run uses the Kaggle GPU notebook.
+
+Tests: 11 new tests (26 in `ml/` total).
+
+Pending: real-data numbers (FAERS blocked) and the label-change source (accessdata.fda.gov and DailyMed
+not reachable; ADR-006 keeps the test pending rather than inventing dates).
 
 ## Environment re-tests
 

@@ -68,3 +68,38 @@ cd ../ml && .venv/bin/pv-ml baselines --scope "subset: FAERS 2019Q1–<latest>"
 ```
 
 Outputs: `analysis/m3/baselines.json`, `analysis/m3/roc_*.png`, `analysis/m3/scores_*.csv`.
+
+## SafetyFormer (M4)
+
+Model: `ml/signals/MODEL_CARD.md`. Score definition: ADR-005. Time-travel method: ADR-006.
+
+### Reference sets
+
+SafetyFormer is scored on the **same scorable pairs** as the baselines: a pair counts only if its drug
+appears in the training window and in the model vocabulary, so no method gets an easier subset. Output:
+`analysis/m4/safetyformer.json` (AUCs with bootstrap CIs for PRR, ROR, IC, EBGM and SafetyFormer side by
+side).
+
+| Scope | Status |
+|---|---|
+| subset/CPU: FAERS 2019Q1 to the latest quarter | **pending full data** (FAERS host blocked) |
+| full/GPU: FAERS 2004Q1 to the latest quarter | **pending owner step** (Kaggle notebook) |
+
+### Time-travel test
+
+Yearly snapshots; flagged = in the drug's top 10 / 20 / 50; lead time in months before the label
+change. Output: `analysis/m4/time_travel.json`. Status: **pending** (needs FAERS and a reachable
+label-change source, ADR-006).
+
+### Leakage check
+
+Same number of training reports and same test-set size; a time-ordered split (train before the test
+year) against a shuffled split. Metric: held-out masked-reaction recall@10 and NLL. Output:
+`analysis/m4/leakage.json`. Status: **pending full data**.
+
+### Code checks
+
+`ml/tests/test_safetyformer.py` trains tiny models on synthetic reports with planted associations and
+checks that training lowers the loss, the planted pair gets a positive score above the median of other
+drugs, checkpoints round-trip exactly, label-change text matching works, lead times are computed
+correctly, and both leakage splits run. These are tests of the code, not results.

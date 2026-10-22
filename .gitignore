@@ -60,3 +60,6 @@ crash.log
 
 # Downloaded at build time (licence unclear, see docs/E2B_R3.md)
 /services/common/src/main/xsd/ich/
+
+# Model artefacts written by pv-ml (hashes go to analysis/models/MANIFEST.md)
+/ml/artifacts/

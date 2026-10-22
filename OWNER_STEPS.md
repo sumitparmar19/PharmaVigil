@@ -99,5 +99,32 @@ last cell of `02_faers_silver_gold`.
 
 ---
 
+## 5. Train SafetyFormer at full scale on a Kaggle GPU: OPEN (after step 4)
+
+**Why:** full-scale training needs a GPU; Kaggle gives free GPU hours.
+
+1. Open https://www.kaggle.com and click **Register**. Verify your phone number when asked (GPU access
+   needs it): click your profile picture → **Settings** → **Phone verification**.
+2. In Databricks, open **Catalog** → **workspace** → **pharmavigil** → **Volumes** → **lake** →
+   **export**. For each of the folders `report`, `report_drug`, `report_reaction`, open it and download
+   every `.parquet` file into a folder on your computer with the same name.
+3. In Kaggle, click **Create** → **New Dataset**. Name it `pharmavigil-faers-gold`. Drag the three
+   folders in. Click **Create**.
+4. Open https://github.com/sumitparmar19/PharmaVigil/blob/main/ml/notebooks/kaggle/safetyformer_full.ipynb
+   and click the **Download raw file** button.
+5. In Kaggle, click **Create** → **New Notebook** → **File** → **Import Notebook**, and choose the file
+   from step 4.
+6. In the right panel: **Session options** → **Accelerator** → **GPU T4 x2**; **Internet** → **On**;
+   **Input** → **Add Input** → search `pharmavigil-faers-gold` → **Add**.
+7. In the first code cell, set `GIT_REF` to `claude/determined-wozniak-8tf7pa` until the pull request is
+   merged, and set `SCOPE` to the quarters you loaded in step 4 (for example `full: FAERS 2004Q1–2026Q2`).
+8. Click **Run All**. When it finishes, open the **Output** tab and download
+   `pharmavigil_m4_evidence.zip`.
+
+**Send back to the planning chat:** the file `pharmavigil_m4_evidence.zip` and the `sha256sum` line
+printed by the last cell.
+
+---
+
 *More steps are added as milestones need them (Databricks, Kaggle, MedDRA licence, narrative labels,
 Azure, Grafana Cloud, GitHub secrets, release tags).*

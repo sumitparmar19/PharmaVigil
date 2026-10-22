@@ -1,6 +1,9 @@
 """`pv-ml` command line for the model milestones. Every command writes its evidence under analysis/.
 
-  pv-ml baselines --scope "subset: FAERS 2019Q1–2026Q2"   # M3: PRR/ROR/IC/EBGM + reference-set AUCs
+  pv-ml baselines --scope "subset: FAERS 2019Q1–2026Q2"      # M3: PRR/ROR/IC/EBGM + reference-set AUCs
+  pv-ml safetyformer --scope "..." --steps 20000               # M4: train + compare on reference sets
+  pv-ml time-travel --scope "..." --label-changes srlc.csv     # M4: yearly snapshots vs label changes
+  pv-ml leakage --scope "..." --test-start 2025-01-01          # M4: shuffled vs time-ordered split
 """
 
 from __future__ import annotations
@@ -32,6 +35,66 @@ def cmd_baselines(args: argparse.Namespace) -> int:
     return 0
 
 
+def _m4_inputs(args: argparse.Namespace):
+    from .safetyformer.run import M4Inputs
+    from .safetyformer.train import TrainConfig
+
+    cfg = TrainConfig(steps=args.steps, batch_size=args.batch_size, d_model=args.d_model, n_layers=args.n_layers,
+                      n_heads=args.n_heads, d_ff=args.d_model * 4, min_count=args.min_count, seed=args.seed,
+                      eval_every=max(1, min(500, args.steps)), masked_drug_objective=args.masked_drug)
+    return M4Inputs(gold_dir=Path(args.gold), refsets_dir=Path(args.refsets), outcome_map=Path(args.outcome_map),
+                    out_dir=Path(args.out), models_dir=Path(args.models_dir), scope=args.scope, train=cfg,
+                    before=date.fromisoformat(args.before) if args.before else None,
+                    tracking_uri=args.tracking_uri)
+
+
+def cmd_safetyformer(args: argparse.Namespace) -> int:
+    from .safetyformer.run import train_and_evaluate
+
+    train_and_evaluate(_m4_inputs(args))
+    print(f"wrote {Path(args.out) / 'safetyformer.json'}")
+    return 0
+
+
+def cmd_time_travel(args: argparse.Namespace) -> int:
+    import pandas as pd
+
+    from .safetyformer.run import time_travel
+
+    changes = pd.read_csv(args.label_changes, parse_dates=["label_date"])
+    snapshots = [date(y, 1, 1) for y in range(args.first_year, args.last_year + 1)]
+    time_travel(_m4_inputs(args), changes, snapshots)
+    print(f"wrote {Path(args.out) / 'time_travel.json'}")
+    return 0
+
+
+def cmd_leakage(args: argparse.Namespace) -> int:
+    from .safetyformer.run import leakage
+
+    leakage(_m4_inputs(args), date.fromisoformat(args.test_start))
+    print(f"wrote {Path(args.out) / 'leakage.json'}")
+    return 0
+
+
+def _add_m4_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--gold", default=str(DEFAULT_LAKE / "gold" / "faers"))
+    p.add_argument("--refsets", default=str(DEFAULT_LAKE / "bronze" / "refsets"))
+    p.add_argument("--outcome-map", default=str(DEFAULT_OUTCOME_MAP))
+    p.add_argument("--out", default=str(REPO / "analysis" / "m4"))
+    p.add_argument("--models-dir", default=str(REPO / "ml" / "artifacts" / "safetyformer"))
+    p.add_argument("--tracking-uri", default=f"file:{REPO / 'ml' / 'mlruns'}")
+    p.add_argument("--scope", required=True)
+    p.add_argument("--before")
+    p.add_argument("--steps", type=int, default=20000)
+    p.add_argument("--batch-size", type=int, default=256)
+    p.add_argument("--d-model", type=int, default=256)
+    p.add_argument("--n-layers", type=int, default=4)
+    p.add_argument("--n-heads", type=int, default=8)
+    p.add_argument("--min-count", type=int, default=5)
+    p.add_argument("--seed", type=int, default=13)
+    p.add_argument("--masked-drug", action="store_true")
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="pv-ml", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -46,6 +109,22 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--before", help="only reports received before this date (YYYY-MM-DD)")
     b.add_argument("--n-boot", type=int, default=1000)
     b.set_defaults(func=cmd_baselines)
+
+    sf = sub.add_parser("safetyformer", help="M4: train SafetyFormer and evaluate on the reference sets")
+    _add_m4_args(sf)
+    sf.set_defaults(func=cmd_safetyformer)
+
+    tt = sub.add_parser("time-travel", help="M4: yearly snapshots against FDA label changes")
+    _add_m4_args(tt)
+    tt.add_argument("--label-changes", required=True, help="CSV with drug_name, label_date, text")
+    tt.add_argument("--first-year", type=int, required=True)
+    tt.add_argument("--last-year", type=int, required=True)
+    tt.set_defaults(func=cmd_time_travel)
+
+    lk = sub.add_parser("leakage", help="M4: shuffled vs time-ordered split")
+    _add_m4_args(lk)
+    lk.add_argument("--test-start", required=True)
+    lk.set_defaults(func=cmd_leakage)
     return p
 
 
