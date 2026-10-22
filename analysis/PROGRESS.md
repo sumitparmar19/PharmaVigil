@@ -14,7 +14,7 @@ the repo.
 | M3 | Signal baselines | code complete and tested (synthetic data); real AUCs pending FAERS | `docs/EVALUATION.md`, ADR-005, `ml/tests/` |
 | M4 | SafetyFormer | code complete and tested (synthetic); real training, time-travel and leakage numbers pending FAERS | `ml/signals/MODEL_CARD.md`, ADR-006, `ml/tests/test_safetyformer.py` |
 | M5 | Coder, triage, duplicates | code complete and tested (synthetic); real metrics pending FAERS/VAERS/GPU | model cards in `ml/coder/`, `ml/triage/`; ADR-007 |
-| M6 | Java platform core | pending | |
+| M6 | Java platform core | ✅ done (Oracle and SQL Server green locally) | `services/`, ADR-003 |
 | M7 | E2B(R3) and SOAP | pending | |
 | M8 | Kafka, ONNX in Java, JMS, narrative | pending | |
 | M9 | Frontend | pending | |
@@ -144,7 +144,48 @@ Tests: 20 new tests (`ml/` 46 total; `data/` 43).
 Pending: real metrics (FAERS, VAERS and Hugging Face hosts blocked; GPU runs are owner steps 5–6), and
 the drug-narrative labels (owner step 7).
 
+## M6: Java platform core
+
+Built (`services/`):
+- `common`: HS256 JWT issue/verify with a `roles` claim (→ `ROLE_*`), stateless security helper with a
+  strict CSP header, RFC 7807 problem details that never leak internals (unexpected errors return a
+  reference id only), and a test-jar with shared Testcontainers databases selected by `-Dpv.db`.
+- `pharmacy-service`: drugs with expiring lots; FEFO dispensing that row-locks the drug's in-date lots and
+  never touches expired ones; stock `CHECK (quantity >= 0)`; Rx-only drugs need a matching active
+  prescription that is drawn down and completed; BCrypt logins with no HTTP session; PATIENT users read
+  only their own history; one-click side-effect reports stored verbatim; Synthea-format patient import
+  (only id, names, birth date, sex are kept); demo profile (catalog with expired lots, synthetic patients,
+  logins only when `PV_DEMO_PASSWORD` is set); signal-service client that falls back to "unavailable"
+  without blocking a dispense.
+- `case-service`: case head (status machine, seriousness, 15/90-day deadline, optimistic lock) with
+  append-only, Hibernate-`@Immutable` versions (drugs, reactions with model provenance); append-only
+  narratives with single approval; audit events; review decisions that keep the model suggestion beside
+  the final value (changed ones are the feedback set); processed-event and outbox tables for M8;
+  idempotent receive by (source, source report id); reviewer queue (serious → unknown → non-serious, then
+  deadline); read API for reviewers.
+- Flyway migrations per vendor; Hibernate `validate` against both engines (ADR-003).
+
+Tests and coverage (local run, Docker in this container):
+- `mvn -B verify` (Oracle Database Free 23 via Testcontainers): common 7, pharmacy-service 23,
+  case-service 9 tests, all green; skeleton services' context tests green.
+- `mvn -B -Pmssql verify` for pharmacy-service and case-service on SQL Server 2022: same tests, green.
+- JaCoCo line coverage: common 82.5% (52/63), pharmacy-service 93.2% (437/469), case-service 82.9%
+  (306/369); the 70% gate passes.
+- Notable tests: 50 concurrent dispenses against 30 in-date units (plus 1,000 expired) → exactly 30
+  succeed, stock ends at 0, expired lot untouched; failed login gives no token, no session and the same
+  response for unknown users; an immutable case version cannot be changed in place; a stale edit gets a
+  conflict.
+
+Problems hit: Oracle Free took about 70 s to report ready, beyond Testcontainers' default wait (fixed
+with a 5-minute start-up timeout); `@PreAuthorize` denials surfaced as 500 through the catch-all handler
+(now mapped to 403/401); Spring Security 7 adds a `FACTOR_BEARER` authority to JWT logins (test asserts
+roles only).
+
 ## Environment re-tests
+
+### After the worker restart (during M6)
+
+Still refused: fis.fda.gov, rxnav.nlm.nih.gov, vaers.hhs.gov, huggingface.co, database.ich.org.
 
 ### Start of M0
 
