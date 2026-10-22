@@ -62,6 +62,7 @@ Checked against Maven Central, PyPI and npm when M0 was built.
 | Micrometer | 1.17.1 | managed by Boot |
 | JaCoCo | 0.8.15 | coverage gate |
 | ONNX Runtime (Java) | 1.31.0 | models in case-service (ADR-008) |
+| Anthropic Java SDK | 3.1.0 (`com.anthropic:anthropic-java`) | narrative drafts; model id only from `CLAUDE_MODEL` |
 
 ### Python (data and ml)
 

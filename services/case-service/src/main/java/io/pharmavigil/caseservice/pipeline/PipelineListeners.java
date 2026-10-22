@@ -1,12 +1,15 @@
-// Kafka listeners for the case pipeline. They only parse the message and hand it to PipelineStages; a message
+// Kafka listeners for the case pipeline and for submission results. They only parse the message and hand it to PipelineStages; a message
 // that is not valid JSON of the expected shape is a poison message and goes straight to the dead-letter topic.
 package io.pharmavigil.caseservice.pipeline;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import io.pharmavigil.caseservice.review.ReviewService;
+
 import io.pharmavigil.common.events.CaseEvent;
 import io.pharmavigil.common.events.ReportReceived;
+import io.pharmavigil.common.events.SubmissionStatus;
 import io.pharmavigil.common.events.Topics;
 import io.pharmavigil.common.kafka.PoisonMessageException;
 import tools.jackson.core.JacksonException;
@@ -18,10 +21,15 @@ public class PipelineListeners {
     static final String GROUP = "case-service";
 
     private final PipelineStages stages;
+    private final NarrativeStage narratives;
+    private final ReviewService reviews;
     private final JsonMapper json;
 
-    public PipelineListeners(PipelineStages stages, JsonMapper json) {
+    public PipelineListeners(PipelineStages stages, NarrativeStage narratives, ReviewService reviews,
+            JsonMapper json) {
         this.stages = stages;
+        this.narratives = narratives;
+        this.reviews = reviews;
         this.json = json;
     }
 
@@ -38,6 +46,20 @@ public class PipelineListeners {
     @KafkaListener(id = "case-coded", topics = Topics.REPORT_CODED, groupId = GROUP)
     public void coded(String payload) {
         stages.onCoded(parse(payload, CaseEvent.class));
+    }
+
+    @KafkaListener(id = "case-triaged", topics = Topics.CASE_TRIAGED, groupId = GROUP)
+    public void triaged(String payload) {
+        narratives.onTriaged(parse(payload, CaseEvent.class));
+    }
+
+    @KafkaListener(id = "case-submission-status", topics = Topics.SUBMISSION_STATUS, groupId = GROUP)
+    public void submissionStatus(String payload) {
+        SubmissionStatus s = parse(payload, SubmissionStatus.class);
+        if (s.eventId() == null || s.status() == null) {
+            throw new PoisonMessageException("submission.status without eventId or status", null);
+        }
+        reviews.onSubmissionStatus(s);
     }
 
     <T> T parse(String payload, Class<T> type) {
