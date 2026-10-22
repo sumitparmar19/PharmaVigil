@@ -16,7 +16,7 @@ the repo.
 | M5 | Coder, triage, duplicates | code complete and tested (synthetic); real metrics pending FAERS/VAERS/GPU | model cards in `ml/coder/`, `ml/triage/`; ADR-007 |
 | M6 | Java platform core | ✅ done (Oracle and SQL Server green locally) | `services/`, ADR-003 |
 | M7 | E2B(R3) and SOAP | ✅ done (exports validate against the official schema set in CI) | `docs/E2B_R3.md`, ADR-009, `services/intake-gateway`, `scripts/fetch-e2b-xsd.sh` |
-| M8 | Kafka, ONNX in Java, JMS, narrative | pending | |
+| M8 | Kafka, ONNX in Java, JMS, narrative | ✅ done (end-to-end test in CI) | ADR-008, `services/e2e-tests`, `analysis/models/MANIFEST.md` |
 | M9 | Frontend | pending | |
 | M10 | Operations | pending | |
 | M11 | Azure infrastructure (code only) | pending | |
@@ -217,6 +217,59 @@ Problems hit: Spring Boot's web-services auto-configuration backs off when the a
 server and test client disagreed (fixed with a fixed test-only value); Oracle 23 maps Java `boolean` to its
 native `BOOLEAN` type, not `NUMBER(1)`.
 
+## M8: Kafka pipeline, models in Java, JMS gateway, narrative
+
+Built:
+- **Kafka pipeline** (`report.received → report.deduped → report.coded → case.triaged`, then `case.ready` and
+  `submission.status`, each with a `.dlq` twin). Every publisher writes to its own `outbox_event` table in the
+  same transaction as its change; a shared relay in `common` publishes in id order (at-least-once). Every
+  consumer records `(event id, consumer)` in `processed_event` in the same transaction as its work. Listener
+  errors are retried three times, then dead-lettered; poison messages (bad JSON, unknown case) go straight to
+  the DLQ.
+- **Models in Java** (ADR-008): `pv-ml java-bundle` exports ONNX graphs plus everything Java needs (feature
+  spec, WordPiece vocabulary, label space, tail embeddings) and parity vectors. case-service runs the duplicate
+  check, the MedDRA coder (Java WordPiece tokenizer) and seriousness triage with ONNX Runtime; each model loads
+  independently and a missing one routes cases to manual coding or "seriousness unknown". The committed bundle
+  is a tiny synthetic fixture for tests; it was trained on invented data and its scores mean nothing.
+- **Reviewer API**: confirm or correct each code (optimistic locking), seriousness and duplicate flags; write
+  and approve narratives; approve (all codes confirmed, seriousness decided, narrative approved); submit (only
+  when the E2B(R3) export passes the official schemas). Every decision stores the model's suggestion next to
+  the final value.
+- **Narrative**: drafted from structured, already-coded facts only (no reporter free text, no numbers to
+  compute) with the Anthropic Java SDK when `ANTHROPIC_API_KEY` and `CLAUDE_MODEL` are set; a deterministic
+  template otherwise and on refusal, truncation or any API error. The model call runs outside database
+  transactions. Approval by a reviewer is always required.
+- **submission-gateway** (JMS, ActiveMQ Artemis): `case.ready` → message recorded (SENDING) → E2B(R3) XML on
+  `regulatory.outbound` in a transacted session → QUEUED. The mock regulator validates against the official
+  schemas and answers ACK or NACK (first errors as the reason) on `regulatory.ack`; answers are recorded once
+  under a row lock. A failing JMS message is redelivered by the broker and ends in its DLQ. NACK sends the case
+  back to review with the reason.
+- **signal-service**: loads a `pv-ml export-signals` folder (signals.csv, signal_trend.csv, signals_meta.json)
+  as a snapshot; serves counter warnings (EB05 rule, disclaimer), top signals per method, yearly trends and the
+  reference-set evaluation summary. With no export loaded it returns empty, labelled answers. No real export
+  exists yet (FAERS hosts blocked), so the demo shows no warnings rather than invented ones.
+- **pharmacy-service** forwards stored reports to intake-gateway (de-identified: age in years, sex, drug,
+  text), retrying while intake is down.
+- **End-to-end test** (`services/e2e-tests`): all five services in one JVM against Oracle, Kafka and Artemis
+  from Testcontainers (one schema per service; each service's Flyway scripts now live in `db/<service>/`).
+
+Tests (local runs in this container; Oracle Free, Kafka 4.3.2 and Artemis 2.44 via Testcontainers):
+- common 20 (2 schema tests skipped locally), pharmacy-service 25, intake-gateway 11 (1 skipped locally),
+  case-service 34, signal-service 7, submission-gateway 3; all green on Oracle. common, intake-gateway and
+  case-service also green on SQL Server 2022 locally (`-Pmssql`).
+- Highlights: Java/Python parity on the fixture bundle (identical token ids and feature vectors, scores within
+  1e-5, identical top-5 rankings); replaying every event of a case through Kafka changes nothing; poison
+  messages reach `<topic>.dlq` and the broker DLQ; with no models, cases still reach the queue.
+- The end-to-end test needs the official E2B(R3) schemas, which only CI can download; its CI result is recorded
+  under "M8 CI evidence". Locally it was exercised against a permissive stand-in schema (not committed): the
+  main flow reached ACK and the replay and dead-letter checks passed.
+
+Problems hit: an E2B answer could overtake the gateway's own record of the message (fixed by recording the
+message before sending and locking the row while answering); Artemis blocks producers above 90% disk use of the
+host filesystem, which this shared container exceeds (turned off for test brokers only); all five services
+shipped Flyway scripts at the same classpath path (moved to `db/<service>/`); the Anthropic Java SDK 3.1 sends
+the API key as a bearer token (the stand-in test accepts either header).
+
 ## Environment re-tests
 
 ### After the worker restart (during M6)
@@ -238,10 +291,12 @@ the start of each data milestone.
 |---|---|---|---|
 | Plan copies | copy both files into `docs/` | copied verbatim, each with a one-line pointer to Amendment 1 at the top | keeps the original instructions intact while making the override visible |
 | TypeScript | newest version | 6.0.3, not 7.0.2 | typescript-eslint 8.72 (latest) supports TypeScript < 6.1 only (Amendment 1 item 4: "newest the whole toolchain supports") |
-| Kafka 4.4 | Kafka 4.4 | broker image `apache/kafka:4.4.0`; client 4.2.1 as managed by Spring Boot 4.1.1 | overriding the client under spring-kafka 4.1.1 risks incompatibilities; Kafka clients and brokers are wire-compatible |
+| Kafka 4.4 | Kafka 4.4 | broker image `apache/kafka:4.3.2`; client 4.2.1 as managed by Spring Boot 4.1.1 | Docker Hub publishes 4.4.0 only as release candidates so far (kafka-clients 4.4.0 is on Maven Central); overriding the client under spring-kafka 4.1.1 risks incompatibilities; Kafka clients and brokers are wire-compatible |
 | Docker locally | §6 fallback: rely on GitHub Actions | the container's Docker daemon can be started, so Testcontainers also runs locally | better local verification |
 | E2B(R3) JAXB classes | generate JAXB classes from the ICH XSDs into `common` | DOM writer/reader for the mapped subset, validated against the official schemas in CI | the schemas are not committed and cannot be downloaded in the build container, so code generation would break offline builds; validation keeps the output honest (`docs/E2B_R3.md`) |
 | FDA regional elements | fetch FDA regional E2B(R3) elements | not included | FDA hosts refuse both this container and GitHub's runners |
 | E2B schema source | ICH XSDs | EMA's published copy of the ICH E2B(R3) schema set | ICH and FDA downloads are blocked; EMA's copy is reachable from CI |
 | ICH sample messages | round-trip official samples if the package has them | own fixtures only | the ICH package could not be downloaded |
+| Demo signal data | signal-service serves FAERS-derived warnings | serves nothing until a real export is loaded | the FAERS hosts are blocked here; synthetic numbers would look like evidence, so only tests use a synthetic export |
+| Java test models | — | tiny synthetic model bundle committed under case-service test resources | lets CI exercise the real ONNX path; listed in the model manifest as fixtures |
 | gitleaks locally | n/a | Docker Hub `zricethezav/gitleaks` image locally; CI uses `ghcr.io/gitleaks/gitleaks` | ghcr.io image layers are served from a blocked host in this container |

@@ -29,6 +29,7 @@
     <module>case-service</module>
     <module>signal-service</module>
     <module>submission-gateway</module>
+    <module>e2e-tests</module>
   </modules>
 
   <properties>
@@ -84,6 +85,15 @@
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
           <version>${jacoco.version}</version>
+        </plugin>
+        <plugin>
+          <!-- The runnable jar gets the "exec" classifier; the plain jar stays the main artifact so the
+               end-to-end test module can put every service on one classpath. -->
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <configuration>
+            <classifier>exec</classifier>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

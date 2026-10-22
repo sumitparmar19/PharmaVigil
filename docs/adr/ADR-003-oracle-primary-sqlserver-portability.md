@@ -20,7 +20,7 @@ locking and types differ.
 ## Decision
 
 Option 3.
-- Flyway runs `db/migration/{vendor}` (`oracle/`, `sqlserver/`); the two files mirror each other line by
+- Flyway runs `db/<service>/{vendor}` (`oracle/`, `sqlserver/`; one folder per service so all services can share a classpath in the end-to-end test); the two files mirror each other line by
   line (identity columns, `BOOLEAN`/`BIT`, `TIMESTAMP(6)`/`DATETIME2(6)`, `CLOB`/`VARCHAR(MAX)`, UTF-8
   collation for free text on SQL Server).
 - Hibernate runs with `ddl-auto=validate`, so every entity mapping is checked against the real schema on

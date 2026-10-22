@@ -46,8 +46,8 @@ Checked against Maven Central, PyPI and npm when M0 was built.
 | E2B(R3) schemas | EMA's copy of the ICH set, fetched at build time | `scripts/fetch-e2b-xsd.sh`, not committed (docs/E2B_R3.md) |
 | Spring for Apache Kafka | 4.1.1 | managed by Boot |
 | Kafka client | 4.2.1 | managed by Boot; talks to the 4.4 broker (Kafka clients and brokers are wire-compatible across versions) |
-| Kafka broker | 4.4.0 (`apache/kafka`, KRaft) | Amendment 1 |
-| ActiveMQ Artemis | 2.53.0 (client, managed by Boot) | |
+| Kafka broker | `apache/kafka:4.3.2` (KRaft) in tests | Amendment 1 asks for 4.4: kafka-clients 4.4.0 is on Maven Central, but Docker Hub has only 4.4.0 release candidates, so the newest GA image (4.3.2) is used until 4.4.0 is published |
+| ActiveMQ Artemis | client 2.53.0 (managed by Boot); broker image `apache/activemq-artemis:2.44.0-alpine` | newest broker image on Docker Hub; same core protocol |
 | Hibernate ORM | 7.4.5.Final | managed by Boot |
 | Flyway | 12.4.0 | managed by Boot |
 | Oracle JDBC (ojdbc11) | 23.26.3.0.0 | managed by Boot |
