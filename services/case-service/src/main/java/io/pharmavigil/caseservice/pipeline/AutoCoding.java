@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import io.pharmavigil.caseservice.cases.CaseService;
+import io.pharmavigil.caseservice.metrics.CaseMetrics;
 import io.pharmavigil.caseservice.model.CaseEnums.CodeSource;
 import io.pharmavigil.caseservice.model.CaseEnums.Status;
 import io.pharmavigil.caseservice.model.SafetyCase;
@@ -26,10 +27,12 @@ public class AutoCoding {
 
     private final ModelBundle models;
     private final CaseService cases;
+    private final CaseMetrics metrics;
 
-    public AutoCoding(ModelBundle models, CaseService cases) {
+    public AutoCoding(ModelBundle models, CaseService cases, CaseMetrics metrics) {
         this.models = models;
         this.cases = cases;
+        this.metrics = metrics;
     }
 
     /** Runs inside the stage transaction; returns the status the case should move to. */
@@ -45,7 +48,8 @@ public class AutoCoding {
         boolean changed = false;
         try {
             if (d.reactions.isEmpty()) {
-                for (MedDraCoder.Suggestion s : m.suggest(d.reportedText, NARRATIVE_SUGGESTIONS)) {
+                for (MedDraCoder.Suggestion s : metrics.inference("meddra-coder",
+                        () -> m.suggest(d.reportedText, NARRATIVE_SUGGESTIONS))) {
                     if (s.score() >= m.threshold()) {
                         d.reactions.add(suggested(VersionDraft.NARRATIVE_TERM, s, m));
                         changed = true;
@@ -58,7 +62,8 @@ public class AutoCoding {
                     if (r.codeSource() != CodeSource.NONE) {
                         continue;
                     }
-                    List<MedDraCoder.Suggestion> top = m.suggest(r.reportedTerm(), 1);
+                    List<MedDraCoder.Suggestion> top = metrics.inference("meddra-coder",
+                            () -> m.suggest(r.reportedTerm(), 1));
                     if (top.isEmpty()) {
                         confident = false;
                         continue;

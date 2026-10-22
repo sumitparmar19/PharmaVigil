@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.pharmavigil.caseservice.cases.CaseService;
+import io.pharmavigil.caseservice.metrics.CaseMetrics;
 import io.pharmavigil.caseservice.model.CaseEnums.Seriousness;
 import io.pharmavigil.caseservice.model.CaseVersion;
 import io.pharmavigil.caseservice.model.SafetyCase;
@@ -27,11 +28,14 @@ public class Triage {
     private final ModelBundle models;
     private final CaseService cases;
     private final double threshold;
+    private final CaseMetrics metrics;
 
-    public Triage(ModelBundle models, CaseService cases, @Value("${pv.triage.serious-threshold:0.5}") double threshold) {
+    public Triage(ModelBundle models, CaseService cases, @Value("${pv.triage.serious-threshold:0.5}") double threshold,
+            CaseMetrics metrics) {
         this.models = models;
         this.cases = cases;
         this.threshold = threshold;
+        this.metrics = metrics;
     }
 
     public Seriousness triage(SafetyCase c) {
@@ -56,8 +60,9 @@ public class Triage {
         });
         double p;
         try {
-            p = model.get().predict(new SeriousnessModel.Input(v.getPatientAge(), v.getPatientSex(),
-                    v.getReporterType(), v.getCountry(), drugs, pts));
+            SeriousnessModel.Input in = new SeriousnessModel.Input(v.getPatientAge(), v.getPatientSex(),
+                    v.getReporterType(), v.getCountry(), drugs, pts);
+            p = metrics.inference("seriousness", () -> model.get().predict(in));
         } catch (Exception e) {
             log.warn("seriousness model failed for case {}: {}", c.getId(), e.toString());
             cases.note(c.getId(), "pipeline", "TRIAGE", "seriousness model error: stays UNKNOWN");

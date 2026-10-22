@@ -14,6 +14,10 @@
   <artifactId>case-service</artifactId>
   <name>case-service</name>
 
+  <properties>
+    <pv.otel.skip>false</pv.otel.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.pharmavigil</groupId>

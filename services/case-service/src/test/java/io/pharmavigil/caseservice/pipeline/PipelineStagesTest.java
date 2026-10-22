@@ -29,6 +29,7 @@ import io.pharmavigil.caseservice.model.OutboxEventRepository;
 import io.pharmavigil.caseservice.model.SafetyCase;
 import io.pharmavigil.caseservice.model.SafetyCaseRepository;
 import io.pharmavigil.caseservice.model.VersionDraft;
+import io.pharmavigil.caseservice.review.ReviewService;
 import io.pharmavigil.common.events.CaseEvent;
 import io.pharmavigil.common.events.ReportReceived;
 import io.pharmavigil.common.events.Topics;
@@ -45,6 +46,7 @@ class PipelineStagesTest {
     }
 
     @Autowired PipelineStages stages;
+    @Autowired ReviewService reviews;
     @Autowired CaseService cases;
     @Autowired SafetyCaseRepository caseRepo;
     @Autowired OutboxEventRepository outbox;
@@ -136,6 +138,29 @@ class PipelineStagesTest {
         });
         // The fixture coder is deliberately tiny: only "pyrexia" clears its 0.5 threshold for this text.
         assertThat(v.getReactions()).extracting(x -> x.getPt()).containsExactly("pyrexia");
+    }
+
+    @Test
+    void triageNeverOverwritesAReviewerWhoTookTheCaseFirst() {
+        // A report the coder cannot code goes to the queue as NEEDS_MANUAL_CODING before triage has run (a one-letter
+        // narrative gives the fixture coder nothing above its threshold).
+        ReportReceived r = new ReportReceived(UUID.randomUUID().toString(), "PHARMACY", "R-" + UUID.randomUUID(),
+                Instant.now(), new BigDecimal("40"), "M", "PHARMACIST", "US", null, "x",
+                List.of(new ReportReceived.Drug(rx(), "Drug", "PS", null, null)), List.of(), null);
+        stages.onReportReceived(r);
+        SafetyCase c = caseOf(r);
+        stages.onDeduped(last(c));
+        assertThat(cases.load(c.getId()).getStatus()).isEqualTo(Status.NEEDS_MANUAL_CODING);
+        CaseEvent coded = last(c);
+
+        reviews.decideSeriousness(c.getId(), Seriousness.NON_SERIOUS, "reviewer-1");
+        stages.onCoded(coded);
+
+        SafetyCase after = cases.load(c.getId());
+        assertThat(after.getStatus()).isEqualTo(Status.IN_REVIEW);
+        assertThat(after.getSeriousness()).isEqualTo(Seriousness.NON_SERIOUS);
+        assertThat(after.getSeriousScore()).isNull();
+        assertThat(events(c)).extracting(OutboxEvent::getTopic).endsWith(Topics.CASE_TRIAGED);
     }
 
     @Test

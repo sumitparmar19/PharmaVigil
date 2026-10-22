@@ -24,6 +24,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.pharmavigil.caseservice.cases.CaseService;
 import io.pharmavigil.caseservice.e2b.E2bExportService;
 import io.pharmavigil.caseservice.model.CaseEnums.NarrativeSource;
@@ -73,6 +74,7 @@ class ReviewWorkflowTest {
     @Autowired E2bValidator validator;
     @Autowired TransactionTemplate tx;
     @Autowired JsonMapper json;
+    @Autowired MeterRegistry meters;
 
     private String bearer(String role) {
         return "Bearer " + tokens.issue("reviewer-" + role.toLowerCase(), List.of(role));
@@ -148,6 +150,9 @@ class ReviewWorkflowTest {
             assertThat(d.getModelScore()).isNotNull();
         });
         assertThat(latest(c.getId()).getReactions().get(1).getPt()).isEqualTo("Pyrexia (corrected)");
+        // One accepted and one corrected code reach the reviewer-acceptance metric.
+        assertThat(meters.counter("pv.review.decisions", "field", "PT", "outcome", "accepted").count()).isPositive();
+        assertThat(meters.counter("pv.review.decisions", "field", "PT", "outcome", "corrected").count()).isPositive();
 
         mvc.perform(post("/api/cases/" + c.getId() + "/approve").header("Authorization", auth))
                 .andExpect(status().isConflict())

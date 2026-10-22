@@ -31,6 +31,6 @@ public class ReportIntake {
         return cases.receive(new CaseService.IncomingReport(Source.valueOf(r.source()), r.sourceReportId(),
                 r.receivedAt().atOffset(ZoneOffset.UTC).toLocalDate(), r.patientAgeYears(), r.patientSex(),
                 r.reporterType(), r.country(), r.onsetDate(), r.narrative(), drugs,
-                r.reactionTerms() == null ? List.of() : r.reactionTerms(), r.seriousCriteria()), ACTOR);
+                r.reactionTerms() == null ? List.of() : r.reactionTerms(), r.seriousCriteria(), r.receivedAt()), ACTOR);
     }
 }

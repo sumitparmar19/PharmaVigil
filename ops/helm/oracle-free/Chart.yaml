@@ -1,0 +1,8 @@
+# Demo database for kind: Oracle Database Free with one schema per service, created at first start by the same
+# init script docker compose uses. Ephemeral storage; not a production database.
+apiVersion: v2
+name: oracle-free
+description: Oracle Database Free (demo, ephemeral) with the PharmaVigil schemas
+type: application
+version: 0.1.0
+appVersion: "23"

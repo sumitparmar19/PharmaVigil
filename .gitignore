@@ -71,3 +71,7 @@ crash.log
 /.e2b-xsd/
 playwright-report/
 test-results/
+
+# Helm: dependency packages and lock files are rebuilt with `helm dependency build`
+ops/helm/*/charts/
+ops/helm/*/Chart.lock

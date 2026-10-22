@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.pharmavigil.signal.api.SignalController;
 import io.pharmavigil.signal.store.Csv;
 import io.pharmavigil.signal.store.SignalLoader;
@@ -42,9 +43,12 @@ class CsvAndEmptyStateTest {
     void withoutAnExportEverythingIsEmptyButLabelled() {
         SignalStore store = mock(SignalStore.class);
         when(store.current()).thenReturn(Optional.empty());
+        SimpleMeterRegistry meters = new SimpleMeterRegistry();
         SignalController api = new SignalController(store, mock(SignalLoader.class), JsonMapper.builder().build(),
-                2.0, 10, "");
+                2.0, 10, "", meters);
         assertThat(api.warnings("83367")).isEmpty();
+        assertThat(meters.counter("pv.signals.lookups", "result", "no_data").count()).isEqualTo(1.0);
+        assertThat(meters.find("pv.signals.snapshot.pairs").gauge().value()).isNaN();
         assertThat(api.top("ebgm", 10).signals()).isEmpty();
         assertThat(api.top("ebgm", 10).disclaimer()).contains("do not prove");
         assertThat(api.trend("83367", "rash").points()).isEmpty();

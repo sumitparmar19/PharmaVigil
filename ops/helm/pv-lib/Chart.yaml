@@ -1,0 +1,7 @@
+# Library chart shared by the PharmaVigil service charts: one Deployment + Service per service, with the same
+# probes, security context, secret wiring and Prometheus annotations everywhere.
+apiVersion: v2
+name: pv-lib
+description: Shared templates for the PharmaVigil service charts
+type: library
+version: 0.1.0

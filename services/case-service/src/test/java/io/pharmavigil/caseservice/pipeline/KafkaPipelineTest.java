@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.pharmavigil.caseservice.cases.CaseService;
 import io.pharmavigil.caseservice.model.CaseEnums.Source;
 import io.pharmavigil.caseservice.model.CaseEnums.Status;
@@ -49,6 +50,7 @@ class KafkaPipelineTest {
     @Autowired OutboxEventRepository outbox;
     @Autowired CaseService cases;
     @Autowired JsonMapper json;
+    @Autowired MeterRegistry meters;
 
     private static void send(String topic, String key, String value) throws Exception {
         try (KafkaProducer<String, String> p = new KafkaProducer<>(Map.of(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
@@ -99,6 +101,18 @@ class KafkaPipelineTest {
         assertThat(versions.findByCaseIdOrderByVersionNoAsc(c.getId())).hasSize(versionCount);
         assertThat(outbox.findByAggregateIdOrderByIdAsc(Long.toString(c.getId()))).hasSize(3);
         assertThat(cases.load(c.getId()).getStatus()).isEqualTo(Status.TRIAGED);
+
+        // Metrics: each stage is timed, intake-to-coded is measured once per new case, models are timed.
+        for (String stage : List.of("dedup", "coding", "triage")) {
+            assertThat(meters.find("pv.pipeline.stage").tags("stage", stage, "outcome", "ok").timer())
+                    .as(stage).isNotNull().satisfies(t -> assertThat(t.count()).isPositive());
+        }
+        assertThat(meters.find("pv.report.intake_to_coded").timer()).isNotNull()
+                .satisfies(t -> assertThat(t.count()).isGreaterThanOrEqualTo(2));
+        assertThat(meters.find("pv.model.inference").tag("model", "meddra-coder").timer()).isNotNull();
+        assertThat(meters.find("pv.outbox.backlog").gauge()).isNotNull();
+        assertThat(meters.find("pv.pipeline.outcome").tag("stage", "coding").counters()).isNotEmpty();
+        assertThat(meters.find("pv.pipeline.outcome").tag("stage", "triage").counters()).isNotEmpty();
     }
 
     @Test

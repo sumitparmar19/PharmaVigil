@@ -1,0 +1,7 @@
+# Demo JMS broker for kind: one ActiveMQ Artemis node for submission-gateway and the mock regulator.
+apiVersion: v2
+name: artemis
+description: ActiveMQ Artemis (demo, single node, ephemeral)
+type: application
+version: 0.1.0
+appVersion: "2.44.0"

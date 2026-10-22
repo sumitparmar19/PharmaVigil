@@ -1,0 +1,169 @@
+{
+  "metrics": {
+    "http_req_receiving": {
+      "avg": 0.3559725433669737,
+      "min": 0.020805,
+      "med": 0.110372,
+      "max": 40.703857,
+      "p(90)": 0.2966732,
+      "p(95)": 0.6870651999999992
+    },
+    "vus": {
+      "max": 2,
+      "value": 1,
+      "min": 0
+    },
+    "data_sent": {
+      "rate": 14325.17093944901,
+      "count": 4607041
+    },
+    "iterations": {
+      "count": 6006,
+      "rate": 18.67510548795436
+    },
+    "http_reqs": {
+      "count": 6837,
+      "rate": 21.25902367984415
+    },
+    "http_req_tls_handshaking": {
+      "avg": 0,
+      "min": 0,
+      "med": 0,
+      "max": 0,
+      "p(90)": 0,
+      "p(95)": 0
+    },
+    "http_req_duration{scenario:reports}": {
+      "p(95)": 22.3862713,
+      "avg": 11.795258168586384,
+      "min": 4.229534,
+      "med": 10.065180999999999,
+      "max": 163.429285,
+      "p(90)": 18.12061700000001,
+      "thresholds": {
+        "p(95)<1000": false
+      }
+    },
+    "data_received": {
+      "count": 112562960,
+      "rate": 350004.1878182463
+    },
+    "http_req_connecting": {
+      "med": 0,
+      "max": 0.673368,
+      "p(90)": 0,
+      "p(95)": 0,
+      "avg": 0.0009192253912534738,
+      "min": 0
+    },
+    "http_req_sending": {
+      "avg": 0.045121101360245754,
+      "min": 0.007714,
+      "med": 0.036243,
+      "max": 4.330036,
+      "p(90)": 0.0605094,
+      "p(95)": 0.07509619999999997
+    },
+    "iteration_duration": {
+      "avg": 61.73283988028631,
+      "min": 4.533585,
+      "med": 10.679639,
+      "max": 1306.648198,
+      "p(90)": 22.1122765,
+      "p(95)": 50.86930225
+    },
+    "http_req_waiting": {
+      "p(90)": 19.59631660000002,
+      "p(95)": 25.395754,
+      "avg": 12.608586378967443,
+      "min": 4.115034,
+      "med": 10.366717,
+      "max": 332.377123
+    },
+    "http_req_failed{scenario:reports}": {
+      "passes": 0,
+      "fails": 5730,
+      "thresholds": {
+        "rate<0.01": false
+      },
+      "value": 0
+    },
+    "http_req_duration{expected_response:true}": {
+      "avg": 12.968884597246623,
+      "min": 4.229534,
+      "med": 10.5754375,
+      "max": 333.441581,
+      "p(90)": 20.0369108,
+      "p(95)": 25.882916599999987
+    },
+    "checks": {
+      "passes": 5732,
+      "fails": 0,
+      "value": 1
+    },
+    "vus_max": {
+      "value": 21,
+      "min": 21,
+      "max": 21
+    },
+    "http_req_blocked": {
+      "p(90)": 0.010500400000000003,
+      "p(95)": 0.012337799999999994,
+      "avg": 0.01066743688752375,
+      "min": 0.002263,
+      "med": 0.007891,
+      "max": 1.89713
+    },
+    "http_req_failed": {
+      "passes": 9,
+      "fails": 6828,
+      "value": 0.0013163668275559457
+    },
+    "http_req_duration": {
+      "min": 4.229534,
+      "med": 10.583439,
+      "max": 333.441581,
+      "p(90)": 20.07503120000001,
+      "p(95)": 26.036124599999997,
+      "avg": 13.009680023694589
+    }
+  },
+  "root_group": {
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": {
+      "setup": {
+        "checks": {
+          "pharmacist signed in": {
+            "passes": 1,
+            "fails": 0,
+            "name": "pharmacist signed in",
+            "path": "::setup::pharmacist signed in",
+            "id": "2e17eebae2f0545aa7539a2c579266ab"
+          },
+          "reviewer signed in": {
+            "passes": 1,
+            "fails": 0,
+            "name": "reviewer signed in",
+            "path": "::setup::reviewer signed in",
+            "id": "6acf4370a4bc67a7c36a611bf2bcc353"
+          }
+        },
+        "name": "setup",
+        "path": "::setup",
+        "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+        "groups": {}
+      }
+    },
+    "checks": {
+      "report accepted (202)": {
+        "path": "::report accepted (202)",
+        "id": "a1c897e09a530b346c3b13826b87d9e5",
+        "passes": 5730,
+        "fails": 0,
+        "name": "report accepted (202)"
+      }
+    },
+    "name": ""
+  }
+}

@@ -1,0 +1,7 @@
+PharmaVigil {{ .Chart.AppVersion }} is installed in namespace {{ .Release.Namespace }}.
+
+Not for clinical or regulatory use. Spontaneous reports do not prove that a drug caused a reaction.
+Synthetic patients only.
+
+Kafka is not part of this chart: apply ops/k8s/strimzi/ (Strimzi operator) first. Secrets come from the
+Secret "{{ .Values.global.secretName }}". The UI is the "frontend" Service on port 8080.

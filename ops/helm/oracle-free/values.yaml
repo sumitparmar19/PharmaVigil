@@ -1,0 +1,8 @@
+# Demo Oracle Free. Passwords come from the existing Secret (global.secretName): ORACLE_PASSWORD (SYSTEM) and
+# PV_DB_PASSWORD (the five service schemas).
+image: gvenzl/oracle-free:23-slim-faststart
+resources:
+  requests: {cpu: 250m, memory: 1Gi}
+  limits: {memory: 2Gi}
+global:
+  secretName: pharmavigil-secrets

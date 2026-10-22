@@ -12,6 +12,10 @@
   <artifactId>signal-service</artifactId>
   <name>signal-service</name>
 
+  <properties>
+    <pv.otel.skip>false</pv.otel.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.pharmavigil</groupId>

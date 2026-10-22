@@ -5,9 +5,11 @@
 package io.pharmavigil.caseservice.pipeline;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import io.pharmavigil.caseservice.cases.CaseService;
 import io.pharmavigil.caseservice.model.CaseVersion;
+import io.pharmavigil.caseservice.metrics.CaseMetrics;
 import io.pharmavigil.caseservice.model.CaseVersionRepository;
 import io.pharmavigil.caseservice.model.SafetyCase;
 import io.pharmavigil.caseservice.models.AgeBands;
@@ -36,11 +39,13 @@ public class DuplicateCheck {
     private final ModelBundle models;
     private final CaseService cases;
     private final CaseVersionRepository versions;
+    private final CaseMetrics metrics;
 
-    public DuplicateCheck(ModelBundle models, CaseService cases, CaseVersionRepository versions) {
+    public DuplicateCheck(ModelBundle models, CaseService cases, CaseVersionRepository versions, CaseMetrics metrics) {
         this.models = models;
         this.cases = cases;
         this.versions = versions;
+        this.metrics = metrics;
     }
 
     /** Runs inside the stage transaction; returns the flagged match, if any. */
@@ -63,10 +68,23 @@ public class DuplicateCheck {
                 rx.isEmpty() ? Set.of("-") : rx, names.isEmpty() ? Set.of("-") : names, Limit.of(MAX_CANDIDATES));
         DuplicateModel.Profile mine = profile(c, v);
         Match best = null;
+        // All candidates and their current versions in one query (their drugs and reactions load in batches,
+        // hibernate.default_batch_fetch_size), instead of four round trips per candidate.
+        Map<Long, DuplicateModel.Profile> others = new HashMap<>();
+        if (!candidates.isEmpty()) {
+            for (Object[] row : versions.findCurrentWithCase(candidates)) {
+                SafetyCase other = (SafetyCase) row[0];
+                others.put(other.getId(), profile(other, (CaseVersion) row[1]));
+            }
+        }
         try {
             for (Long otherId : candidates) {
-                SafetyCase other = cases.load(otherId);
-                double score = model.get().score(DuplicateModel.features(mine, profile(other, cases.latest(other))));
+                DuplicateModel.Profile profile = others.get(otherId);
+                if (profile == null) {
+                    continue;
+                }
+                float[] features = DuplicateModel.features(mine, profile);
+                double score = metrics.inference("duplicates", () -> model.get().score(features));
                 if (best == null || score > best.score()) {
                     best = new Match(otherId, score);
                 }

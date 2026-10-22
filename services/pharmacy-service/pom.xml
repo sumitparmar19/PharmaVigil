@@ -14,6 +14,10 @@
   <artifactId>pharmacy-service</artifactId>
   <name>pharmacy-service</name>
 
+  <properties>
+    <pv.otel.skip>false</pv.otel.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.pharmavigil</groupId>

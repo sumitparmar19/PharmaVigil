@@ -1,5 +1,6 @@
 #!/bin/bash
-# Oracle init script for docker compose: one schema per service (they share table names such as outbox_event).
+# Oracle init script for docker compose and the oracle-free Helm chart: one schema per service (they share table
+# names such as outbox_event).
 # Runs once, when the database volume is created. The password comes from PV_DB_PASSWORD (.env); passwords
 # go to sqlplus on stdin, never on its command line.
 set -euo pipefail

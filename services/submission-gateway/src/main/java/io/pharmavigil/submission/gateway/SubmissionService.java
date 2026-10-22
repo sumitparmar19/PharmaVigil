@@ -14,6 +14,7 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.pharmavigil.common.events.CaseReady;
 import io.pharmavigil.common.events.SubmissionStatus;
 import io.pharmavigil.common.events.Topics;
@@ -38,9 +39,11 @@ public class SubmissionService {
     private final TransactionTemplate tx;
     private final JsonMapper json;
     private final Clock clock;
+    private final MeterRegistry registry;
 
     public SubmissionService(JmsTemplate jms, SubmissionMessageRepository messages, ProcessedEventRepository processed,
-            OutboxEventRepository outbox, TransactionTemplate tx, JsonMapper json, Clock clock) {
+            OutboxEventRepository outbox, TransactionTemplate tx, JsonMapper json, Clock clock, MeterRegistry registry) {
+        this.registry = registry;
         this.jms = jms;
         this.messages = messages;
         this.processed = processed;
@@ -78,6 +81,7 @@ public class SubmissionService {
             m.setJMSCorrelationID(messageId);
             return m;
         });
+        registry.counter("pv.submissions.sent").increment();
         // 3. Mark the event processed and announce QUEUED, unless a fast answer already did.
         tx.executeWithoutResult(s -> {
             if (processed.existsById(new ProcessedEvent.Key(r.eventId(), CONSUMER))) {
@@ -102,12 +106,12 @@ public class SubmissionService {
             case "NACK" -> SubmissionStatus.Status.NACK;
             default -> throw new IllegalArgumentException("unknown outcome " + ack.outcome());
         };
-        tx.executeWithoutResult(s -> {
+        Boolean recorded = tx.execute(s -> {
             SubmissionMessage m = messages.lockByMessageId(ack.messageId())
                     .orElseThrow(() -> new IllegalArgumentException("acknowledgement for unknown message "
                             + ack.messageId()));
             if (m.answered()) {
-                return; // redelivered answer
+                return false; // redelivered answer
             }
             if ("SENDING".equals(m.getStatus())) {
                 // The answer overtook step 3 of onCaseReady: announce QUEUED first so consumers see the order.
@@ -115,7 +119,11 @@ public class SubmissionService {
             }
             m.answer(outcome.name(), ack.reason(), clock.instant());
             status(m.getCaseId(), m.getSafetyReportId(), m.getMessageId(), outcome, ack.reason());
+            return true;
         });
+        if (Boolean.TRUE.equals(recorded)) {
+            registry.counter("pv.regulator.answers", "outcome", outcome.name()).increment();
+        }
     }
 
     private void status(long caseId, String safetyReportId, String messageId, SubmissionStatus.Status s,

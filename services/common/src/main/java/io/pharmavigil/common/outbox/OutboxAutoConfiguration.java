@@ -1,10 +1,12 @@
 // Starts the outbox relay in every service that has both a database and Kafka. Properties:
-// pv.outbox.enabled (default true), pv.outbox.poll-interval (500 ms), pv.outbox.batch-size (100).
+// pv.outbox.enabled (default true), pv.outbox.poll-interval (500 ms), pv.outbox.batch-size (100). Also exposes
+// pv_outbox_backlog (unpublished rows; NaN while the database is unreachable) for Prometheus.
 package io.pharmavigil.common.outbox;
 
 import java.time.Clock;
 import java.time.Duration;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -14,6 +16,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 
 @AutoConfiguration(afterName = {"org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration",
         "org.springframework.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration",
@@ -28,7 +33,18 @@ public class OutboxAutoConfiguration {
     OutboxRelay outboxRelay(JdbcTemplate jdbc, KafkaTemplate<String, String> kafka, Clock clock,
             @Value("${pv.outbox.poll-interval:PT0.5S}") Duration interval,
             @Value("${pv.outbox.batch-size:100}") int batchSize,
-            @Value("${pv.outbox.send-timeout:PT10S}") Duration sendTimeout) {
-        return new OutboxRelay(jdbc, kafka, clock, interval, batchSize, sendTimeout);
+            @Value("${pv.outbox.send-timeout:PT10S}") Duration sendTimeout, ObjectProvider<MeterRegistry> meters) {
+        OutboxRelay relay = new OutboxRelay(jdbc, kafka, clock, interval, batchSize, sendTimeout);
+        meters.ifAvailable(registry -> Gauge.builder("pv.outbox.backlog", relay, OutboxAutoConfiguration::backlog)
+                .description("Outbox rows not yet published to Kafka").register(registry));
+        return relay;
+    }
+
+    static double backlog(OutboxRelay relay) {
+        try {
+            return relay.backlog();
+        } catch (RuntimeException e) {
+            return Double.NaN;
+        }
     }
 }

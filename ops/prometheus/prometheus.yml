@@ -1,0 +1,23 @@
+# Prometheus for the local stack (docker compose --profile observability): scrapes /actuator/prometheus of the
+# five services every 15 s and evaluates the alert rules kept with the Grafana dashboards (ops/grafana/alerts).
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  - job_name: pharmavigil
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["pharmacy-service:8081"]
+        labels: {service: pharmacy-service}
+      - targets: ["intake-gateway:8082"]
+        labels: {service: intake-gateway}
+      - targets: ["case-service:8083"]
+        labels: {service: case-service}
+      - targets: ["signal-service:8084"]
+        labels: {service: signal-service}
+      - targets: ["submission-gateway:8085"]
+        labels: {service: submission-gateway}

@@ -24,6 +24,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.pharmavigil.common.security.Roles;
 import io.pharmavigil.common.security.TokenService;
 import io.pharmavigil.common.testing.TestDatabases;
@@ -45,6 +46,7 @@ class SignalServiceTest {
     @Autowired SignalStore store;
     @Autowired SignalLoader loader;
     @Autowired TokenService tokens;
+    @Autowired MeterRegistry meters;
 
     @Test
     void fixtureLoadsOnceAsTheCurrentSnapshot() throws IOException {
@@ -68,6 +70,9 @@ class SignalServiceTest {
                         org.hamcrest.Matchers.greaterThanOrEqualTo(1.5))));
         mvc.perform(get("/api/signals/warnings").param("rxcui", "unknown-drug"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
+        assertThat(meters.counter("pv.signals.lookups", "result", "warning").count()).isPositive();
+        assertThat(meters.counter("pv.signals.lookups", "result", "none").count()).isPositive();
+        assertThat(meters.find("pv.signals.snapshot.pairs").gauge().value()).isPositive();
     }
 
     @Test

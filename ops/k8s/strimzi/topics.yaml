@@ -1,0 +1,134 @@
+# Pipeline topics and their dead-letter twins (common/events/Topics), managed by Strimzi's topic operator:
+# 3 partitions each (events of one case share a key, so they stay in order), one replica on the demo cluster.
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: report-received
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: report.received
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: report-deduped
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: report.deduped
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: report-coded
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: report.coded
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: case-triaged
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: case.triaged
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: case-ready
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: case.ready
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: submission-status
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: submission.status
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: report-received-dlq
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: report.received.dlq
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: report-deduped-dlq
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: report.deduped.dlq
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: report-coded-dlq
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: report.coded.dlq
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: case-triaged-dlq
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: case.triaged.dlq
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: case-ready-dlq
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: case.ready.dlq
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: submission-status-dlq
+  labels:
+    strimzi.io/cluster: pv-kafka
+spec:
+  topicName: submission.status.dlq
+  partitions: 3
+  replicas: 1

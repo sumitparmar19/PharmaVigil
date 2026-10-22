@@ -18,7 +18,7 @@ the repo.
 | M7 | E2B(R3) and SOAP | ✅ done (exports validate against the official schema set in CI) | `docs/E2B_R3.md`, ADR-009, `services/intake-gateway`, `scripts/fetch-e2b-xsd.sh` |
 | M8 | Kafka, ONNX in Java, JMS, narrative | ✅ done (end-to-end test in CI) | ADR-008, `services/e2e-tests`, `analysis/models/MANIFEST.md` |
 | M9 | Frontend | ✅ done locally (unit tests and the browser smoke test against the full stack); CI job added | `frontend/`, `docker-compose.yml`, `frontend/e2e/` |
-| M10 | Operations | pending | |
+| M10 | Operations | in progress: metrics, tracing, dashboards, alerts, k6 done; Helm charts and kind workflow written (CI result pending); Jenkins next | `docs/OBSERVABILITY.md`, `docs/PERFORMANCE.md`, `analysis/m10/` |
 | M11 | Azure infrastructure (code only) | pending | |
 | M12 | Docs, evidence, report | pending | |
 
@@ -298,6 +298,56 @@ Tests (local runs in this container):
   image was built from the already-built bundle, because `npm ci` inside a Docker build cannot pass this
   container's TLS proxy; CI builds the real image. No E2B schemas locally, so no submission was attempted
   in this run.
+
+## M10: operations (part 1: observability and load)
+
+Built:
+- **Metrics** (Micrometer → `/actuator/prometheus`): reports accepted, time per pipeline stage, intake→coded
+  latency (new `intake_received_at` column on the case), coding and triage results, ONNX inference time, reviewer
+  decisions (kept / corrected / manual), outbox backlog, Kafka consumer lag, JMS queue depth, regulator answers,
+  signal lookups and snapshot size. Tests assert the meters in each service.
+- **Traces**: OpenTelemetry Java agent 2.32.0 in every image (off unless `PV_TRACING=true`); the outbox stores the
+  writer's W3C traceparent and the relay restores it, so one trace runs from the pharmacy forwarder through
+  intake, Kafka and every case-service stage (182 spans, `analysis/m10/trace_example.json`). The JMS hop has
+  not been looked at (no submissions without the schemas here).
+- **Prometheus, Grafana, Jaeger** in the compose profile `observability`; three generated dashboards and nine
+  alert rules (`promtool`: OK); every query checked against the running stack (31 queries, 0 failed, 19 with data;
+  `analysis/m10/dashboard_queries.json`); screenshots in `analysis/m10/screenshots/`.
+- **k6** (`ops/k6/report-load.js`, ramp to 40 reports/s plus one working reviewer) and a collector that reads the
+  pipeline numbers from Prometheus (`ops/k6/collect_results.py`). Three runs: `docs/PERFORMANCE.md`.
+
+Found by the load test and fixed:
+- Duplicate check loaded each candidate in separate queries: now one query plus batch fetching. Cases coded in
+  the run doubled; p95 intake→coded 103 s → 21 s.
+- Outbox relay waited for each event's acknowledgement: now pipelined per batch. Max backlog 1,599 → 73; p95
+  intake→coded 21 s → 7.5 s (subset: local compose stack, synthetic reports, fixture models, 4 CPUs).
+- Triage could fail on a NEEDS_MANUAL_CODING case a reviewer had already opened: it now leaves it to the reviewer
+  (new test).
+
+Tests (local, Oracle Free via Testcontainers): common 22 (2 skipped locally), intake-gateway 11 (1 skipped),
+case-service 35, signal-service 7, submission-gateway 3; all green with the coverage gate. The k6 summary export
+contains the sign-in tokens (`setup_data`); it is stripped before a summary is kept.
+
+Problems hit: Docker Hub rate limits in this container (base images pulled from `mirror.gcr.io` locally; CI pulls
+from Docker Hub); the container's disk allowance ran out during the stack builds (Docker build cache and the ml
+virtualenv removed); a container restart in the middle (work was intact, the stack was brought up again for the
+trace check); the Kafka client's `records-lag-max` is NaN between fetches, so the dashboards use the per-partition
+`records-lag`.
+
+## M10: operations (part 2: Kubernetes)
+
+Built (ADR-010, `docs/KUBERNETES.md`):
+- Helm: library chart `pv-lib` (Deployment + Service, Spring Boot probes, non-root pods, Prometheus annotations,
+  secrets only by reference), six generated service charts, demo charts for Oracle Free and Artemis, umbrella
+  chart `pharmavigil`. The UI image now runs nginx as uid 101 so pods can require `runAsNonRoot`.
+- Strimzi 0.51.0 manifests: one KRaft node running Kafka 4.2.0 (the newest Strimzi 0.51 supports) and the twelve
+  pipeline topics as `KafkaTopic` resources.
+- Workflow *Kubernetes e2e (kind)*: images → kind v0.33.0 → Strimzi → Helm 4.3.0 install with random throwaway
+  secrets → Playwright smoke test through NodePort 30080.
+
+Checked here: `helm lint` 9 charts, 0 failures; `helm template` renders 8 Deployments, 8 Services, 1 ConfigMap;
+the non-root UI image serves the app as uid 101. The cluster run needs quay.io (Strimzi images), which this
+container cannot reach, so its result comes from CI.
 
 ### M7 and M8 CI evidence
 

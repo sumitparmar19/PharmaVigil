@@ -1,0 +1,10 @@
+# Loads the PharmaVigil dashboards (ops/grafana/dashboards/*.json) into a "PharmaVigil" folder, read-only.
+apiVersion: 1
+providers:
+  - name: pharmavigil
+    folder: PharmaVigil
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards

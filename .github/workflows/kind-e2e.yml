@@ -1,0 +1,123 @@
+# Kubernetes end-to-end test (M10, ADR-010): builds the six images, starts a kind cluster, installs the Strimzi
+# operator and a Kafka cluster from ops/k8s/strimzi, installs the umbrella Helm chart with random throwaway
+# secrets, and runs the same Playwright smoke test as the compose job against the UI's NodePort.
+name: Kubernetes e2e (kind)
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kind-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  KIND_VERSION: v0.33.0
+  HELM_VERSION: v4.3.0
+  STRIMZI_VERSION: 0.51.0
+  NS: pharmavigil
+
+jobs:
+  kind:
+    name: Helm on kind + Strimzi + Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Free disk space for the images
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install kind and Helm (pinned, checksums verified)
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          cd "$RUNNER_TEMP"
+          curl -fsSLo kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+          curl -fsSLo kind.sha256 "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64.sha256sum"
+          echo "$(cut -d' ' -f1 kind.sha256)  kind" | sha256sum -c -
+          install kind bin/kind
+          curl -fsSLo helm.tgz "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz"
+          curl -fsSLo helm.sha256 "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum"
+          echo "$(cut -d' ' -f1 helm.sha256)  helm.tgz" | sha256sum -c -
+          tar xzf helm.tgz && install linux-amd64/helm bin/helm
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Build the service jars
+        working-directory: services
+        run: mvn -B -ntp -DskipTests package
+      - name: Build the images
+        run: |
+          for s in pharmacy-service intake-gateway case-service signal-service submission-gateway; do
+            docker build -q -f services/Dockerfile --build-arg SERVICE=$s -t pharmavigil/$s:0.1.0 services
+          done
+          docker build -q -t pharmavigil/frontend:0.1.0 frontend
+      - name: Create the kind cluster and load the images
+        run: |
+          kind create cluster --name pv --config ops/kind/cluster.yaml --wait 120s
+          for s in pharmacy-service intake-gateway case-service signal-service submission-gateway frontend; do
+            kind load docker-image --name pv pharmavigil/$s:0.1.0
+          done
+          kubectl create namespace "$NS"
+      - name: Install the Strimzi operator and Kafka
+        run: |
+          curl -fsSL "https://github.com/strimzi/strimzi-kafka-operator/releases/download/${STRIMZI_VERSION}/strimzi-cluster-operator-${STRIMZI_VERSION}.yaml" \
+            | sed "s/namespace: .*/namespace: ${NS}/" | kubectl create -n "$NS" -f -
+          kubectl -n "$NS" rollout status deployment/strimzi-cluster-operator --timeout=300s
+          kubectl -n "$NS" apply -f ops/k8s/strimzi/kafka.yaml
+          kubectl -n "$NS" wait kafka/pv-kafka --for=condition=Ready --timeout=600s
+          kubectl -n "$NS" apply -f ops/k8s/strimzi/topics.yaml
+          kubectl -n "$NS" wait kafkatopic --all --for=condition=Ready --timeout=300s
+      - name: Throwaway secrets for this run only (random, masked, never stored)
+        run: |
+          : > "$RUNNER_TEMP/pv.env"
+          for name in ORACLE_PASSWORD PV_DB_PASSWORD JWT_SECRET PV_DEMO_PASSWORD ARTEMIS_PASSWORD; do
+            value="Pv$(openssl rand -hex 24)"
+            echo "::add-mask::$value"
+            echo "$name=$value" >> "$RUNNER_TEMP/pv.env"
+          done
+          echo "ARTEMIS_USER=pvbroker" >> "$RUNNER_TEMP/pv.env"
+          kubectl -n "$NS" create secret generic pharmavigil-secrets --from-env-file="$RUNNER_TEMP/pv.env"
+      - name: Install the PharmaVigil chart
+        run: |
+          for c in pharmacy-service intake-gateway case-service signal-service submission-gateway frontend pharmavigil; do
+            helm dependency build "ops/helm/$c"
+          done
+          helm lint ops/helm/pharmavigil
+          helm install pv ops/helm/pharmavigil -n "$NS" -f ops/kind/values-kind.yaml --wait --timeout 20m
+          kubectl -n "$NS" get pods -o wide
+      - name: Browser smoke test against the cluster
+        working-directory: frontend
+        run: |
+          npm ci && npx playwright install --with-deps chromium
+          export PV_DEMO_PASSWORD="$(grep '^PV_DEMO_PASSWORD=' "$RUNNER_TEMP/pv.env" | cut -d= -f2-)"
+          PV_UI_URL=http://127.0.0.1:8080 npm run e2e
+      - name: Cluster state and logs
+        if: failure()
+        run: |
+          kubectl get pods -A -o wide || true
+          kubectl -n "$NS" get events --sort-by=.lastTimestamp | tail -60 || true
+          for p in $(kubectl -n "$NS" get pods -o name); do
+            echo "::group::$p"; kubectl -n "$NS" logs "$p" --all-containers --tail=200 || true; echo "::endgroup::"
+          done
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: kind-playwright-report
+          path: frontend/playwright-report/
+          if-no-files-found: ignore
+      - name: Delete the cluster
+        if: always()
+        run: kind delete cluster --name pv || true

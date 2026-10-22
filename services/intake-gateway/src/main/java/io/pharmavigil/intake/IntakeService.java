@@ -16,7 +16,10 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.pharmavigil.common.e2b.E2bReader;
 import io.pharmavigil.common.e2b.E2bValidator;
 import io.pharmavigil.common.e2b.IcsrCase;
@@ -60,9 +63,11 @@ public class IntakeService {
     private final E2bValidator validator;
     private final JsonMapper json;
     private final Clock clock;
+    private final MeterRegistry registry;
 
     public IntakeService(IntakeReceiptRepository receipts, OutboxEventRepository outbox, E2bReader reader,
-            E2bValidator validator, JsonMapper json, Clock clock) {
+            E2bValidator validator, JsonMapper json, Clock clock, MeterRegistry registry) {
+        this.registry = registry;
         this.receipts = receipts;
         this.outbox = outbox;
         this.reader = reader;
@@ -138,6 +143,7 @@ public class IntakeService {
             String hash, boolean schemaChecked, ReportReceived event, List<String> warnings) {
         var same = receipts.findBySourceAndSourceReportIdAndPayloadSha256(source, reportId, hash);
         if (same.isPresent()) {
+            countAfterCommit(source, "duplicate");
             return new Accepted(same.get(), true, warnings);
         }
         List<String> notes = new ArrayList<>(warnings);
@@ -149,7 +155,24 @@ public class IntakeService {
                 partnerReference, submittedBy, hash, followUp, schemaChecked, clock.instant()));
         outbox.save(new OutboxEvent(event.eventId(), "intake_receipt", receipt.getReceiptId(), ReportReceived.TOPIC,
                 json.writeValueAsString(event), clock.instant()));
+        countAfterCommit(source, followUp ? "follow_up" : "new");
         return new Accepted(receipt, false, notes);
+    }
+
+    /** pv_reports_received_total{source, kind}: counted only when the receipt is committed. */
+    private void countAfterCommit(Source source, String kind) {
+        Runnable count = () -> registry.counter("pv.reports.received", "source", source.name(), "kind", kind)
+                .increment();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    count.run();
+                }
+            });
+        } else {
+            count.run();
+        }
     }
 
     static String sha256(String s) {

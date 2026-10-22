@@ -14,6 +14,10 @@
   <artifactId>intake-gateway</artifactId>
   <name>intake-gateway</name>
 
+  <properties>
+    <pv.otel.skip>false</pv.otel.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.pharmavigil</groupId>

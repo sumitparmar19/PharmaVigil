@@ -1,0 +1,12 @@
+# Umbrella values. Secrets are never here: create the Secret named in global.secretName first (docs/KUBERNETES.md
+# lists its keys). Images default to pharmavigil/<service>:<global.imageTag>.
+global:
+  secretName: pharmavigil-secrets
+  imageTag: "0.1.0"
+  imagePullPolicy: IfNotPresent
+
+# Demo infrastructure; switch off to point the services at managed databases and brokers.
+oracle-free:
+  enabled: true
+artemis:
+  enabled: true

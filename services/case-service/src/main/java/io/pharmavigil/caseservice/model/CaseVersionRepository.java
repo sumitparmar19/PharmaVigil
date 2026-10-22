@@ -23,4 +23,9 @@ public interface CaseVersionRepository extends JpaRepository<CaseVersion, Long> 
             + "and c.receivedDate >= :since and (d.rxcui in :rxcuis or lower(d.drugName) in :names)")
     List<Long> findDuplicateCandidates(@Param("caseId") Long caseId, @Param("since") LocalDate since,
             @Param("rxcuis") Collection<String> rxcuis, @Param("names") Collection<String> names, Limit limit);
+
+    /** Each given case with its current version, in one query (rows of [SafetyCase, CaseVersion]). */
+    @Query("select c, v from SafetyCase c, CaseVersion v where v.caseId = c.id and v.versionNo = c.currentVersion "
+            + "and c.id in :ids")
+    List<Object[]> findCurrentWithCase(@Param("ids") Collection<Long> ids);
 }

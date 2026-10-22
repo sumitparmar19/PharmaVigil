@@ -11,8 +11,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.pharmavigil.common.e2b.E2bSamples;
 import io.pharmavigil.common.e2b.E2bWriter;
 import io.pharmavigil.common.security.Roles;
@@ -20,6 +22,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 class RestIntakeTest extends IntakeTest {
+
+    @Autowired MeterRegistry meters;
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
@@ -58,6 +62,9 @@ class RestIntakeTest extends IntakeTest {
                 .andExpect(jsonPath("$.receiptId").value(receiptId))
                 .andExpect(jsonPath("$.duplicate").value(true));
         assertThat(outbox.findByAggregateId(receiptId)).hasSize(1);
+        assertThat(meters.counter("pv.reports.received", "source", "PHARMACY", "kind", "new").count()).isPositive();
+        assertThat(meters.counter("pv.reports.received", "source", "PHARMACY", "kind", "duplicate").count())
+                .isPositive();
 
         mvc.perform(get("/api/intake/receipts/" + receiptId).header("Authorization", bearer(Roles.PHARMACIST)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("RECEIVED"));

@@ -12,6 +12,10 @@
   <artifactId>submission-gateway</artifactId>
   <name>submission-gateway</name>
 
+  <properties>
+    <pv.otel.skip>false</pv.otel.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.pharmavigil</groupId>

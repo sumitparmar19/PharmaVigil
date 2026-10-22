@@ -78,6 +78,9 @@ public class SafetyCase {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "intake_received_at")
+    private Instant intakeReceivedAt;
+
     protected SafetyCase() {
     }
 
@@ -131,5 +134,7 @@ public class SafetyCase {
     public BigDecimal getDuplicateScore() { return duplicateScore; }
     public int getLockVersion() { return lockVersion; }
     public Instant getCreatedAt() { return createdAt; }
+    public Instant getIntakeReceivedAt() { return intakeReceivedAt; }
+    public void setIntakeReceivedAt(Instant at) { this.intakeReceivedAt = at; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

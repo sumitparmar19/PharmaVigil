@@ -1,0 +1,227 @@
+{
+  "summary": {
+    "queries": 31,
+    "failed": 0,
+    "with_data": 19,
+    "scope": "local docker compose stack after the k6 run (synthetic data, fixture models)"
+  },
+  "results": [
+    {
+      "source": "pv-ai-quality / MedDRA coder: kept by reviewers",
+      "expr": "sum(increase(pv_review_decisions_total{field=\"PT\",outcome=\"accepted\"}[$__range])) / sum(increase(pv_review_decisions_total{field=\"PT\",outcome=~\"accepted|corrected\"}[$__range]))",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "pv-ai-quality / Seriousness: kept by reviewers",
+      "expr": "sum(increase(pv_review_decisions_total{field=\"SERIOUSNESS\",outcome=\"accepted\"}[$__range])) / sum(increase(pv_review_decisions_total{field=\"SERIOUSNESS\",outcome=~\"accepted|corrected\"}[$__range]))",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "pv-ai-quality / Duplicate flag: kept by reviewers",
+      "expr": "sum(increase(pv_review_decisions_total{field=\"DUPLICATE\",outcome=\"accepted\"}[$__range])) / sum(increase(pv_review_decisions_total{field=\"DUPLICATE\",outcome=~\"accepted|corrected\"}[$__range]))",
+      "ok": true,
+      "series": 0,
+      "has_data": false
+    },
+    {
+      "source": "pv-ai-quality / Reviewer decisions per hour",
+      "expr": "sum by (field, outcome) (increase(pv_review_decisions_total[1h]))",
+      "ok": true,
+      "series": 4,
+      "has_data": true
+    },
+    {
+      "source": "pv-ai-quality / Model inference p95",
+      "expr": "histogram_quantile(0.95, sum by (le, model) (rate(pv_model_inference_seconds_bucket[5m])))",
+      "ok": true,
+      "series": 3,
+      "has_data": true
+    },
+    {
+      "source": "pv-ai-quality / Coding results per hour",
+      "expr": "sum by (result) (increase(pv_pipeline_outcome_total{stage=\"coding\"}[1h]))",
+      "ok": true,
+      "series": 2,
+      "has_data": true
+    },
+    {
+      "source": "pv-ai-quality / Triage results per hour",
+      "expr": "sum by (result) (increase(pv_pipeline_outcome_total{stage=\"triage\"}[1h]))",
+      "ok": true,
+      "series": 2,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / Reports accepted / min",
+      "expr": "sum(rate(pv_reports_received_total{kind!=\"duplicate\"}[5m])) * 60",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / Intake \u2192 coded, p95",
+      "expr": "histogram_quantile(0.95, sum by (le) (rate(pv_report_intake_to_coded_seconds_bucket[5m])))",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / Max Kafka consumer lag",
+      "expr": "max(kafka_consumer_fetch_manager_records_lag{topic=~\".+[.].+\"})",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / Outbox backlog",
+      "expr": "sum(pv_outbox_backlog)",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / Reports per minute by source",
+      "expr": "sum by (source, kind) (rate(pv_reports_received_total[5m])) * 60",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / Stage time p95",
+      "expr": "histogram_quantile(0.95, sum by (le, stage) (rate(pv_pipeline_stage_seconds_bucket[5m])))",
+      "ok": true,
+      "series": 4,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / Stage failures per minute",
+      "expr": "sum by (stage) (rate(pv_pipeline_stage_seconds_count{outcome=\"error\"}[5m])) * 60",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / Kafka consumer lag",
+      "expr": "max by (service, topic) (kafka_consumer_fetch_manager_records_lag{topic=~\".+[.].+\"})",
+      "ok": true,
+      "series": 6,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / Outbox backlog by service",
+      "expr": "pv_outbox_backlog",
+      "ok": true,
+      "series": 3,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / JMS queue depth",
+      "expr": "pv_jms_queue_depth",
+      "ok": true,
+      "series": 3,
+      "has_data": true
+    },
+    {
+      "source": "pv-pipeline / Regulator answers per hour",
+      "expr": "sum by (outcome) (increase(pv_regulator_answers_total[1h]))",
+      "ok": true,
+      "series": 0,
+      "has_data": false
+    },
+    {
+      "source": "pv-signals / Drug\u2013event pairs in the snapshot",
+      "expr": "max(pv_signals_snapshot_pairs)",
+      "ok": true,
+      "series": 1,
+      "has_data": false
+    },
+    {
+      "source": "pv-signals / Snapshot age",
+      "expr": "time() - max(pv_signals_snapshot_loaded)",
+      "ok": true,
+      "series": 1,
+      "has_data": false
+    },
+    {
+      "source": "pv-signals / Lookups with a warning",
+      "expr": "sum(increase(pv_signals_lookups_total{result=\"warning\"}[$__range])) / sum(increase(pv_signals_lookups_total[$__range]))",
+      "ok": true,
+      "series": 0,
+      "has_data": false
+    },
+    {
+      "source": "pv-signals / Counter lookups per minute",
+      "expr": "sum by (result) (rate(pv_signals_lookups_total[5m])) * 60",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "alert PvServiceDown",
+      "expr": "up{job=\"pharmavigil\"} == 0",
+      "ok": true,
+      "series": 0,
+      "has_data": false
+    },
+    {
+      "source": "alert PvOutboxBacklogGrowing",
+      "expr": "sum by (service) (pv_outbox_backlog) > 100",
+      "ok": true,
+      "series": 0,
+      "has_data": false
+    },
+    {
+      "source": "alert PvConsumerLagHigh",
+      "expr": "max by (service, topic) (kafka_consumer_fetch_manager_records_lag{topic=~\".+[.].+\"}) > 1000",
+      "ok": true,
+      "series": 0,
+      "has_data": false
+    },
+    {
+      "source": "alert PvIntakeToCodedSlow",
+      "expr": "histogram_quantile(0.95, sum by (le) (rate(pv_report_intake_to_coded_seconds_bucket[10m]))) > 60",
+      "ok": true,
+      "series": 0,
+      "has_data": false
+    },
+    {
+      "source": "alert PvPipelineStageFailing",
+      "expr": "sum by (stage) (rate(pv_pipeline_stage_seconds_count{outcome=\"error\"}[5m])) > 0",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "alert PvJmsDeadLetters",
+      "expr": "pv_jms_queue_depth{queue=\"DLQ\"} > 0",
+      "ok": true,
+      "series": 0,
+      "has_data": false
+    },
+    {
+      "source": "alert PvRegulatorNack",
+      "expr": "sum(increase(pv_regulator_answers_total{outcome=\"NACK\"}[1h])) > 0",
+      "ok": true,
+      "series": 0,
+      "has_data": false
+    },
+    {
+      "source": "alert PvCodingMostlyManual",
+      "expr": "sum(increase(pv_pipeline_outcome_total{stage=\"coding\",result=\"NEEDS_MANUAL_CODING\"}[30m])) / sum(increase(pv_pipeline_outcome_total{stage=\"coding\"}[30m])) > 0.5",
+      "ok": true,
+      "series": 1,
+      "has_data": true
+    },
+    {
+      "source": "alert PvSignalSnapshotMissing",
+      "expr": "max(pv_signals_snapshot_pairs) != max(pv_signals_snapshot_pairs)",
+      "ok": true,
+      "series": 1,
+      "has_data": false
+    }
+  ]
+}

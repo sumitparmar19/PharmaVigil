@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -17,6 +18,7 @@ import io.pharmavigil.common.security.SecurityAutoConfiguration;
 
 @Configuration
 @EnableMethodSecurity
+@EnableScheduling
 public class GatewayConfig {
 
     @Bean

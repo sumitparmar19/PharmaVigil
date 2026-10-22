@@ -1,0 +1,1468 @@
+{
+  "scope": "local docker compose stack, one synthetic pharmacy report sent by the Playwright smoke test, OpenTelemetry Java agent 2.32.0, Jaeger 2.22.0",
+  "trace_id": "019023553a73a8e72dd25831c930bc63",
+  "services": [
+    "case-service",
+    "intake-gateway",
+    "pharmacy-service"
+  ],
+  "span_count": 182,
+  "spans": [
+    {
+      "service": "pharmacy-service",
+      "span": "ReportForwarder.scheduled",
+      "kind": 1,
+      "span_id": "56aeef286d42f9ab",
+      "parent_span_id": null,
+      "offset_ms": 0.0
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "SideEffectReportRepository.findTop50ByStatusOrderByIdAsc",
+      "kind": 1,
+      "span_id": "85483f58f5c5081d",
+      "parent_span_id": "56aeef286d42f9ab",
+      "offset_ms": 2.0
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "SELECT io.pharmavigil.pharmacy.reports.SideEffectReport",
+      "kind": 1,
+      "span_id": "379510d2d90311f0",
+      "parent_span_id": "85483f58f5c5081d",
+      "offset_ms": 2.9
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "SELECT freepdb1.side_effect_report",
+      "kind": 3,
+      "span_id": "05e93b30f601bddb",
+      "parent_span_id": "379510d2d90311f0",
+      "offset_ms": 4.0
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "Transaction.commit",
+      "kind": 1,
+      "span_id": "f831e9391c8ac206",
+      "parent_span_id": "56aeef286d42f9ab",
+      "offset_ms": 17.6
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "SideEffectReportRepository.findById",
+      "kind": 1,
+      "span_id": "ebd9ec1f6118a89e",
+      "parent_span_id": "56aeef286d42f9ab",
+      "offset_ms": 19.9
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "Session.find io.pharmavigil.pharmacy.reports.SideEffectReport",
+      "kind": 1,
+      "span_id": "66094496fba80f64",
+      "parent_span_id": "ebd9ec1f6118a89e",
+      "offset_ms": 20.5
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "SELECT freepdb1.side_effect_report",
+      "kind": 3,
+      "span_id": "d3dc7dbb8d17ce48",
+      "parent_span_id": "66094496fba80f64",
+      "offset_ms": 21.4
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "SELECT freepdb1.patient",
+      "kind": 3,
+      "span_id": "99f41529f196e06c",
+      "parent_span_id": "56aeef286d42f9ab",
+      "offset_ms": 28.3
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "SELECT freepdb1.drug",
+      "kind": 3,
+      "span_id": "2f19e4b7c4d009d3",
+      "parent_span_id": "56aeef286d42f9ab",
+      "offset_ms": 32.0
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "Transaction.commit",
+      "kind": 1,
+      "span_id": "0fa37351f1cc19d9",
+      "parent_span_id": "56aeef286d42f9ab",
+      "offset_ms": 34.5
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "POST",
+      "kind": 3,
+      "span_id": "083b6303651d9bf9",
+      "parent_span_id": "56aeef286d42f9ab",
+      "offset_ms": 39.4
+    },
+    {
+      "service": "intake-gateway",
+      "span": "POST /api/intake/reports",
+      "kind": 2,
+      "span_id": "ba77eb6c5e1555bf",
+      "parent_span_id": "083b6303651d9bf9",
+      "offset_ms": 45.4
+    },
+    {
+      "service": "intake-gateway",
+      "span": "IntakeReceiptRepository.findBySourceAndSourceReportIdAndPayloadSha256",
+      "kind": 1,
+      "span_id": "4630de7bf1a4c470",
+      "parent_span_id": "ba77eb6c5e1555bf",
+      "offset_ms": 335.6
+    },
+    {
+      "service": "intake-gateway",
+      "span": "SELECT io.pharmavigil.intake.receipts.IntakeReceipt",
+      "kind": 1,
+      "span_id": "832f10f98ba87286",
+      "parent_span_id": "4630de7bf1a4c470",
+      "offset_ms": 889.2
+    },
+    {
+      "service": "intake-gateway",
+      "span": "SELECT freepdb1.intake_receipt",
+      "kind": 3,
+      "span_id": "eca7fb6dcc44fad3",
+      "parent_span_id": "832f10f98ba87286",
+      "offset_ms": 968.9
+    },
+    {
+      "service": "intake-gateway",
+      "span": "IntakeReceiptRepository.existsBySourceAndSourceReportId",
+      "kind": 1,
+      "span_id": "782b1f4d7a2b0055",
+      "parent_span_id": "ba77eb6c5e1555bf",
+      "offset_ms": 1069.7
+    },
+    {
+      "service": "intake-gateway",
+      "span": "SELECT io.pharmavigil.intake.receipts.IntakeReceipt",
+      "kind": 1,
+      "span_id": "3b80ac3670386adf",
+      "parent_span_id": "782b1f4d7a2b0055",
+      "offset_ms": 1085.9
+    },
+    {
+      "service": "intake-gateway",
+      "span": "SELECT freepdb1.intake_receipt",
+      "kind": 3,
+      "span_id": "0653da613848666b",
+      "parent_span_id": "3b80ac3670386adf",
+      "offset_ms": 1090.1
+    },
+    {
+      "service": "intake-gateway",
+      "span": "IntakeReceiptRepository.save",
+      "kind": 1,
+      "span_id": "bf9ff016dc01a596",
+      "parent_span_id": "ba77eb6c5e1555bf",
+      "offset_ms": 1147.4
+    },
+    {
+      "service": "intake-gateway",
+      "span": "Session.persist io.pharmavigil.intake.receipts.IntakeReceipt",
+      "kind": 1,
+      "span_id": "7168aacb8f98f1d1",
+      "parent_span_id": "bf9ff016dc01a596",
+      "offset_ms": 1157.0
+    },
+    {
+      "service": "intake-gateway",
+      "span": "INSERT freepdb1.intake_receipt",
+      "kind": 3,
+      "span_id": "f6fb2d4b7eaaacab",
+      "parent_span_id": "7168aacb8f98f1d1",
+      "offset_ms": 1213.7
+    },
+    {
+      "service": "intake-gateway",
+      "span": "OutboxEventRepository.save",
+      "kind": 1,
+      "span_id": "d676606b42037374",
+      "parent_span_id": "ba77eb6c5e1555bf",
+      "offset_ms": 1241.5
+    },
+    {
+      "service": "intake-gateway",
+      "span": "Session.persist io.pharmavigil.intake.outbox.OutboxEvent",
+      "kind": 1,
+      "span_id": "8f787fc0e0939cd3",
+      "parent_span_id": "d676606b42037374",
+      "offset_ms": 1242.2
+    },
+    {
+      "service": "intake-gateway",
+      "span": "INSERT freepdb1.outbox_event",
+      "kind": 3,
+      "span_id": "231570ee72653089",
+      "parent_span_id": "8f787fc0e0939cd3",
+      "offset_ms": 1283.1
+    },
+    {
+      "service": "intake-gateway",
+      "span": "Transaction.commit",
+      "kind": 1,
+      "span_id": "6f8e278eb4361d99",
+      "parent_span_id": "ba77eb6c5e1555bf",
+      "offset_ms": 1312.3
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "SideEffectReportRepository.findById",
+      "kind": 1,
+      "span_id": "18fc96ee3f466bce",
+      "parent_span_id": "56aeef286d42f9ab",
+      "offset_ms": 1426.0
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "Session.find io.pharmavigil.pharmacy.reports.SideEffectReport",
+      "kind": 1,
+      "span_id": "01a20fe7d2d0e8c7",
+      "parent_span_id": "18fc96ee3f466bce",
+      "offset_ms": 1426.3
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "SELECT freepdb1.side_effect_report",
+      "kind": 3,
+      "span_id": "80b1a49e6f519702",
+      "parent_span_id": "01a20fe7d2d0e8c7",
+      "offset_ms": 1427.6
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "Transaction.commit",
+      "kind": 1,
+      "span_id": "7be069a4bc158e46",
+      "parent_span_id": "56aeef286d42f9ab",
+      "offset_ms": 1433.6
+    },
+    {
+      "service": "pharmacy-service",
+      "span": "UPDATE freepdb1.side_effect_report",
+      "kind": 3,
+      "span_id": "9b732ecfcf889ad1",
+      "parent_span_id": "7be069a4bc158e46",
+      "offset_ms": 1435.2
+    },
+    {
+      "service": "intake-gateway",
+      "span": "report.received publish",
+      "kind": 4,
+      "span_id": "f3474fe0e21d9cc1",
+      "parent_span_id": "8f787fc0e0939cd3",
+      "offset_ms": 1769.6
+    },
+    {
+      "service": "case-service",
+      "span": "report.received process",
+      "kind": 5,
+      "span_id": "21150295820d0852",
+      "parent_span_id": "f3474fe0e21d9cc1",
+      "offset_ms": 1971.2
+    },
+    {
+      "service": "case-service",
+      "span": "ProcessedEventRepository.existsById",
+      "kind": 1,
+      "span_id": "922ba77e6ab25a23",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 1996.3
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.ProcessedEvent",
+      "kind": 1,
+      "span_id": "3de3569559937cbd",
+      "parent_span_id": "922ba77e6ab25a23",
+      "offset_ms": 2013.3
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "fa3e7fb252ab61d3",
+      "parent_span_id": "3de3569559937cbd",
+      "offset_ms": 2021.8
+    },
+    {
+      "service": "case-service",
+      "span": "ProcessedEventRepository.saveAndFlush",
+      "kind": 1,
+      "span_id": "0bac80eadcff9a0f",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2029.2
+    },
+    {
+      "service": "case-service",
+      "span": "Session.merge io.pharmavigil.caseservice.model.ProcessedEvent",
+      "kind": 1,
+      "span_id": "81096e3a5c6345b7",
+      "parent_span_id": "0bac80eadcff9a0f",
+      "offset_ms": 2032.7
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "fb84e02ff5694d2c",
+      "parent_span_id": "81096e3a5c6345b7",
+      "offset_ms": 2055.2
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "5776bbd9dc76372d",
+      "parent_span_id": "0bac80eadcff9a0f",
+      "offset_ms": 2101.3
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findBySourceAndSourceReportId",
+      "kind": 1,
+      "span_id": "16f6cf91b4d14eee",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2114.3
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "427875e826f1cf39",
+      "parent_span_id": "16f6cf91b4d14eee",
+      "offset_ms": 2123.4
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.safety_case",
+      "kind": 3,
+      "span_id": "b2d92b235fb06798",
+      "parent_span_id": "427875e826f1cf39",
+      "offset_ms": 2127.3
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.save",
+      "kind": 1,
+      "span_id": "bf9ef18e7bbc6958",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2133.2
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "740568308009e8f7",
+      "parent_span_id": "bf9ef18e7bbc6958",
+      "offset_ms": 2134.4
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.safety_case",
+      "kind": 3,
+      "span_id": "f6615ece9ac35a7d",
+      "parent_span_id": "740568308009e8f7",
+      "offset_ms": 2151.5
+    },
+    {
+      "service": "case-service",
+      "span": "CaseVersionRepository.save",
+      "kind": 1,
+      "span_id": "e915372f07a31354",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2178.7
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.CaseVersion",
+      "kind": 1,
+      "span_id": "ac04151155302ac4",
+      "parent_span_id": "e915372f07a31354",
+      "offset_ms": 2179.4
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.case_version",
+      "kind": 3,
+      "span_id": "8135bd5a849a5831",
+      "parent_span_id": "ac04151155302ac4",
+      "offset_ms": 2193.3
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.case_drug",
+      "kind": 3,
+      "span_id": "fc5039f723eec615",
+      "parent_span_id": "ac04151155302ac4",
+      "offset_ms": 2205.1
+    },
+    {
+      "service": "case-service",
+      "span": "AuditEventRepository.save",
+      "kind": 1,
+      "span_id": "3f07f78ef1de1d7f",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2211.6
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.AuditEvent",
+      "kind": 1,
+      "span_id": "11e6fac25c93fd91",
+      "parent_span_id": "3f07f78ef1de1d7f",
+      "offset_ms": 2212.3
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.audit_event",
+      "kind": 3,
+      "span_id": "ce7da96d838c737b",
+      "parent_span_id": "11e6fac25c93fd91",
+      "offset_ms": 2213.3
+    },
+    {
+      "service": "case-service",
+      "span": "CaseVersionRepository.findByCaseIdAndVersionNo",
+      "kind": 1,
+      "span_id": "cb5d531405831162",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2224.6
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.CaseVersion",
+      "kind": 1,
+      "span_id": "3944d5535384a02e",
+      "parent_span_id": "cb5d531405831162",
+      "offset_ms": 2227.7
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_version",
+      "kind": 3,
+      "span_id": "b7efc759577a2d71",
+      "parent_span_id": "3944d5535384a02e",
+      "offset_ms": 2238.0
+    },
+    {
+      "service": "case-service",
+      "span": "CaseVersionRepository.findDuplicateCandidates",
+      "kind": 1,
+      "span_id": "77f14f5ae53fc2fa",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2248.2
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT",
+      "kind": 1,
+      "span_id": "1181c3dd3aeeacbe",
+      "parent_span_id": "77f14f5ae53fc2fa",
+      "offset_ms": 2256.4
+    },
+    {
+      "service": "case-service",
+      "span": "UPDATE freepdb1.safety_case",
+      "kind": 3,
+      "span_id": "d92a5f4dbce358a5",
+      "parent_span_id": "1181c3dd3aeeacbe",
+      "offset_ms": 2279.1
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1",
+      "kind": 3,
+      "span_id": "358dcae1efd15ef8",
+      "parent_span_id": "1181c3dd3aeeacbe",
+      "offset_ms": 2290.1
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "cbbb25c9838e54a3",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2322.4
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "adce5953fc5a0ef2",
+      "parent_span_id": "cbbb25c9838e54a3",
+      "offset_ms": 2324.1
+    },
+    {
+      "service": "case-service",
+      "span": "AuditEventRepository.save",
+      "kind": 1,
+      "span_id": "bc5f2e49cc33e48b",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2326.4
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.AuditEvent",
+      "kind": 1,
+      "span_id": "aa94dd22e780987a",
+      "parent_span_id": "bc5f2e49cc33e48b",
+      "offset_ms": 2326.7
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.audit_event",
+      "kind": 3,
+      "span_id": "10d94ac7e6e9f318",
+      "parent_span_id": "aa94dd22e780987a",
+      "offset_ms": 2327.5
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "f4e0085aff32225e",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2331.2
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "f44f276a1d67aa26",
+      "parent_span_id": "f4e0085aff32225e",
+      "offset_ms": 2331.4
+    },
+    {
+      "service": "case-service",
+      "span": "OutboxEventRepository.save",
+      "kind": 1,
+      "span_id": "811d4f4ae836be48",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2336.1
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.OutboxEvent",
+      "kind": 1,
+      "span_id": "f26f710026b68415",
+      "parent_span_id": "811d4f4ae836be48",
+      "offset_ms": 2336.6
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.outbox_event",
+      "kind": 3,
+      "span_id": "ac1145aa6eb7208a",
+      "parent_span_id": "f26f710026b68415",
+      "offset_ms": 2377.1
+    },
+    {
+      "service": "case-service",
+      "span": "Transaction.commit",
+      "kind": 1,
+      "span_id": "a63da07c2c9667bc",
+      "parent_span_id": "21150295820d0852",
+      "offset_ms": 2398.0
+    },
+    {
+      "service": "case-service",
+      "span": "report.deduped publish",
+      "kind": 4,
+      "span_id": "ab1f8fe4d29ba794",
+      "parent_span_id": "f26f710026b68415",
+      "offset_ms": 2814.1
+    },
+    {
+      "service": "case-service",
+      "span": "report.deduped process",
+      "kind": 5,
+      "span_id": "67e9149bba4d323e",
+      "parent_span_id": "ab1f8fe4d29ba794",
+      "offset_ms": 2843.9
+    },
+    {
+      "service": "case-service",
+      "span": "ProcessedEventRepository.existsById",
+      "kind": 1,
+      "span_id": "313d87e2e73968ce",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2852.0
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.ProcessedEvent",
+      "kind": 1,
+      "span_id": "b1a150dccf97d58c",
+      "parent_span_id": "313d87e2e73968ce",
+      "offset_ms": 2853.3
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "89dc6ed74d5b4447",
+      "parent_span_id": "b1a150dccf97d58c",
+      "offset_ms": 2854.8
+    },
+    {
+      "service": "case-service",
+      "span": "ProcessedEventRepository.saveAndFlush",
+      "kind": 1,
+      "span_id": "5c8c2160784924ce",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2859.3
+    },
+    {
+      "service": "case-service",
+      "span": "Session.merge io.pharmavigil.caseservice.model.ProcessedEvent",
+      "kind": 1,
+      "span_id": "0d5a6a74c08924ab",
+      "parent_span_id": "5c8c2160784924ce",
+      "offset_ms": 2859.5
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "b7aee2f06835370f",
+      "parent_span_id": "0d5a6a74c08924ab",
+      "offset_ms": 2860.1
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "a27d811fc0ed693b",
+      "parent_span_id": "5c8c2160784924ce",
+      "offset_ms": 2864.2
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "e86e7742974bdfd6",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2865.8
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "418eeed72a6b9f37",
+      "parent_span_id": "e86e7742974bdfd6",
+      "offset_ms": 2866.1
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.safety_case",
+      "kind": 3,
+      "span_id": "ed631d9500db876d",
+      "parent_span_id": "418eeed72a6b9f37",
+      "offset_ms": 2866.9
+    },
+    {
+      "service": "case-service",
+      "span": "CaseVersionRepository.findByCaseIdAndVersionNo",
+      "kind": 1,
+      "span_id": "aa2fd79b70f5a731",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2872.8
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.CaseVersion",
+      "kind": 1,
+      "span_id": "6eb913359fa6560f",
+      "parent_span_id": "aa2fd79b70f5a731",
+      "offset_ms": 2873.5
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_version",
+      "kind": 3,
+      "span_id": "80a4665eeacb925a",
+      "parent_span_id": "6eb913359fa6560f",
+      "offset_ms": 2874.4
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_drug",
+      "kind": 3,
+      "span_id": "74b1e901939cb496",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2881.7
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_reaction",
+      "kind": 3,
+      "span_id": "00fc6d94a766b130",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2892.4
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "cbf9503b8a993788",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2918.1
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "d016afaecb963588",
+      "parent_span_id": "cbf9503b8a993788",
+      "offset_ms": 2918.4
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "bbe65b1b9ec62cf2",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2920.5
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "b89c4afde0c312f8",
+      "parent_span_id": "bbe65b1b9ec62cf2",
+      "offset_ms": 2920.7
+    },
+    {
+      "service": "case-service",
+      "span": "CaseVersionRepository.findByCaseIdAndVersionNo",
+      "kind": 1,
+      "span_id": "bc452f6857712491",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2921.1
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.CaseVersion",
+      "kind": 1,
+      "span_id": "3b113051279db549",
+      "parent_span_id": "bc452f6857712491",
+      "offset_ms": 2921.7
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_version",
+      "kind": 3,
+      "span_id": "7d5c87c7d87947fc",
+      "parent_span_id": "3b113051279db549",
+      "offset_ms": 2922.8
+    },
+    {
+      "service": "case-service",
+      "span": "CaseVersionRepository.save",
+      "kind": 1,
+      "span_id": "a68dcb49671ce43a",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2924.4
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.CaseVersion",
+      "kind": 1,
+      "span_id": "82a57d8426e81fcb",
+      "parent_span_id": "a68dcb49671ce43a",
+      "offset_ms": 2924.7
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.case_version",
+      "kind": 3,
+      "span_id": "4fac58b96c9db5b6",
+      "parent_span_id": "82a57d8426e81fcb",
+      "offset_ms": 2925.6
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.case_drug",
+      "kind": 3,
+      "span_id": "ff05984043e33552",
+      "parent_span_id": "82a57d8426e81fcb",
+      "offset_ms": 2930.0
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.case_reaction",
+      "kind": 3,
+      "span_id": "8618b64eeb33cd33",
+      "parent_span_id": "82a57d8426e81fcb",
+      "offset_ms": 2932.5
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.case_reaction",
+      "kind": 3,
+      "span_id": "7a946d0f1943d73e",
+      "parent_span_id": "82a57d8426e81fcb",
+      "offset_ms": 2940.7
+    },
+    {
+      "service": "case-service",
+      "span": "AuditEventRepository.save",
+      "kind": 1,
+      "span_id": "fd1ab177e24ee21a",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2943.0
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.AuditEvent",
+      "kind": 1,
+      "span_id": "586d876c0987bfff",
+      "parent_span_id": "fd1ab177e24ee21a",
+      "offset_ms": 2943.2
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.audit_event",
+      "kind": 3,
+      "span_id": "a716a62963ed42f3",
+      "parent_span_id": "586d876c0987bfff",
+      "offset_ms": 2943.7
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "da05b8df0e229ff9",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2946.7
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "c423aedd0fdc0496",
+      "parent_span_id": "da05b8df0e229ff9",
+      "offset_ms": 2946.8
+    },
+    {
+      "service": "case-service",
+      "span": "AuditEventRepository.save",
+      "kind": 1,
+      "span_id": "6c9841e440e81ff0",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2947.3
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.AuditEvent",
+      "kind": 1,
+      "span_id": "57bd849ebeb3c073",
+      "parent_span_id": "6c9841e440e81ff0",
+      "offset_ms": 2947.4
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.audit_event",
+      "kind": 3,
+      "span_id": "720a75ee1ef6670c",
+      "parent_span_id": "57bd849ebeb3c073",
+      "offset_ms": 2947.9
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "05f332d314f1574a",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2949.5
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "a6c3b406066d1da6",
+      "parent_span_id": "05f332d314f1574a",
+      "offset_ms": 2949.6
+    },
+    {
+      "service": "case-service",
+      "span": "OutboxEventRepository.save",
+      "kind": 1,
+      "span_id": "268c12ffed1c7def",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2950.3
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.OutboxEvent",
+      "kind": 1,
+      "span_id": "a10010e02ead77b1",
+      "parent_span_id": "268c12ffed1c7def",
+      "offset_ms": 2950.4
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.outbox_event",
+      "kind": 3,
+      "span_id": "f39e0934f7ae2662",
+      "parent_span_id": "a10010e02ead77b1",
+      "offset_ms": 2951.0
+    },
+    {
+      "service": "case-service",
+      "span": "Transaction.commit",
+      "kind": 1,
+      "span_id": "bedcfe8d5b2e5645",
+      "parent_span_id": "67e9149bba4d323e",
+      "offset_ms": 2953.9
+    },
+    {
+      "service": "case-service",
+      "span": "UPDATE freepdb1.safety_case",
+      "kind": 3,
+      "span_id": "0944d4378b0b63c6",
+      "parent_span_id": "bedcfe8d5b2e5645",
+      "offset_ms": 2955.9
+    },
+    {
+      "service": "case-service",
+      "span": "report.coded publish",
+      "kind": 4,
+      "span_id": "7ab953c8d39d832d",
+      "parent_span_id": "a10010e02ead77b1",
+      "offset_ms": 3363.1
+    },
+    {
+      "service": "case-service",
+      "span": "report.coded process",
+      "kind": 5,
+      "span_id": "007e79d3c7f26c17",
+      "parent_span_id": "7ab953c8d39d832d",
+      "offset_ms": 3378.6
+    },
+    {
+      "service": "case-service",
+      "span": "ProcessedEventRepository.existsById",
+      "kind": 1,
+      "span_id": "5e8be3fb5d695afb",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3389.3
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.ProcessedEvent",
+      "kind": 1,
+      "span_id": "a17a0df6fbae4f7f",
+      "parent_span_id": "5e8be3fb5d695afb",
+      "offset_ms": 3390.4
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "7e4ecbfc10ee8c13",
+      "parent_span_id": "a17a0df6fbae4f7f",
+      "offset_ms": 3391.5
+    },
+    {
+      "service": "case-service",
+      "span": "ProcessedEventRepository.saveAndFlush",
+      "kind": 1,
+      "span_id": "ac85d053fb779957",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3393.2
+    },
+    {
+      "service": "case-service",
+      "span": "Session.merge io.pharmavigil.caseservice.model.ProcessedEvent",
+      "kind": 1,
+      "span_id": "fb693d4b22291484",
+      "parent_span_id": "ac85d053fb779957",
+      "offset_ms": 3394.9
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "d102c0001b61a417",
+      "parent_span_id": "fb693d4b22291484",
+      "offset_ms": 3395.8
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "473839c8763503d7",
+      "parent_span_id": "ac85d053fb779957",
+      "offset_ms": 3398.8
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "b7fb930d6b9fbf7c",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3401.7
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "7733334158f10718",
+      "parent_span_id": "b7fb930d6b9fbf7c",
+      "offset_ms": 3401.9
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.safety_case",
+      "kind": 3,
+      "span_id": "5cbf13c9152173b1",
+      "parent_span_id": "7733334158f10718",
+      "offset_ms": 3402.4
+    },
+    {
+      "service": "case-service",
+      "span": "CaseVersionRepository.findByCaseIdAndVersionNo",
+      "kind": 1,
+      "span_id": "dd825f0b97513874",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3404.7
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.CaseVersion",
+      "kind": 1,
+      "span_id": "2f6dde75dd81422b",
+      "parent_span_id": "dd825f0b97513874",
+      "offset_ms": 3405.3
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_version",
+      "kind": 3,
+      "span_id": "d48c00c09eb76fe7",
+      "parent_span_id": "2f6dde75dd81422b",
+      "offset_ms": 3406.4
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_drug",
+      "kind": 3,
+      "span_id": "d92a4fb951e2ecbd",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3409.0
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_reaction",
+      "kind": 3,
+      "span_id": "bdd59af70f944c05",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3412.2
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "bf77880675190e42",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3421.6
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "d09fcf7ff75221af",
+      "parent_span_id": "bf77880675190e42",
+      "offset_ms": 3422.1
+    },
+    {
+      "service": "case-service",
+      "span": "AuditEventRepository.save",
+      "kind": 1,
+      "span_id": "424c3dd4f09542fa",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3422.6
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.AuditEvent",
+      "kind": 1,
+      "span_id": "cb522284209434dd",
+      "parent_span_id": "424c3dd4f09542fa",
+      "offset_ms": 3422.8
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.audit_event",
+      "kind": 3,
+      "span_id": "2e326424e49e3a61",
+      "parent_span_id": "cb522284209434dd",
+      "offset_ms": 3423.6
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "e3d872f64c2edaeb",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3428.2
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "23af000f4199b146",
+      "parent_span_id": "e3d872f64c2edaeb",
+      "offset_ms": 3428.3
+    },
+    {
+      "service": "case-service",
+      "span": "AuditEventRepository.save",
+      "kind": 1,
+      "span_id": "e4f32b5cf92cc78d",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3428.6
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.AuditEvent",
+      "kind": 1,
+      "span_id": "d6d215277c4d9db1",
+      "parent_span_id": "e4f32b5cf92cc78d",
+      "offset_ms": 3428.7
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.audit_event",
+      "kind": 3,
+      "span_id": "96b0fc0c840f7261",
+      "parent_span_id": "d6d215277c4d9db1",
+      "offset_ms": 3429.6
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "22dcfe8d461c17df",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3431.8
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "3d91ceaff5ff5bd9",
+      "parent_span_id": "22dcfe8d461c17df",
+      "offset_ms": 3432.1
+    },
+    {
+      "service": "case-service",
+      "span": "OutboxEventRepository.save",
+      "kind": 1,
+      "span_id": "96640914e03feee6",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3432.7
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.OutboxEvent",
+      "kind": 1,
+      "span_id": "848c72c81f8b55be",
+      "parent_span_id": "96640914e03feee6",
+      "offset_ms": 3432.9
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.outbox_event",
+      "kind": 3,
+      "span_id": "ce3e2a4c1d5a4094",
+      "parent_span_id": "848c72c81f8b55be",
+      "offset_ms": 3433.6
+    },
+    {
+      "service": "case-service",
+      "span": "Transaction.commit",
+      "kind": 1,
+      "span_id": "fd50c0b4e2d5193b",
+      "parent_span_id": "007e79d3c7f26c17",
+      "offset_ms": 3436.0
+    },
+    {
+      "service": "case-service",
+      "span": "UPDATE freepdb1.safety_case",
+      "kind": 3,
+      "span_id": "480103101a3deb8c",
+      "parent_span_id": "fd50c0b4e2d5193b",
+      "offset_ms": 3437.7
+    },
+    {
+      "service": "case-service",
+      "span": "case.triaged publish",
+      "kind": 4,
+      "span_id": "4d2772d72cc857f9",
+      "parent_span_id": "848c72c81f8b55be",
+      "offset_ms": 3883.1
+    },
+    {
+      "service": "case-service",
+      "span": "case.triaged process",
+      "kind": 5,
+      "span_id": "8a0d977bfa83ebfa",
+      "parent_span_id": "4d2772d72cc857f9",
+      "offset_ms": 3896.5
+    },
+    {
+      "service": "case-service",
+      "span": "ProcessedEventRepository.existsById",
+      "kind": 1,
+      "span_id": "326b493913d54efc",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3900.6
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.ProcessedEvent",
+      "kind": 1,
+      "span_id": "a37c4024197deb15",
+      "parent_span_id": "326b493913d54efc",
+      "offset_ms": 3901.9
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "e54e9688143fae14",
+      "parent_span_id": "a37c4024197deb15",
+      "offset_ms": 3902.5
+    },
+    {
+      "service": "case-service",
+      "span": "Transaction.commit",
+      "kind": 1,
+      "span_id": "8dc0ae9f704886a9",
+      "parent_span_id": "326b493913d54efc",
+      "offset_ms": 3903.9
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "b08b72403ab02cda",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3904.9
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "da5c856872350483",
+      "parent_span_id": "b08b72403ab02cda",
+      "offset_ms": 3905.1
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.safety_case",
+      "kind": 3,
+      "span_id": "90b50f3833752331",
+      "parent_span_id": "da5c856872350483",
+      "offset_ms": 3905.6
+    },
+    {
+      "service": "case-service",
+      "span": "CaseVersionRepository.findByCaseIdAndVersionNo",
+      "kind": 1,
+      "span_id": "b6ec083918edc848",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3907.5
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.CaseVersion",
+      "kind": 1,
+      "span_id": "98099623c9eb5530",
+      "parent_span_id": "b6ec083918edc848",
+      "offset_ms": 3907.9
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_version",
+      "kind": 3,
+      "span_id": "9f0b4a77df5707ec",
+      "parent_span_id": "98099623c9eb5530",
+      "offset_ms": 3908.5
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_drug",
+      "kind": 3,
+      "span_id": "09388865f8876125",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3911.3
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.case_reaction",
+      "kind": 3,
+      "span_id": "0500f3053cd93f41",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3913.3
+    },
+    {
+      "service": "case-service",
+      "span": "Transaction.commit",
+      "kind": 1,
+      "span_id": "1f00a8c458e342c9",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3914.7
+    },
+    {
+      "service": "case-service",
+      "span": "ProcessedEventRepository.existsById",
+      "kind": 1,
+      "span_id": "158c1b14541f63c0",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3917.1
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT io.pharmavigil.caseservice.model.ProcessedEvent",
+      "kind": 1,
+      "span_id": "f033942fd69a7fc7",
+      "parent_span_id": "158c1b14541f63c0",
+      "offset_ms": 3917.5
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "5b83b2f8784c9b81",
+      "parent_span_id": "f033942fd69a7fc7",
+      "offset_ms": 3917.9
+    },
+    {
+      "service": "case-service",
+      "span": "ProcessedEventRepository.saveAndFlush",
+      "kind": 1,
+      "span_id": "67146ed41e61f0e7",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3918.9
+    },
+    {
+      "service": "case-service",
+      "span": "Session.merge io.pharmavigil.caseservice.model.ProcessedEvent",
+      "kind": 1,
+      "span_id": "c37e5d335337622a",
+      "parent_span_id": "67146ed41e61f0e7",
+      "offset_ms": 3919.2
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "57062bae684267cf",
+      "parent_span_id": "c37e5d335337622a",
+      "offset_ms": 3919.6
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.processed_event",
+      "kind": 3,
+      "span_id": "56460cd57ca89e82",
+      "parent_span_id": "67146ed41e61f0e7",
+      "offset_ms": 3921.2
+    },
+    {
+      "service": "case-service",
+      "span": "SafetyCaseRepository.findById",
+      "kind": 1,
+      "span_id": "f232d137dead14e5",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3923.0
+    },
+    {
+      "service": "case-service",
+      "span": "Session.find io.pharmavigil.caseservice.model.SafetyCase",
+      "kind": 1,
+      "span_id": "72479bbe6b167114",
+      "parent_span_id": "f232d137dead14e5",
+      "offset_ms": 3923.2
+    },
+    {
+      "service": "case-service",
+      "span": "SELECT freepdb1.safety_case",
+      "kind": 3,
+      "span_id": "cab4f2ce1062b220",
+      "parent_span_id": "72479bbe6b167114",
+      "offset_ms": 3923.5
+    },
+    {
+      "service": "case-service",
+      "span": "NarrativeRepository.save",
+      "kind": 1,
+      "span_id": "ff7c574e661e1c52",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3925.8
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.Narrative",
+      "kind": 1,
+      "span_id": "d7f6c233caaac18a",
+      "parent_span_id": "ff7c574e661e1c52",
+      "offset_ms": 3926.3
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.narrative",
+      "kind": 3,
+      "span_id": "43ae1926558a9b57",
+      "parent_span_id": "d7f6c233caaac18a",
+      "offset_ms": 3927.3
+    },
+    {
+      "service": "case-service",
+      "span": "AuditEventRepository.save",
+      "kind": 1,
+      "span_id": "71275343a5e33317",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3936.3
+    },
+    {
+      "service": "case-service",
+      "span": "Session.persist io.pharmavigil.caseservice.model.AuditEvent",
+      "kind": 1,
+      "span_id": "a9ff57f35dd81423",
+      "parent_span_id": "71275343a5e33317",
+      "offset_ms": 3936.6
+    },
+    {
+      "service": "case-service",
+      "span": "INSERT freepdb1.audit_event",
+      "kind": 3,
+      "span_id": "eb03bcd437ed6232",
+      "parent_span_id": "a9ff57f35dd81423",
+      "offset_ms": 3937.2
+    },
+    {
+      "service": "case-service",
+      "span": "Transaction.commit",
+      "kind": 1,
+      "span_id": "ac5b0bb21def134b",
+      "parent_span_id": "8a0d977bfa83ebfa",
+      "offset_ms": 3938.9
+    }
+  ]
+}

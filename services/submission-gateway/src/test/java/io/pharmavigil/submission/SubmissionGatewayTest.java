@@ -26,6 +26,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.pharmavigil.common.e2b.E2bSamples;
 import io.pharmavigil.common.e2b.E2bValidator;
 import io.pharmavigil.common.e2b.E2bWriter;
@@ -66,6 +67,8 @@ class SubmissionGatewayTest {
     @Autowired JsonMapper json;
     @Autowired MockMvc mvc;
     @Autowired TokenService tokens;
+    @Autowired MeterRegistry meters;
+    @Autowired io.pharmavigil.submission.gateway.QueueDepth queueDepth;
 
     static long nextCaseId = Math.abs(UUID.randomUUID().getMostSignificantBits() % 1_000_000_000L);
 
@@ -147,6 +150,11 @@ class SubmissionGatewayTest {
             assertThat(m.getReason()).startsWith("schema validation failed").contains("notAnE2bElement");
         }
         assertThat(statuses(caseId).get(1).reason()).isEqualTo(m.getReason());
+        assertThat(meters.counter("pv.regulator.answers", "outcome", "NACK").count()).isPositive();
+        assertThat(meters.counter("pv.submissions.sent").count()).isPositive();
+        queueDepth.refresh();
+        assertThat(meters.find("pv.jms.queue.depth").tag("queue", "regulatory.outbound").gauge().value())
+                .isGreaterThanOrEqualTo(0);
     }
 
     @Test

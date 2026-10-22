@@ -7,6 +7,7 @@ package io.pharmavigil.caseservice.cases;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Year;
 import java.util.Comparator;
@@ -20,6 +21,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.pharmavigil.caseservice.metrics.CaseMetrics;
 import io.pharmavigil.caseservice.model.AuditEvent;
 import io.pharmavigil.caseservice.model.AuditEventRepository;
 import io.pharmavigil.caseservice.model.CaseEnums.NarrativeSource;
@@ -43,7 +45,8 @@ public class CaseService {
     /** A report arriving from the pharmacy, a partner (SOAP) or an E2B(R3) import. */
     public record IncomingReport(Source source, String sourceReportId, LocalDate receivedDate, BigDecimal patientAge,
             String patientSex, String reporterType, String country, LocalDate onsetDate, String reportedText,
-            List<VersionDraft.DrugDraft> drugs, List<String> reactionTerms, String seriousCriteria) {
+            List<VersionDraft.DrugDraft> drugs, List<String> reactionTerms, String seriousCriteria,
+            Instant intakeReceivedAt) {
     }
 
     /** created: a new case; followUp: an existing case got a new version from changed report content. */
@@ -63,8 +66,11 @@ public class CaseService {
     private final ReviewDecisionRepository decisions;
     private final Clock clock;
 
+    private final CaseMetrics metrics;
+
     public CaseService(SafetyCaseRepository cases, CaseVersionRepository versions, NarrativeRepository narratives,
-            AuditEventRepository audit, ReviewDecisionRepository decisions, Clock clock) {
+            AuditEventRepository audit, ReviewDecisionRepository decisions, Clock clock, CaseMetrics metrics) {
+        this.metrics = metrics;
         this.cases = cases;
         this.versions = versions;
         this.narratives = narratives;
@@ -82,8 +88,9 @@ public class CaseService {
         }
         String number = "PV-" + Year.now(clock) + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10)
                 .toUpperCase();
-        SafetyCase c = cases.save(new SafetyCase(number, r.source(), r.sourceReportId(), r.receivedDate(),
-                clock.instant()));
+        SafetyCase created = new SafetyCase(number, r.source(), r.sourceReportId(), r.receivedDate(), clock.instant());
+        created.setIntakeReceivedAt(r.intakeReceivedAt());
+        SafetyCase c = cases.save(created);
         writeVersion(c, actor, "received from " + r.source(), incoming);
         audit(c, actor, "RECEIVED", r.source() + " report " + r.sourceReportId());
         return new Received(c, true, false);
@@ -109,6 +116,9 @@ public class CaseService {
             }
         }
         CaseVersion v = writeVersion(c, actor, "follow-up from " + r.source(), incoming);
+        if (r.intakeReceivedAt() != null) {
+            c.setIntakeReceivedAt(r.intakeReceivedAt());
+        }
         audit(c, actor, "FOLLOW_UP", "v" + v.getVersionNo() + " from " + r.source() + " report " + r.sourceReportId());
         if (REOPEN_ON_FOLLOW_UP.contains(c.getStatus())) {
             Status from = c.getStatus();
@@ -198,6 +208,7 @@ public class CaseService {
         ReviewDecision d = decisions.save(new ReviewDecision(c.getId(), c.getCurrentVersion(), reviewer, field, itemRef,
                 suggestion, finalValue, clock.instant()));
         audit(c, reviewer, "DECISION", field + " " + (d.isAccepted() ? "accepted" : "changed") + ": " + finalValue);
+        metrics.decision(d);
         return d;
     }
 

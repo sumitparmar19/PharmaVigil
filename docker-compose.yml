@@ -5,6 +5,8 @@
 # Demo data: synthetic patients and demo logins (pharmacist / reviewer / admin, password PV_DEMO_PASSWORD).
 # The model bundle mounted by default is the tiny synthetic test fixture: its suggestions are labelled
 # "fixture:" and mean nothing; point MODEL_BUNDLE_DIR at a trained bundle to use real models.
+# Observability (docs/OBSERVABILITY.md): `PV_TRACING=true docker compose --profile observability up -d` adds
+# Prometheus (:9090), Grafana (:3000, dashboards preloaded) and Jaeger (:16686) and turns tracing on.
 
 x-java: &java
   restart: unless-stopped
@@ -16,6 +18,12 @@ x-java: &java
     ORACLE_PASSWORD: ${PV_DB_PASSWORD:?set PV_DB_PASSWORD in .env}
     JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
     KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    # OpenTelemetry Java agent (traces only; metrics go through /actuator/prometheus)
+    OTEL_JAVAAGENT_ENABLED: ${PV_TRACING:-false}
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_METRICS_EXPORTER: none
+    OTEL_LOGS_EXPORTER: none
 
 services:
   oracle:
@@ -24,7 +32,7 @@ services:
       ORACLE_PASSWORD: ${ORACLE_PASSWORD:?set ORACLE_PASSWORD in .env}
       PV_DB_PASSWORD: ${PV_DB_PASSWORD:?set PV_DB_PASSWORD in .env}
     volumes:
-      - ./ops/compose/oracle-init.sh:/container-entrypoint-initdb.d/01-schemas.sh:ro
+      - ./ops/helm/oracle-free/files/oracle-init.sh:/container-entrypoint-initdb.d/01-schemas.sh:ro
       - oracle-data:/opt/oracle/oradata
     healthcheck:
       test: ["CMD", "healthcheck.sh"]
@@ -70,6 +78,7 @@ services:
     environment:
       <<: *java-env
       ORACLE_USER: pv_pharmacy
+      OTEL_SERVICE_NAME: pharmacy-service
       SPRING_PROFILES_ACTIVE: demo
       PV_DEMO_PASSWORD: ${PV_DEMO_PASSWORD:?set PV_DEMO_PASSWORD in .env}
       INTAKE_GATEWAY_URL: http://intake-gateway:8082
@@ -81,6 +90,7 @@ services:
     environment:
       <<: *java-env
       ORACLE_USER: pv_intake
+      OTEL_SERVICE_NAME: intake-gateway
       SOAP_PARTNER_USER: ${SOAP_PARTNER_USER:-}
       SOAP_PARTNER_PASSWORD: ${SOAP_PARTNER_PASSWORD:-}
       PV_E2B_XSD_DIR: /xsd
@@ -95,6 +105,7 @@ services:
     environment:
       <<: *java-env
       ORACLE_USER: pv_case
+      OTEL_SERVICE_NAME: case-service
       PV_MODEL_DIR: /models
       PV_E2B_XSD_DIR: /xsd
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
@@ -109,6 +120,7 @@ services:
     environment:
       <<: *java-env
       ORACLE_USER: pv_signal
+      OTEL_SERVICE_NAME: signal-service
       PV_SIGNALS_DIR: ${SIGNALS_DIR:+/signals}
     volumes:
       - ${SIGNALS_DIR:-./ops/compose/no-signals}:/signals:ro
@@ -123,6 +135,7 @@ services:
     environment:
       <<: *java-env
       ORACLE_USER: pv_submission
+      OTEL_SERVICE_NAME: submission-gateway
       ARTEMIS_BROKER_URL: tcp://artemis:61616
       ARTEMIS_USER: ${ARTEMIS_USER}
       ARTEMIS_PASSWORD: ${ARTEMIS_PASSWORD}
@@ -136,6 +149,40 @@ services:
     depends_on: [pharmacy-service, case-service, signal-service, submission-gateway, intake-gateway]
     ports:
       - "8080:8080"
+
+  # --- Observability (profile "observability")
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    profiles: [observability]
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=2d"]
+    volumes:
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./ops/grafana/alerts:/etc/prometheus/rules:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  grafana:
+    image: grafana/grafana:13.2.3
+    profiles: [observability]
+    depends_on: [prometheus]
+    environment:
+      # Read-only local demo: dashboards and alert rules come from files, so nobody needs to sign in.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./ops/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./ops/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    profiles: [observability]
+    ports:
+      - "127.0.0.1:16686:16686"   # UI; services send OTLP to jaeger:4318 inside the network
 
 volumes:
   oracle-data:

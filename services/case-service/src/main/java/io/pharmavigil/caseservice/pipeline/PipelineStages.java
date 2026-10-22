@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import io.pharmavigil.caseservice.cases.CaseService;
 import io.pharmavigil.caseservice.e2b.ReportIntake;
+import io.pharmavigil.caseservice.metrics.CaseMetrics;
 import io.pharmavigil.caseservice.model.CaseEnums.Status;
 import io.pharmavigil.caseservice.model.SafetyCase;
 import io.pharmavigil.common.events.CaseEvent;
@@ -35,9 +36,10 @@ public class PipelineStages {
     private final Triage triage;
     private final CaseOutbox outbox;
     private final Clock clock;
+    private final CaseMetrics metrics;
 
     public PipelineStages(ProcessedEvents processed, ReportIntake intake, CaseService cases, DuplicateCheck duplicates,
-            AutoCoding coding, Triage triage, CaseOutbox outbox, Clock clock) {
+            AutoCoding coding, Triage triage, CaseOutbox outbox, Clock clock, CaseMetrics metrics) {
         this.processed = processed;
         this.intake = intake;
         this.cases = cases;
@@ -46,6 +48,7 @@ public class PipelineStages {
         this.triage = triage;
         this.outbox = outbox;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -78,7 +81,10 @@ public class PipelineStages {
         SafetyCase c = load(e);
         Status target = coding.code(c);
         cases.advance(c.getId(), target, "pipeline");
-        next(Topics.REPORT_CODED, cases.load(c.getId()));
+        SafetyCase coded = cases.load(c.getId());
+        next(Topics.REPORT_CODED, coded);
+        metrics.coded(coded);
+        metrics.outcome("coding", target.name());
     }
 
     @Transactional
@@ -87,8 +93,16 @@ public class PipelineStages {
             return;
         }
         SafetyCase c = load(e);
-        triage.triage(c);
-        cases.advance(c.getId(), Status.TRIAGED, "pipeline");
+        if (c.getStatus() == Status.CODED || c.getStatus() == Status.NEEDS_MANUAL_CODING) {
+            metrics.outcome("triage", triage.triage(c).name());
+            cases.advance(c.getId(), Status.TRIAGED, "pipeline");
+        } else {
+            // A NEEDS_MANUAL_CODING case is in the review queue at once; if a reviewer has already taken it, their
+            // decisions stand and the model must not overwrite them.
+            cases.note(c.getId(), "pipeline", "TRIAGE", "skipped: case is already " + c.getStatus()
+                    + "; seriousness is left to the reviewer");
+            metrics.outcome("triage", "SKIPPED_IN_REVIEW");
+        }
         next(Topics.CASE_TRIAGED, cases.load(c.getId()));
     }
 

@@ -1,6 +1,7 @@
 // Read API over the newest signal snapshot. Every response names its data scope and carries the causation
 // disclaimer; without a loaded export the lists are empty (never invented). The data are aggregates of public
-// FAERS reports, so reads are open; reloading an export needs the ADMIN role.
+// FAERS reports, so reads are open; reloading an export needs the ADMIN role. Metrics: counter lookups by result
+// (pv_signals_lookups_total) and the loaded snapshot's size and load time (pv_signals_snapshot_*).
 package io.pharmavigil.signal.api;
 
 import java.nio.file.Path;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.pharmavigil.common.Disclaimers;
 import io.pharmavigil.signal.store.SignalLoader;
 import io.pharmavigil.signal.store.SignalStore;
@@ -45,10 +48,17 @@ public class SignalController {
     private final double warningEb05;
     private final int warningLimit;
     private final String dir;
+    private final MeterRegistry meters;
 
     public SignalController(SignalStore store, SignalLoader loader, JsonMapper json,
             @Value("${pv.signals.warning-eb05:2.0}") double warningEb05,
-            @Value("${pv.signals.warning-limit:10}") int warningLimit, @Value("${pv.signals.dir:}") String dir) {
+            @Value("${pv.signals.warning-limit:10}") int warningLimit, @Value("${pv.signals.dir:}") String dir,
+            MeterRegistry meters) {
+        this.meters = meters;
+        Gauge.builder("pv.signals.snapshot.pairs", store, s -> snapshot(s, x -> x.pairs()))
+                .description("Drug-event pairs in the loaded signal snapshot").register(meters);
+        Gauge.builder("pv.signals.snapshot.loaded", store, s -> snapshot(s, x -> x.loadedAt().getEpochSecond()))
+                .description("When the loaded signal snapshot was loaded (Unix seconds)").register(meters);
         this.store = store;
         this.loader = loader;
         this.json = json;
@@ -59,10 +69,23 @@ public class SignalController {
 
     @GetMapping("/warnings")
     public List<Warning> warnings(@RequestParam String rxcui) {
-        return store.current().map(s -> store.warnings(s.id(), rxcui, warningEb05, warningLimit).stream()
+        var snapshot = store.current();
+        List<Warning> out = snapshot.map(s -> store.warnings(s.id(), rxcui, warningEb05, warningLimit).stream()
                 .map(x -> new Warning(x.rxcui(), x.pt(), x.reports(), x.ebgm(), x.eb05(), x.safetyformer(), null,
                         Disclaimers.NO_CAUSATION))
                 .toList()).orElse(List.of());
+        String result = snapshot.isEmpty() ? "no_data" : out.isEmpty() ? "none" : "warning";
+        meters.counter("pv.signals.lookups", "result", result).increment();
+        return out;
+    }
+
+    /** NaN without a snapshot or while the database is unreachable. */
+    static double snapshot(SignalStore store, java.util.function.ToDoubleFunction<SignalStore.Snapshot> value) {
+        try {
+            return store.current().map(value::applyAsDouble).orElse(Double.NaN);
+        } catch (RuntimeException e) {
+            return Double.NaN;
+        }
     }
 
     @GetMapping("/top")

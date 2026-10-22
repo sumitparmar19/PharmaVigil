@@ -61,7 +61,7 @@ class CaseServiceTest {
         return new CaseService.IncomingReport(Source.PHARMACY, id, LocalDate.of(2026, 10, 1), new BigDecimal("54"),
                 "F", "PHARMACIST", "US", LocalDate.of(2026, 9, 28), "Muscle pain and dark urine after starting the statin",
                 List.of(new VersionDraft.DrugDraft("83367", "Atorvastatin", "PS", "20 mg daily", "oral")),
-                List.of("muscle pain", "dark urine"), null);
+                List.of("muscle pain", "dark urine"), null, null);
     }
 
     private SafetyCase newCase() {

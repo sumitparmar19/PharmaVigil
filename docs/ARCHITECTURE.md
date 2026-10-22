@@ -98,3 +98,18 @@ Checked against Maven Central, PyPI and npm when M0 was built.
 | Oracle | `gvenzl/oracle-free:23-slim-faststart` | one schema per service, created by `ops/compose/oracle-init.sh` |
 | Kafka | `apache/kafka:4.3.2` | single KRaft node |
 | ActiveMQ Artemis | `apache/activemq-artemis:2.44.0-alpine` | |
+
+### Observability and load (compose profile `observability`)
+
+| Component | Version | Note |
+|---|---|---|
+| Micrometer Prometheus registry | 1.17.1 | from the Spring Boot BOM; `/actuator/prometheus` |
+| OpenTelemetry Java agent | 2.32.0 | copied from Maven Central at `mvn package`; off unless `PV_TRACING=true` |
+| OpenTelemetry API | 1.62.0 | from the Spring Boot BOM; trace context through the outbox |
+| Prometheus | `prom/prometheus:v3.15.0` | |
+| Grafana | `grafana/grafana:13.2.3` | three provisioned dashboards, read-only |
+| Jaeger | `jaegertracing/jaeger:2.22.0` | OTLP over HTTP |
+| k6 | `grafana/k6:2.3.0` | `ops/k6/report-load.js` |
+
+Newer Prometheus (v3.15.1) and Grafana (13.2.4) images existed but were less than two weeks old, so the previous
+releases are used.

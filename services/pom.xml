@@ -45,6 +45,10 @@
     <springdoc.version>3.1.1</springdoc.version>
     <!-- Database used by the repository/integration tests: oracle (default) or mssql (-Pmssql). -->
     <pv.db>oracle</pv.db>
+    <!-- OpenTelemetry Java agent copied next to each service jar for its container image (docs/OBSERVABILITY.md).
+         Off by default; the five service modules switch it on. -->
+    <otel-javaagent.version>2.32.0</otel-javaagent.version>
+    <pv.otel.skip>true</pv.otel.skip>
   </properties>
 
   <profiles>
@@ -98,6 +102,29 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>otel-javaagent</id>
+            <phase>package</phase>
+            <goals><goal>copy</goal></goals>
+            <configuration>
+              <skip>${pv.otel.skip}</skip>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>io.opentelemetry.javaagent</groupId>
+                  <artifactId>opentelemetry-javaagent</artifactId>
+                  <version>${otel-javaagent.version}</version>
+                  <destFileName>opentelemetry-javaagent.jar</destFileName>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/otel</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>

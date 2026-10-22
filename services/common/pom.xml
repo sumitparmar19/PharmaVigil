@@ -30,6 +30,16 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-tx</artifactId>
     </dependency>
+    <!-- Prometheus scrape format for /actuator/prometheus in every service (version from the Boot BOM). -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    <!-- W3C trace context carried through the outbox (no-op unless the OpenTelemetry Java agent is attached). -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-api</artifactId>
+    </dependency>
     <!-- Outbox relay and Kafka error handling: active only in services that bring Kafka and JDBC. -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

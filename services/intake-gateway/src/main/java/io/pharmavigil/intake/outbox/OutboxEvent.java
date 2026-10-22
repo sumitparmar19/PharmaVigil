@@ -10,7 +10,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+
+import io.pharmavigil.common.outbox.TraceParent;
 
 @Entity
 @Table(name = "outbox_event")
@@ -45,6 +48,9 @@ public class OutboxEvent {
     @Column(nullable = false)
     private int attempts;
 
+    @Column(name = "trace_parent", length = 64)
+    private String traceParent;
+
     protected OutboxEvent() {
     }
 
@@ -67,4 +73,14 @@ public class OutboxEvent {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getPublishedAt() { return publishedAt; }
     public int getAttempts() { return attempts; }
+
+    /** Remembers the active trace (if any) so the relay can continue it when it publishes this row. */
+    @PrePersist
+    void captureTrace() {
+        if (traceParent == null) {
+            traceParent = TraceParent.current();
+        }
+    }
+
+    public String getTraceParent() { return traceParent; }
 }

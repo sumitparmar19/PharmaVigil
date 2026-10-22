@@ -5,6 +5,7 @@ package io.pharmavigil.caseservice.pipeline;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import io.pharmavigil.caseservice.metrics.CaseMetrics;
 import io.pharmavigil.caseservice.review.ReviewService;
 
 import io.pharmavigil.common.events.CaseEvent;
@@ -24,42 +25,46 @@ public class PipelineListeners {
     private final NarrativeStage narratives;
     private final ReviewService reviews;
     private final JsonMapper json;
+    private final CaseMetrics metrics;
 
     public PipelineListeners(PipelineStages stages, NarrativeStage narratives, ReviewService reviews,
-            JsonMapper json) {
+            JsonMapper json, CaseMetrics metrics) {
         this.stages = stages;
         this.narratives = narratives;
         this.reviews = reviews;
         this.json = json;
+        this.metrics = metrics;
     }
 
     @KafkaListener(id = "case-received", topics = Topics.REPORT_RECEIVED, groupId = GROUP)
     public void received(String payload) {
-        stages.onReportReceived(parse(payload, ReportReceived.class));
+        metrics.stage("dedup", () -> stages.onReportReceived(parse(payload, ReportReceived.class)));
     }
 
     @KafkaListener(id = "case-deduped", topics = Topics.REPORT_DEDUPED, groupId = GROUP)
     public void deduped(String payload) {
-        stages.onDeduped(parse(payload, CaseEvent.class));
+        metrics.stage("coding", () -> stages.onDeduped(parse(payload, CaseEvent.class)));
     }
 
     @KafkaListener(id = "case-coded", topics = Topics.REPORT_CODED, groupId = GROUP)
     public void coded(String payload) {
-        stages.onCoded(parse(payload, CaseEvent.class));
+        metrics.stage("triage", () -> stages.onCoded(parse(payload, CaseEvent.class)));
     }
 
     @KafkaListener(id = "case-triaged", topics = Topics.CASE_TRIAGED, groupId = GROUP)
     public void triaged(String payload) {
-        narratives.onTriaged(parse(payload, CaseEvent.class));
+        metrics.stage("narrative", () -> narratives.onTriaged(parse(payload, CaseEvent.class)));
     }
 
     @KafkaListener(id = "case-submission-status", topics = Topics.SUBMISSION_STATUS, groupId = GROUP)
     public void submissionStatus(String payload) {
-        SubmissionStatus s = parse(payload, SubmissionStatus.class);
-        if (s.eventId() == null || s.status() == null) {
-            throw new PoisonMessageException("submission.status without eventId or status", null);
-        }
-        reviews.onSubmissionStatus(s);
+        metrics.stage("submission-status", () -> {
+            SubmissionStatus s = parse(payload, SubmissionStatus.class);
+            if (s.eventId() == null || s.status() == null) {
+                throw new PoisonMessageException("submission.status without eventId or status", null);
+            }
+            reviews.onSubmissionStatus(s);
+        });
     }
 
     <T> T parse(String payload, Class<T> type) {
