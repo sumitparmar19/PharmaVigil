@@ -51,25 +51,33 @@ jobs:
         working-directory: services
         run: mvn -B -ntp -Pmssql verify
 
-  e2b-schema-discovery:
-    # Temporary (M7): the build container cannot reach the E2B(R3) schema hosts. This job checks whether
-    # GitHub's runners can (EMA serves the files at the schemaLocation used in ICSR files; ICH hosts the zip).
-    name: E2B(R3) schema link discovery
+  e2b-schema:
+    # The official E2B(R3) schemas are not committed (docs/E2B_R3.md). GitHub's runners can reach the copy EMA
+    # publishes, so this job fetches the set and runs the export-validation tests against it.
+    name: E2B(R3) export against the official schemas
     runs-on: ubuntu-latest
     steps:
-      - name: Probe EMA and ICH
-        run: |
-          for u in \
-            "https://eudravigilance.ema.europa.eu/XSD/multicacheschemas/MCCI_IN200100UV01.xsd" \
-            "http://eudravigilance.ema.europa.eu/XSD/multicacheschemas/MCCI_IN200100UV01.xsd" \
-            "https://www.ich.org/page/e2br3-individual-case-safety-report-icsr-specification-and-related-files" \
-            "https://database.ich.org/sites/default/files/ICH_ICSR_Schema_Files.zip"; do
-            curl -sSL -o probe.out -w "%{http_code} %{size_download} bytes %{content_type} <- $u\n" "$u" || echo "failed <- $u"
-            head -c 300 probe.out | tr -d '\000' | head -5 || true
-            echo
-          done
-          curl -sSL "https://eudravigilance.ema.europa.eu/XSD/multicacheschemas/MCCI_IN200100UV01.xsd" \
-            | grep -oE '(include|import)[^>]*schemaLocation="[^"]+"' | head -20 || true
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Fetch the ICH E2B(R3) schema set
+        run: scripts/fetch-e2b-xsd.sh "$RUNNER_TEMP/e2b-xsd"
+      - name: Validate exported ICSR files
+        working-directory: services
+        env:
+          PV_E2B_XSD_DIR: ${{ runner.temp }}/e2b-xsd
+        run: mvn -B -ntp -pl common test -Dtest='E2b*Test' -Dsurefire.failIfNoSpecifiedTests=false
+      - name: Keep the fetched schemas for inspection
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2b-xsd
+          path: ${{ runner.temp }}/e2b-xsd
+          if-no-files-found: ignore
+          retention-days: 7
 
   python:
     name: Python (${{ matrix.package }})
