@@ -131,6 +131,16 @@ def cmd_coder_drug_narratives(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_export_signals(args: argparse.Namespace) -> int:
+    from .signals.export import export_signals
+
+    meta = export_signals(Path(args.gold), Path(args.signals_dir), Path(args.out), args.scope,
+                          Path(args.safetyformer) if args.safetyformer else None,
+                          Path(args.baselines_json) if args.baselines_json else None)
+    print(f"wrote {meta['pairs']} signal pairs to {args.out}")
+    return 0
+
+
 def cmd_java_bundle(args: argparse.Namespace) -> int:
     from .export.java_bundle import fixture_bundle
 
@@ -205,6 +215,15 @@ def build_parser() -> argparse.ArgumentParser:
     cd.add_argument("--out", default=m5_out)
     cd.add_argument("--models-dir", default=m5_models)
     cd.set_defaults(func=cmd_coder_drug_narratives)
+
+    es = sub.add_parser("export-signals", help="M8: signal tables for signal-service (CSV + JSON)")
+    es.add_argument("--gold", required=True)
+    es.add_argument("--signals-dir", required=True, help="folder with baselines_primary_suspect.parquet")
+    es.add_argument("--out", required=True)
+    es.add_argument("--scope", required=True, help='data scope label, e.g. "FAERS 2019Q1-2026Q2"')
+    es.add_argument("--safetyformer", help="safetyformer_pt_scores.parquet from the M4 run")
+    es.add_argument("--baselines-json", help="baselines.json from the M3 run (evaluation summary)")
+    es.set_defaults(func=cmd_export_signals)
 
     jb = sub.add_parser("java-bundle", help="M8: tiny synthetic model bundle for the Java case-service tests")
     jb.add_argument("--out", required=True)

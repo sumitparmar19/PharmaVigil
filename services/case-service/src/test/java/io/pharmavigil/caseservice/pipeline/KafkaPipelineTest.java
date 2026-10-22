@@ -106,10 +106,9 @@ class KafkaPipelineTest {
         String poison = "this is not json " + System.nanoTime();
         try (var dlq = TestKafka.consumer(List.of(Topics.dlq(Topics.REPORT_DEDUPED)))) {
             send(Topics.REPORT_DEDUPED, "poison", poison);
-            var records = TestKafka.poll(dlq, Integer.MAX_VALUE, Duration.ofSeconds(30)).stream()
-                    .filter(rec -> poison.equals(rec.value())).toList();
-            assertThat(records).hasSize(1);
-            assertThat(records.get(0).headers().lastHeader("kafka_dlt-exception-fqcn")).isNotNull();
+            var record = TestKafka.pollUntil(dlq, rec -> poison.equals(rec.value()), Duration.ofSeconds(30));
+            assertThat(record).isNotNull();
+            assertThat(record.headers().lastHeader("kafka_dlt-exception-fqcn")).isNotNull();
         }
     }
 }

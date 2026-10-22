@@ -50,6 +50,20 @@ public final class TestKafka {
         return c;
     }
 
+    /** Poll until a record matches or the timeout passed; returns the match, or null. */
+    public static ConsumerRecord<String, String> pollUntil(KafkaConsumer<String, String> c,
+            java.util.function.Predicate<ConsumerRecord<String, String>> match, Duration timeout) {
+        long end = System.nanoTime() + timeout.toNanos();
+        while (System.nanoTime() < end) {
+            for (ConsumerRecord<String, String> r : c.poll(Duration.ofMillis(200))) {
+                if (match.test(r)) {
+                    return r;
+                }
+            }
+        }
+        return null;
+    }
+
     /** Poll until n records arrived or the timeout passed. */
     public static List<ConsumerRecord<String, String>> poll(KafkaConsumer<String, String> c, int n, Duration timeout) {
         List<ConsumerRecord<String, String>> out = new java.util.ArrayList<>();
