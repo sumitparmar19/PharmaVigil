@@ -103,3 +103,20 @@ year) against a shuffled split. Metric: held-out masked-reaction recall@10 and N
 checks that training lowers the loss, the planted pair gets a positive score above the median of other
 drugs, checkpoints round-trip exactly, label-change text matching works, lead times are computed
 correctly, and both leakage splits run. These are tests of the code, not results.
+
+## MedDRA coder, seriousness triage and duplicates (M5)
+
+| Model | Metrics | Evidence | Status |
+|---|---|---|---|
+| MedDRA coder (Model B) | micro-F1, macro-F1 (head labels); top-5 recall over all PTs, head and tail separately; drug-narrative top-5 recall | `analysis/m5/coder.json`, `analysis/m5/coder_drug_narratives.json` | **pending** VAERS + GPU (owner step 6) and owner labels (step 7) |
+| Seriousness (Model C1) | PR-AUC, ROC AUC, Brier, calibration bins, mean-SHAP top features; time split | `analysis/m5/triage.json` | **pending full data** |
+| Duplicates (Model C2, proxy signal) | PR-AUC, precision/recall at 0.5 and at best F1; split by case | `analysis/m5/duplicates.json` | **pending full data** |
+| ONNX parity (all models) | max absolute difference, original vs ONNX Runtime | `analysis/m5/parity.json` | written by each real run; the export path is tested now (below) |
+
+Code checks now passing (`ml/tests/`): the seriousness features never read outcome fields or
+outcome-revealing PTs (changing them leaves every feature vector identical); synthetic training beats
+the base rate; duplicates recover synthetic follow-ups; the coder learns invented sentences with a tiny
+random BERT; ONNX parity holds for LightGBM (< 1e-5), the coder (< 1e-4, at two different batch/sequence
+shapes) and SafetyFormer (< 1e-4, at two shapes). Writing the second-shape test exposed that the legacy
+TorchScript exporter bakes the attention reshape of `nn.TransformerEncoder` to the traced size; SafetyFormer
+now uses the `torch.export`-based exporter with symbolic batch and sequence dimensions.

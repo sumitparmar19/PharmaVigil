@@ -79,7 +79,8 @@ owner can switch it on.
 **Why:** the full 2004Q1 onward history is too large for the build container. The same code runs on
 Databricks as notebooks.
 
-1. Open https://www.databricks.com/learn/free-edition and click **Sign up**. Use your UB email.
+1. Open https://docs.databricks.com/aws/en/getting-started/free-edition and follow its **sign up** link
+   to the Free Edition sign-up page. Sign up with your UB email.
 2. After the workspace opens, click **Workspace** in the left sidebar.
 3. Click **Create** → **Git folder**.
 4. In **Git repository URL**, paste `https://github.com/sumitparmar19/PharmaVigil` and click
@@ -123,6 +124,61 @@ last cell of `02_faers_silver_gold`.
 
 **Send back to the planning chat:** the file `pharmavigil_m4_evidence.zip` and the `sha256sum` line
 printed by the last cell.
+
+---
+
+## 6. Train the MedDRA coder on a Kaggle GPU: OPEN
+
+**Why:** the coder needs the VAERS narratives and a pretrained biomedical model, and both hosts are
+blocked in the build container. Kaggle has both and a free GPU.
+
+1. Open https://vaers.hhs.gov/data/datasets.html in your browser.
+2. Download the yearly zip files **2019 to 2025** (one `<year>VAERSData.zip` per year; complete any check
+   the site shows before the download starts).
+3. In Kaggle, click **Create** → **New Dataset**, name it `pharmavigil-vaers`, drag in the seven zip
+   files, and click **Create**.
+4. Open https://github.com/sumitparmar19/PharmaVigil/blob/main/ml/notebooks/kaggle/meddra_coder.ipynb and
+   click **Download raw file**.
+5. In Kaggle, click **Create** → **New Notebook** → **File** → **Import Notebook**, and choose the file.
+6. Right panel: **Accelerator** → **GPU T4 x2**; **Internet** → **On**; **Add Input** →
+   `pharmavigil-vaers`.
+7. In the first code cell, set `GIT_REF` to `claude/determined-wozniak-8tf7pa` until the pull request is
+   merged, and `TEST_YEAR` to `2025`.
+8. Click **Run All**. When it finishes, download `pharmavigil_m5_coder.zip` from the **Output** tab.
+
+**Send back to the planning chat:** `pharmavigil_m5_coder.zip` and the `sha256sum` line from the last
+cell.
+
+---
+
+## 7. Label the 50 drug narratives: OPEN
+
+**Why:** the coder is trained on vaccine reports; your labels on drug narratives measure how well it
+transfers. Labels must be yours, never an AI model's.
+
+1. Open `ml/coder/drug_narratives_template.csv` in a spreadsheet program.
+2. For each row, type in the `sumit_pts` column the MedDRA Preferred Terms you would code for the
+   narrative, separated by `;` (for example `Myalgia; Muscular weakness`). Use the MedDRA browser once
+   your licence is active (step 8); until then, use the PT names you know from FAERS.
+3. Save as CSV with the same file name and commit it to the pull-request branch (GitHub: open the file →
+   **Edit** pencil → paste → **Commit changes**).
+
+**Send back to the planning chat:** the commit link.
+
+---
+
+## 8. Request the MedDRA academic licence: OPEN
+
+The exact form address could not be checked from the build environment, so this step starts at the
+site's home page.
+
+1. Open https://www.meddra.org.
+2. Open the **Subscription** section from the top menu and choose the free subscription for
+   **academic / non-profit** users.
+3. Fill in the form with your UB email and "University at Buffalo" as the institution, and submit.
+4. Wait for the confirmation email with your MedDRA ID.
+
+**Send back to the planning chat:** only the sentence "MedDRA licence active" (never the login details).
 
 ---
 

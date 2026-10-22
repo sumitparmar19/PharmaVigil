@@ -82,3 +82,16 @@ def test_normalization_coverage(built) -> None:
     assert cov["mentions"] == 4
     assert cov["mapped_mentions"] == 3
     assert cov["ps_mentions"] == 4
+
+
+def test_versions_keep_every_case_version(built, spark) -> None:
+    from pharmavigil_data.faers.versions import build_versions
+
+    rows = {r["report_key"]: r for r in build_versions(spark, write=False).collect()}
+    # 8 DEMO rows minus the deleted case 300.
+    assert len(rows) == 7
+    case100 = sorted(k for k, r in rows.items() if r["caseid"] == "100")
+    assert case100 == ["FAERS:1001", "FAERS:1002", "FAERS:1003"]
+    # No RxNorm map table was saved in this fixture, so drugs fall back to their name keys.
+    assert rows["FAERS:1003"]["drugs"] == ["name:ATORVASTATIN CALCIUM"]
+    assert rows["FAERS:1002"]["pts"] == ["myalgia", "rhabdomyolysis"]

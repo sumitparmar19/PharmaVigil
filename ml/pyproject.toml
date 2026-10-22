@@ -18,7 +18,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-train = ["torch>=2.14,<3", "mlflow>=3.17,<4", "onnx>=1.23,<2", "onnxruntime>=1.31,<2", "onnxscript>=0.7,<1"]
+train = [
+  "torch>=2.14,<3",
+  "mlflow>=3.17,<4",
+  "onnx>=1.23,<2",
+  "onnxruntime>=1.31,<2",
+  "onnxscript>=0.7,<1",
+  "lightgbm>=4.7,<5",
+  "onnxmltools>=1.16,<2",
+  "skl2onnx>=1.20,<2",
+  "transformers>=5.20,<6",
+  "tokenizers>=0.23,<1",
+]
 dev = ["pytest>=8", "pytest-cov>=6", "ruff>=0.8"]
 
 [build-system]

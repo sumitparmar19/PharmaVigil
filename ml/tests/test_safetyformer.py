@@ -142,3 +142,25 @@ def test_leakage_compare_runs(corpus) -> None:
     out = compare_splits(corpus, date(2023, 6, 1), TrainConfig(steps=60, **TINY), eval_reports=200,
                          log=lambda _: None)
     assert {"time_ordered", "shuffled", "recall_at_10_optimism"} <= set(out)
+
+
+def test_onnx_parity(trained, corpus, tmp_path) -> None:
+    from pharmavigil_ml.export.onnx_export import export_safetyformer, safetyformer_parity
+
+    res, _ = trained
+    sample = query_batch(corpus.vocab, corpus.vocab.drug_tokens[:6])
+    path = export_safetyformer(res["model_obj"], tmp_path / "safetyformer.onnx", sample)
+    parity, _ = safetyformer_parity(res["model_obj"], path, sample)
+    assert parity["max_abs_diff"] < 1e-4
+
+
+def test_onnx_other_batch_and_length(trained, corpus, tmp_path) -> None:
+    from pharmavigil_ml.export.onnx_export import export_safetyformer, safetyformer_parity
+    from pharmavigil_ml.safetyformer.views import ViewConfig, ViewMaker
+
+    res, _ = trained
+    trace = query_batch(corpus.vocab, corpus.vocab.drug_tokens[:2])
+    path = export_safetyformer(res["model_obj"], tmp_path / "sf.onnx", trace)
+    b = ViewMaker(corpus, ViewConfig(p_hide_all_pts=0, p_single_drug=0), seed=4).batch(np.arange(9))
+    parity, _ = safetyformer_parity(res["model_obj"], path, (b.tokens, b.types, b.roles, b.query_pos))
+    assert parity["max_abs_diff"] < 1e-4

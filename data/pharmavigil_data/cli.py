@@ -7,6 +7,8 @@ analysis/m2/ (engineering rule 10). Steps, in order:
   pv-data faers-gold                                   # report / report_drug / report_reaction
   pv-data refsets                                      # OMOP + EU-ADR reference sets
   pv-data quality                                      # data-quality report
+  pv-data faers-versions                               # every case version (duplicate-model training)
+  pv-data vaers --years 2019 2025                      # VAERS narratives with coded PTs
 """
 
 from __future__ import annotations
@@ -140,6 +142,46 @@ def cmd_quality(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_faers_versions(args: argparse.Namespace) -> int:
+    from .faers.versions import build_versions
+    from .spark import get_spark
+
+    n = build_versions(get_spark()).count()
+    _write("versions_run.json", {"report_versions": n})
+    return 0
+
+
+def cmd_vaers(args: argparse.Namespace) -> int:
+    import pandas as pd
+
+    from .http import download
+    from .vaers import VAERS_DOWNLOAD_URL, read_zip
+
+    frames, failed = [], []
+    zips = [Path(z) for z in args.zip] if args.zip else []
+    for year in range(args.years[0], args.years[1] + 1) if args.years else []:
+        target = paths.raw_root() / "vaers" / f"{year}VAERSData.zip"
+        try:
+            if not target.exists():
+                download(VAERS_DOWNLOAD_URL.format(year=year), target)
+            zips.append(target)
+        except SourceUnavailable as exc:
+            failed.append({"year": year, "error": str(exc)})
+    for z in zips:
+        frames.append(read_zip(z))
+    if frames:
+        out = pd.concat(frames, ignore_index=True)
+        target = paths.bronze("vaers", "narratives.parquet")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        out.to_parquet(target, index=False)
+        summary = {"narratives": int(len(out)), "years": sorted(out["year"].dropna().unique().tolist()),
+                   "distinct_pts": int(out["pts"].explode().nunique())}
+    else:
+        summary = {"narratives": 0}
+    _write("vaers_run.json", {**summary, "failed": failed})
+    return 0 if not failed else 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="pv-data", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -165,6 +207,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("faers-gold").set_defaults(func=cmd_faers_gold)
     sub.add_parser("refsets").set_defaults(func=cmd_refsets)
     sub.add_parser("quality").set_defaults(func=cmd_quality)
+    sub.add_parser("faers-versions").set_defaults(func=cmd_faers_versions)
+    v = sub.add_parser("vaers")
+    v.add_argument("--years", type=int, nargs=2, metavar=("FIRST", "LAST"))
+    v.add_argument("--zip", nargs="*", help="already-downloaded <year>VAERSData.zip files")
+    v.set_defaults(func=cmd_vaers)
     return p
 
 

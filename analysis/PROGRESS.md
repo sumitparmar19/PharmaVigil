@@ -13,7 +13,7 @@ the repo.
 | M2 | Data platform | code complete and tested on fixtures; real FAERS/VAERS run pending network (owner step 1); reference sets real | `analysis/m2/refsets.json`, `data/tests/` |
 | M3 | Signal baselines | code complete and tested (synthetic data); real AUCs pending FAERS | `docs/EVALUATION.md`, ADR-005, `ml/tests/` |
 | M4 | SafetyFormer | code complete and tested (synthetic); real training, time-travel and leakage numbers pending FAERS | `ml/signals/MODEL_CARD.md`, ADR-006, `ml/tests/test_safetyformer.py` |
-| M5 | Coder, triage, duplicates | pending | |
+| M5 | Coder, triage, duplicates | code complete and tested (synthetic); real metrics pending FAERS/VAERS/GPU | model cards in `ml/coder/`, `ml/triage/`; ADR-007 |
 | M6 | Java platform core | pending | |
 | M7 | E2B(R3) and SOAP | pending | |
 | M8 | Kafka, ONNX in Java, JMS, narrative | pending | |
@@ -118,6 +118,31 @@ Tests: 11 new tests (26 in `ml/` total).
 
 Pending: real-data numbers (FAERS blocked) and the label-change source (accessdata.fda.gov and DailyMed
 not reachable; ADR-006 keeps the test pending rather than inventing dates).
+
+## M5: coder, triage, duplicates, ONNX
+
+Built (`ml/pharmavigil_ml/`):
+- `triage/features.py`: `FeatureSpec` (JSON for Java) and the outcome-leakage guard (outcome fields never
+  read; outcome-revealing PTs dropped by pattern).
+- `triage/seriousness.py`: LightGBM, time split, PR-AUC / ROC AUC / Brier / calibration / TreeSHAP.
+- `triage/duplicates.py` + `data/.../faers/versions.py`: every case version, pair features, hard and
+  random negatives, case-level split; the model card states the proxy.
+- `coder/`: label space (95% coverage head + tail), BiomedBERT encoder + head, retrieval over PT names,
+  merged ranking, micro/macro F1, top-5 recall (head/tail), drug-narrative scoring.
+- `export/onnx_export.py`: ONNX for LightGBM (opset 15, the converter's maximum), the coder (opset 17) and
+  SafetyFormer (`torch.export`, opset 18), parity checks, JSON test vectors for the Java parity tests.
+- `m5.py`, `pv-ml triage | duplicates | coder | coder-drug-narratives`, `pv-data faers-versions | vaers`,
+  Kaggle notebook `ml/notebooks/kaggle/meddra_coder.ipynb`.
+- `ml/coder/drug_narratives_template.csv`: 50 invented drug narratives, label column empty for Sumit.
+
+Problem found and fixed: the first ONNX export of SafetyFormer passed parity at the traced shape but
+failed at another batch/sequence size (attention reshape frozen by the legacy tracer). A second-shape
+parity test now guards every Transformer export.
+
+Tests: 20 new tests (`ml/` 46 total; `data/` 43).
+
+Pending: real metrics (FAERS, VAERS and Hugging Face hosts blocked; GPU runs are owner steps 5–6), and
+the drug-narrative labels (owner step 7).
 
 ## Environment re-tests
 

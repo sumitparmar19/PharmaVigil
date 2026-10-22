@@ -4,6 +4,9 @@
   pv-ml safetyformer --scope "..." --steps 20000               # M4: train + compare on reference sets
   pv-ml time-travel --scope "..." --label-changes srlc.csv     # M4: yearly snapshots vs label changes
   pv-ml leakage --scope "..." --test-start 2025-01-01          # M4: shuffled vs time-ordered split
+  pv-ml triage --scope "..." --test-from 2025-07-01            # M5: seriousness LightGBM + ONNX
+  pv-ml duplicates --scope "..." --versions <silver versions>  # M5: duplicate model + ONNX
+  pv-ml coder --scope "..." --narratives <vaers parquet>       # M5: MedDRA coder fine-tune + ONNX (GPU)
 """
 
 from __future__ import annotations
@@ -95,6 +98,39 @@ def _add_m4_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--masked-drug", action="store_true")
 
 
+def cmd_triage(args: argparse.Namespace) -> int:
+    from .m5 import run_triage
+
+    run_triage(Path(args.gold), Path(args.out), Path(args.models_dir) / "seriousness",
+               date.fromisoformat(args.test_from), args.scope, sample=args.sample)
+    return 0
+
+
+def cmd_duplicates(args: argparse.Namespace) -> int:
+    from .m5 import run_duplicates
+
+    run_duplicates(Path(args.versions), Path(args.out), Path(args.models_dir) / "duplicates", args.scope,
+                   sample_cases=args.sample_cases)
+    return 0
+
+
+def cmd_coder(args: argparse.Namespace) -> int:
+    from .coder.model import DEFAULT_CHECKPOINT
+    from .m5 import run_coder
+
+    run_coder(Path(args.narratives), Path(args.out), Path(args.models_dir) / "coder", args.scope,
+              args.checkpoint or DEFAULT_CHECKPOINT, args.test_year, epochs=args.epochs, max_train=args.max_train,
+              batch_size=args.batch_size)
+    return 0
+
+
+def cmd_coder_drug_narratives(args: argparse.Namespace) -> int:
+    from .m5 import score_drug_narratives
+
+    print(score_drug_narratives(Path(args.csv), Path(args.models_dir) / "coder", Path(args.out)))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="pv-ml", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -125,6 +161,42 @@ def build_parser() -> argparse.ArgumentParser:
     _add_m4_args(lk)
     lk.add_argument("--test-start", required=True)
     lk.set_defaults(func=cmd_leakage)
+
+    m5_out, m5_models = str(REPO / "analysis" / "m5"), str(REPO / "ml" / "artifacts")
+    tr = sub.add_parser("triage", help="M5: seriousness model")
+    tr.add_argument("--gold", default=str(DEFAULT_LAKE / "gold" / "faers"))
+    tr.add_argument("--out", default=m5_out)
+    tr.add_argument("--models-dir", default=m5_models)
+    tr.add_argument("--scope", required=True)
+    tr.add_argument("--test-from", required=True)
+    tr.add_argument("--sample", type=int, help="reservoir-sample this many reports (CPU runs)")
+    tr.set_defaults(func=cmd_triage)
+
+    du = sub.add_parser("duplicates", help="M5: duplicate model")
+    du.add_argument("--versions", default=str(DEFAULT_LAKE / "silver" / "faers" / "versions"))
+    du.add_argument("--out", default=m5_out)
+    du.add_argument("--models-dir", default=m5_models)
+    du.add_argument("--scope", required=True)
+    du.add_argument("--sample-cases", type=int)
+    du.set_defaults(func=cmd_duplicates)
+
+    co = sub.add_parser("coder", help="M5: MedDRA coder (GPU recommended)")
+    co.add_argument("--narratives", default=str(DEFAULT_LAKE / "bronze" / "vaers" / "narratives.parquet"))
+    co.add_argument("--out", default=m5_out)
+    co.add_argument("--models-dir", default=m5_models)
+    co.add_argument("--scope", required=True)
+    co.add_argument("--checkpoint")
+    co.add_argument("--test-year", type=int, required=True)
+    co.add_argument("--epochs", type=int, default=3)
+    co.add_argument("--batch-size", type=int, default=16)
+    co.add_argument("--max-train", type=int)
+    co.set_defaults(func=cmd_coder)
+
+    cd = sub.add_parser("coder-drug-narratives", help="M5: domain-shift check on hand-labelled drug narratives")
+    cd.add_argument("--csv", default=str(REPO / "ml" / "coder" / "drug_narratives_template.csv"))
+    cd.add_argument("--out", default=m5_out)
+    cd.add_argument("--models-dir", default=m5_models)
+    cd.set_defaults(func=cmd_coder_drug_narratives)
     return p
 
 
