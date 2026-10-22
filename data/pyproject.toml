@@ -1,0 +1,29 @@
+# PharmaVigil data platform: ingestion and Delta/Parquet tables for FAERS, VAERS,
+# the OMOP/EU-ADR reference sets and FDA safety-labelling changes.
+[project]
+name = "pharmavigil-data"
+version = "0.1.0"
+description = "FAERS/VAERS ingestion, de-duplication, RxNorm normalization and quality checks"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=6", "ruff>=0.8"]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["pharmavigil_data*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

@@ -1,0 +1,62 @@
+# PharmaVigil ignore rules: no data, models, secrets or build output in git
+# (BUILD_INSTRUCTIONS §5.11). Tiny test fixtures live under */tests/fixtures/.
+
+# Secrets
+.env
+*.env.local
+
+# Data and model artefacts
+/data/raw/
+/data/lake/
+/data/cache/
+*.parquet
+!**/tests/fixtures/**/*.parquet
+*.zip
+*.onnx
+!**/tests/fixtures/**/*.onnx
+*.pt
+*.ckpt
+*.safetensors
+mlruns/
+mlartifacts/
+/models/
+/artifacts/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+spark-warehouse/
+metastore_db/
+derby.log
+.ipynb_checkpoints/
+
+# Java
+target/
+*.class
+.idea/
+*.iml
+.vscode/
+
+# Node / frontend
+node_modules/
+dist/
+playwright-report/
+test-results/
+
+# Infrastructure
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# Downloaded at build time (licence unclear, see docs/E2B_R3.md)
+/services/common/src/main/xsd/ich/
