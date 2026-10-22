@@ -156,6 +156,25 @@ public class CaseService {
         return c;
     }
 
+    /** Move only when the workflow allows it (a follow-up may find the case already further along). */
+    @Transactional
+    public boolean advance(Long caseId, Status next, String actor) {
+        SafetyCase c = load(caseId);
+        if (!c.getStatus().canMoveTo(next)) {
+            return false;
+        }
+        Status from = c.getStatus();
+        c.moveTo(next, clock.instant());
+        audit(c, actor, "STATUS", from + " -> " + next);
+        return true;
+    }
+
+    /** Free-text audit entry for pipeline steps (model unavailable, criteria reported, ...). */
+    @Transactional
+    public void note(Long caseId, String actor, String action, String detail) {
+        audit(load(caseId), actor, action, detail);
+    }
+
     @Transactional
     public SafetyCase setSeriousness(Long caseId, Seriousness s, BigDecimal score, String actor) {
         SafetyCase c = load(caseId);

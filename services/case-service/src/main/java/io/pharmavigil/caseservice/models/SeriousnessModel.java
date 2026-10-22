@@ -52,6 +52,11 @@ public final class SeriousnessModel {
                 Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
     }
 
+    /** FAERS occupation code for a PharmaVigil reporter type (null when unknown). */
+    public static String occupation(String reporterType) {
+        return reporterType == null ? null : OCCUPATION.get(reporterType);
+    }
+
     public ModelInfo info() {
         return info;
     }
@@ -77,7 +82,7 @@ public final class SeriousnessModel {
         float[] x = new float[width];
         x[pos.get("age_band=" + ageBand(in.ageYears()))] = 1;
         x[pos.get("sex=" + (in.sex() != null && SEXES.contains(in.sex()) ? in.sex() : "UNK"))] = 1;
-        set(x, "occp=" + OCCUPATION.get(in.reporterType()), "occp=other");
+        set(x, "occp=" + occupation(in.reporterType()), "occp=other");
         set(x, "country=" + in.country(), "country=other");
         for (Drug d : in.drugs()) {
             x[pos.get("n_drugs")] += 1;

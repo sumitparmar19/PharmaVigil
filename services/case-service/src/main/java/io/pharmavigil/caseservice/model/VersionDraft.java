@@ -12,6 +12,9 @@ import io.pharmavigil.caseservice.model.CaseEnums.CodeSource;
 
 public class VersionDraft {
 
+    /** Reported-term placeholder for a reaction the coder suggested from the narrative, not from a listed term. */
+    public static final String NARRATIVE_TERM = "(suggested from narrative)";
+
     public record DrugDraft(String rxcui, String name, String role, String doseText, String route) {
     }
 

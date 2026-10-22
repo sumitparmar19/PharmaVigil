@@ -1,2 +1,4 @@
 io.pharmavigil.common.security.SecurityAutoConfiguration
 io.pharmavigil.common.web.WebAutoConfiguration
+io.pharmavigil.common.outbox.OutboxAutoConfiguration
+io.pharmavigil.common.kafka.KafkaPipelineAutoConfiguration
