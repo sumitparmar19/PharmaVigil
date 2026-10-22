@@ -131,6 +131,14 @@ def cmd_coder_drug_narratives(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_java_bundle(args: argparse.Namespace) -> int:
+    from .export.java_bundle import fixture_bundle
+
+    meta = fixture_bundle(Path(args.out))
+    print(f"wrote {len(meta['files'])} files to {args.out} ({meta['kind']})")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="pv-ml", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -197,6 +205,10 @@ def build_parser() -> argparse.ArgumentParser:
     cd.add_argument("--out", default=m5_out)
     cd.add_argument("--models-dir", default=m5_models)
     cd.set_defaults(func=cmd_coder_drug_narratives)
+
+    jb = sub.add_parser("java-bundle", help="M8: tiny synthetic model bundle for the Java case-service tests")
+    jb.add_argument("--out", required=True)
+    jb.set_defaults(func=cmd_java_bundle)
     return p
 
 

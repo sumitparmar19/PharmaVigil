@@ -32,6 +32,7 @@
   </modules>
 
   <properties>
+    <onnxruntime.version>1.31.0</onnxruntime.version>
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jacoco.version>0.8.15</jacoco.version>

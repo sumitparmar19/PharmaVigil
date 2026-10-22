@@ -61,6 +61,7 @@ Checked against Maven Central, PyPI and npm when M0 was built.
 | Testcontainers | 2.0.5 | managed by Boot |
 | Micrometer | 1.17.1 | managed by Boot |
 | JaCoCo | 0.8.15 | coverage gate |
+| ONNX Runtime (Java) | 1.31.0 | models in case-service (ADR-008) |
 
 ### Python (data and ml)
 

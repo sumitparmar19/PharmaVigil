@@ -33,6 +33,9 @@ jobs:
         env:
           PV_E2B_XSD_DIR: ${{ runner.temp }}/e2b-xsd
         run: mvn -B -ntp verify
+      - name: Test summary per class
+        if: always()
+        run: grep -h "Tests run" services/*/target/surefire-reports/*.txt || true
       - name: Upload coverage reports
         if: always()
         uses: actions/upload-artifact@v7

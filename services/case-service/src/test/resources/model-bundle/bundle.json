@@ -1,0 +1,14 @@
+{
+ "kind": "fixture",
+ "scope": "synthetic invented data; not trained on any real report",
+ "files": {
+  "coder.json": "32dc4cd6b15eda9b3595b56ab1a225d3e0a0f389eb082a260f7e4974f670ddd1",
+  "coder.onnx": "a32eafa289fd754b4cc439c1776c2948a145e04a2df9a73f18b8faf0b3bf7419",
+  "coder_vocab.txt": "75254db99cbb7265e627ae2c81425e98c6426f4c67b951eb7e001d4c2c26c399",
+  "duplicates.json": "b97e830c2e7c938ec40b7f4c4c7af0f019dbf12fe747b912f876467879111f35",
+  "duplicates.onnx": "edf5fe4c739df0c19f9a8a60d20f3802deb57b226d26c6638a460baedd0ae913",
+  "parity.json": "066b58e5f93e376f5ab990080aa83b80cdbaf83bfaee5d7dd2aaa4a514868cf6",
+  "seriousness.onnx": "4af5119482a694a3e2b58b7825488808810f7de6abacf8d5e89121a3006bca66",
+  "seriousness_features.json": "9f77e0965029229c18d4435688a08f6a2ac7eabb22560b90f63260ad3d8fdc59"
+ }
+}

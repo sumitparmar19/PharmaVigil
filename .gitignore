@@ -63,3 +63,6 @@ crash.log
 
 # Model artefacts written by pv-ml (hashes go to analysis/models/MANIFEST.md)
 /ml/artifacts/
+
+# Tiny synthetic model bundle for the Java tests (ml: pv-ml java-bundle; listed in analysis/models/MANIFEST.md)
+!/services/case-service/src/test/resources/model-bundle/*.onnx
