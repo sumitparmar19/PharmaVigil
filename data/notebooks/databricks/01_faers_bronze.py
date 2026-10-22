@@ -15,7 +15,7 @@ git_ref = dbutils.widgets.get("git_ref")
 
 # COMMAND ----------
 
-# MAGIC %pip install "pharmavigil-data @ git+https://github.com/sumitparmar19/Pharmacy-Managment.git@$git_ref#subdirectory=data"
+# MAGIC %pip install "pharmavigil-data @ git+https://github.com/sumitparmar19/PharmaVigil.git@$git_ref#subdirectory=data"
 
 # COMMAND ----------
 

@@ -44,10 +44,10 @@ after the re-test.
 
 ---
 
-## 2. Rename the repository to PharmaVigil: OPEN
+## 2. Rename the repository to PharmaVigil: DONE
 
-**Why:** at the start of M0, GitHub still listed the repository as `sumitparmar19/Pharmacy-Managment`.
-GitHub redirects the old link after a rename, so the build keeps working either way.
+**Done:** during M2 GitHub reported the new location https://github.com/sumitparmar19/PharmaVigil.
+The steps are kept for the record.
 
 1. Open https://github.com/sumitparmar19/Pharmacy-Managment
 2. Click **Settings** (top bar of the repository).
@@ -64,7 +64,7 @@ GitHub redirects the old link after a rename, so the build keeps working either 
 supported on this repository. Please ensure that Dependency graph is enabled". Only the repository
 owner can switch it on.
 
-1. Open https://github.com/sumitparmar19/Pharmacy-Managment/settings/security_analysis
+1. Open https://github.com/sumitparmar19/PharmaVigil/settings/security_analysis
 2. Find **Dependency graph**.
 3. Click **Enable**.
 4. Open the pull request, click the **Checks** tab, select **Dependency review**, and click
@@ -82,7 +82,7 @@ Databricks as notebooks.
 1. Open https://www.databricks.com/learn/free-edition and click **Sign up**. Use your UB email.
 2. After the workspace opens, click **Workspace** in the left sidebar.
 3. Click **Create** → **Git folder**.
-4. In **Git repository URL**, paste `https://github.com/sumitparmar19/Pharmacy-Managment` and click
+4. In **Git repository URL**, paste `https://github.com/sumitparmar19/PharmaVigil` and click
    **Create Git folder**.
 5. In the Git folder, open `data` → `notebooks` → `databricks` → `00_setup_and_check`.
 6. At the top, set the **git_ref** box to `claude/determined-wozniak-8tf7pa` (until the pull request

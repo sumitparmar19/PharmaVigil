@@ -14,7 +14,7 @@ catalog = dbutils.widgets.get("catalog")
 
 # COMMAND ----------
 
-# MAGIC %pip install "pharmavigil-data @ git+https://github.com/sumitparmar19/Pharmacy-Managment.git@$git_ref#subdirectory=data"
+# MAGIC %pip install "pharmavigil-data @ git+https://github.com/sumitparmar19/PharmaVigil.git@$git_ref#subdirectory=data"
 
 # COMMAND ----------
 

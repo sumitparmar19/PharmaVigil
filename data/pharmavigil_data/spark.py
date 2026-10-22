@@ -22,6 +22,7 @@ def get_spark(app_name: str = "pharmavigil", cores: str | None = None) -> SparkS
         .config("spark.sql.shuffle.partitions", os.environ.get("PV_SPARK_SHUFFLE_PARTITIONS", "16"))
         .config("spark.sql.session.timeZone", "UTC")
         .config("spark.ui.enabled", "false")
+        .config("spark.ui.showConsoleProgress", "false")
     )
     spark = configure_spark_with_delta_pip(builder).getOrCreate()
     spark.sparkContext.setLogLevel("ERROR")

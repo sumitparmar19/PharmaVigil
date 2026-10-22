@@ -6,7 +6,16 @@ version = "0.1.0"
 description = "Signal detection (baselines + SafetyFormer), MedDRA coder, triage and ONNX export"
 requires-python = ">=3.12"
 license = "MIT"
-dependencies = []
+dependencies = [
+  "numpy>=2.5,<3",
+  "scipy>=1.18,<2",
+  "pandas>=2.3,<3",
+  "pyarrow>=26,<27",
+  "duckdb>=2.0,<3",
+  "scikit-learn>=1.9,<2",
+  "matplotlib>=3.11,<4",
+  "deltalake>=1.0,<2",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-cov>=6", "ruff>=0.8"]
@@ -18,10 +27,14 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["pharmavigil_ml*"]
 
+[project.scripts]
+pv-ml = "pharmavigil_ml.cli:main"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
 [tool.ruff]
+extend-exclude = ["notebooks"]
 line-length = 120
 target-version = "py312"
 

@@ -11,7 +11,7 @@ the repo.
 | M0 | Bootstrap, context and rules | ✅ done (CI green; Dependency review waits on owner step 3) | this file, `analysis/M0_REVIEW.md`, CI workflows |
 | M1 | Legacy audit | **removed by owner** (Amendment 1, item 1) | n/a |
 | M2 | Data platform | code complete and tested on fixtures; real FAERS/VAERS run pending network (owner step 1); reference sets real | `analysis/m2/refsets.json`, `data/tests/` |
-| M3 | Signal baselines | pending | |
+| M3 | Signal baselines | code complete and tested (synthetic data); real AUCs pending FAERS | `docs/EVALUATION.md`, ADR-005, `ml/tests/` |
 | M4 | SafetyFormer | pending | |
 | M5 | Coder, triage, duplicates | pending | |
 | M6 | Java platform core | pending | |
@@ -73,6 +73,27 @@ Open checks for the first real run:
   checked against a sample of real matches before the coverage number is reported.
 - Every PT in `outcome_pt_map.csv` is checked against the FAERS vocabulary (`quality.json` lists any
   missing).
+
+## M3: signal baselines
+
+Built (`ml/pharmavigil_ml/signals/`):
+- `disproportionality.py`: PRR and ROR with 95% CIs (Haldane correction for zero cells), IC with Norén
+  shrinkage and IC025/IC975.
+- `ebgm.py`: MGPS/EBGM, two-gamma prior by maximum zero-truncated marginal likelihood, posterior
+  EBGM/EB05/EB95 (vectorized bisection for percentiles).
+- `contingency.py`: DuckDB counts over the gold tables (Delta via delta-rs, or Parquet exports), with
+  role variants and a received-before date cutoff for the time-travel test.
+- `evaluate.py`: reference-drug name matching, AUC with bootstrap 95% CI, unscorable pairs counted.
+- `baselines.py` + `pv-ml baselines`: writes `analysis/m3/baselines.json`, ROC charts, per-pair score
+  CSVs, and the PT-level signal table (pairs with ≥ 3 reports) for signal-service.
+- ADR-005 fixes the outcome → PT lists and the SafetyFormer score before any model results exist.
+
+Tests: 15 pytest tests, including hand-computed PRR/ROR/IC values, EBGM shrinkage and percentile checks,
+DuckDB counts on a hand-checkable gold set, and an end-to-end run on synthetic reports with planted
+associations. An integration check (Spark-written gold Delta read by the ML package) passed locally.
+
+Pending: the real AUCs need the FAERS gold tables (blocked host). The published comparison figures in
+`docs/PLAN.md` (Ding & Cohen, AMIA 2020) could not be re-checked because arXiv is blocked too.
 
 ## Environment re-tests
 
