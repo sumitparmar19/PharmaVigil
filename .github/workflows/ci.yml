@@ -52,18 +52,22 @@ jobs:
         run: mvn -B -ntp -Pmssql verify
 
   e2b-schema-discovery:
-    # Temporary (M7): the build container cannot reach fda.gov or ich.org, so this job lists the official
-    # E2B(R3) schema download links from FDA's guidance page and ICH's page for the fetch script.
+    # Temporary (M7): the build container cannot reach fda.gov or ich.org. This job checks candidate
+    # official download URLs for the ICH E2B(R3) schema set and reports what they contain.
     name: E2B(R3) schema link discovery
     runs-on: ubuntu-latest
     steps:
-      - name: List schema links
+      - name: Probe pages and candidates
         run: |
-          for page in \
-            "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/e2br3-electronic-transmission-individual-case-safety-reports-implementation-guide-data-elements-and" \
-            "https://www.ich.org/page/e2br3-individual-case-safety-report-icsr-specification-and-related-files"; do
-            echo "== $page"
-            curl -sSL -A "Mozilla/5.0" "$page" | grep -oiE 'href="[^"]+"[^<]{0,200}' | grep -iE 'schema|xsd|zip|media/[0-9]+/download' | head -40 || true
+          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+          page="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/e2br3-electronic-transmission-individual-case-safety-reports-implementation-guide-data-elements-and"
+          curl -sSL -A "$UA" -o page.html -w "guidance page: %{http_code} %{size_download} bytes\n" "$page" || true
+          grep -oiE '/media/[0-9]+/download[^<]{0,160}' page.html | head -40 || true
+          grep -oiE '[^>]{0,80}(schema|instance)[^<]{0,80}' page.html | head -20 || true
+          for m in 81942 81904; do
+            curl -sSL -A "$UA" -o "m$m" -w "media $m: %{http_code} %{size_download} bytes %{content_type}\n" "https://www.fda.gov/media/$m/download" || true
+            file "m$m" || true
+            unzip -l "m$m" 2>/dev/null | head -60 || true
           done
 
   python:
