@@ -25,6 +25,16 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    void springClientErrorsKeepTheirStatus() {
+        assertThat(handler.unexpected(new org.springframework.web.servlet.resource.NoResourceFoundException(
+                org.springframework.http.HttpMethod.GET, "/nope", "nope")).getStatus()).isEqualTo(404);
+        assertThat(handler.unexpected(new org.springframework.web.HttpRequestMethodNotSupportedException("PUT"))
+                .getStatus()).isEqualTo(405);
+        assertThat(handler.unreadable(new org.springframework.http.converter.HttpMessageNotReadableException("x",
+                (org.springframework.http.HttpInputMessage) null)).getStatus()).isEqualTo(400);
+    }
+
+    @Test
     void unexpectedErrorsHideDetails() {
         ProblemDetail pd = handler.unexpected(new RuntimeException("ORA-00942: table or view does not exist at x.y.Z"));
         assertThat(pd.getStatus()).isEqualTo(500);

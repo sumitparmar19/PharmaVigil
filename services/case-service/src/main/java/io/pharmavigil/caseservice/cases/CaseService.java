@@ -10,7 +10,9 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.Year;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -44,8 +46,12 @@ public class CaseService {
             List<VersionDraft.DrugDraft> drugs, List<String> reactionTerms, String seriousCriteria) {
     }
 
-    public record Received(SafetyCase safetyCase, boolean created) {
+    /** created: a new case; followUp: an existing case got a new version from changed report content. */
+    public record Received(SafetyCase safetyCase, boolean created, boolean followUp) {
     }
+
+    private static final Set<Status> REOPEN_ON_FOLLOW_UP = EnumSet.of(Status.APPROVED, Status.REJECTED,
+            Status.ACKNOWLEDGED);
 
     private static final List<Status> QUEUE = List.of(Status.TRIAGED, Status.IN_REVIEW, Status.NEEDS_MANUAL_CODING,
             Status.REJECTED);
@@ -69,14 +75,50 @@ public class CaseService {
 
     @Transactional
     public Received receive(IncomingReport r, String actor) {
+        VersionDraft incoming = draftOf(r);
         var existing = cases.findBySourceAndSourceReportId(r.source(), r.sourceReportId());
         if (existing.isPresent()) {
-            return new Received(existing.get(), false);
+            return followUp(existing.get(), incoming, r, actor);
         }
         String number = "PV-" + Year.now(clock) + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10)
                 .toUpperCase();
         SafetyCase c = cases.save(new SafetyCase(number, r.source(), r.sourceReportId(), r.receivedDate(),
                 clock.instant()));
+        writeVersion(c, actor, "received from " + r.source(), incoming);
+        audit(c, actor, "RECEIVED", r.source() + " report " + r.sourceReportId());
+        return new Received(c, true, false);
+    }
+
+    /**
+     * A known report arrives again. Identical content (a resend) changes nothing. Changed content becomes a new
+     * version; codes already confirmed for an unchanged reported term are kept, and a case that had left review
+     * goes back to it.
+     */
+    private Received followUp(SafetyCase c, VersionDraft incoming, IncomingReport r, String actor) {
+        VersionDraft current = VersionDraft.from(latest(c));
+        if (current.sameReportedContent(incoming)) {
+            return new Received(c, false, false);
+        }
+        for (int i = 0; i < incoming.reactions.size(); i++) {
+            String term = incoming.reactions.get(i).reportedTerm();
+            for (VersionDraft.ReactionDraft known : current.reactions) {
+                if (known.reportedTerm() != null && known.reportedTerm().equals(term)) {
+                    incoming.reactions.set(i, known);
+                    break;
+                }
+            }
+        }
+        CaseVersion v = writeVersion(c, actor, "follow-up from " + r.source(), incoming);
+        audit(c, actor, "FOLLOW_UP", "v" + v.getVersionNo() + " from " + r.source() + " report " + r.sourceReportId());
+        if (REOPEN_ON_FOLLOW_UP.contains(c.getStatus())) {
+            Status from = c.getStatus();
+            c.moveTo(Status.IN_REVIEW, clock.instant());
+            audit(c, actor, "STATUS", from + " -> " + Status.IN_REVIEW + " (follow-up)");
+        }
+        return new Received(c, false, true);
+    }
+
+    private static VersionDraft draftOf(IncomingReport r) {
         VersionDraft d = new VersionDraft();
         d.patientAge = r.patientAge();
         d.patientSex = r.patientSex();
@@ -87,9 +129,7 @@ public class CaseService {
         d.seriousCriteria = r.seriousCriteria();
         d.drugs.addAll(r.drugs());
         r.reactionTerms().forEach(t -> d.reactions.add(VersionDraft.ReactionDraft.uncoded(t)));
-        writeVersion(c, actor, "received from " + r.source(), d);
-        audit(c, actor, "RECEIVED", r.source() + " report " + r.sourceReportId());
-        return new Received(c, true);
+        return d;
     }
 
     /** Create the next version from the latest one; fails with a conflict if the case moved on. */

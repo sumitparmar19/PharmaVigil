@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -59,8 +61,18 @@ public class ApiExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ProblemDetail unreadable(HttpMessageNotReadableException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The request body could not be read.");
+    }
+
     @ExceptionHandler(Exception.class)
     ProblemDetail unexpected(Exception e) {
+        if (e instanceof ErrorResponse standard) {
+            // Spring MVC's own client errors (unknown path 404, wrong method 405, wrong media type 415...)
+            // keep their status; their details name only the request, never internals.
+            return standard.getBody();
+        }
         String ref = UUID.randomUUID().toString();
         log.error("Unhandled error, reference {}", ref, e);
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,

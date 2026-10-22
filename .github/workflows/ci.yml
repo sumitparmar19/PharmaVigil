@@ -26,8 +26,12 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Fetch the ICH E2B(R3) schema set (best effort; the e2b-schema job is the gate)
+        run: scripts/fetch-e2b-xsd.sh "$RUNNER_TEMP/e2b-xsd" || echo "::warning::E2B(R3) schemas not fetched"
       - name: Build and test (Oracle Database Free via Testcontainers)
         working-directory: services
+        env:
+          PV_E2B_XSD_DIR: ${{ runner.temp }}/e2b-xsd
         run: mvn -B -ntp verify
       - name: Upload coverage reports
         if: always()
@@ -70,14 +74,6 @@ jobs:
         env:
           PV_E2B_XSD_DIR: ${{ runner.temp }}/e2b-xsd
         run: mvn -B -ntp -pl common test -Dtest='E2b*Test' -Dsurefire.failIfNoSpecifiedTests=false
-      - name: Keep the fetched schemas for inspection
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: e2b-xsd
-          path: ${{ runner.temp }}/e2b-xsd
-          if-no-files-found: ignore
-          retention-days: 7
 
   python:
     name: Python (${{ matrix.package }})

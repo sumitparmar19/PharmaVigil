@@ -10,8 +10,11 @@ set -euo pipefail
 
 BASE="${E2B_XSD_BASE_URL:-https://eudravigilance.ema.europa.eu/XSD}"
 ENTRY="multicacheschemas/MCCI_IN200100UV01.xsd"
-OUT="${1:?usage: fetch-e2b-xsd.sh <target-dir>}"
-mkdir -p "$OUT"
+TARGET="${1:?usage: fetch-e2b-xsd.sh <target-dir>}"
+# Download into a scratch directory and move it into place only when the whole set arrived, so a failed
+# run never leaves a half schema set that would look installed.
+OUT="$(mktemp -d)"
+trap 'rm -rf "$OUT"' EXIT
 
 queue=("$ENTRY")
 declare -A seen=()
@@ -36,4 +39,8 @@ while ((${#queue[@]})); do
   done < <(grep -oE '<xs:(include|import)[^>]*schemaLocation="[^"]+"' "$OUT/$rel" \
              | sed -E 's/.*schemaLocation="([^"]+)".*/\1/' || true)
 done
-echo "fetched $count schema files from $BASE into $OUT"
+rm -rf "$TARGET"
+mkdir -p "$(dirname "$TARGET")"
+mv "$OUT" "$TARGET"
+trap - EXIT
+echo "fetched $count schema files from $BASE into $TARGET"

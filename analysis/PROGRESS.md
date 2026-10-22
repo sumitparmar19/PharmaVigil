@@ -15,7 +15,7 @@ the repo.
 | M4 | SafetyFormer | code complete and tested (synthetic); real training, time-travel and leakage numbers pending FAERS | `ml/signals/MODEL_CARD.md`, ADR-006, `ml/tests/test_safetyformer.py` |
 | M5 | Coder, triage, duplicates | code complete and tested (synthetic); real metrics pending FAERS/VAERS/GPU | model cards in `ml/coder/`, `ml/triage/`; ADR-007 |
 | M6 | Java platform core | ✅ done (Oracle and SQL Server green locally) | `services/`, ADR-003 |
-| M7 | E2B(R3) and SOAP | pending | |
+| M7 | E2B(R3) and SOAP | ✅ done (exports validate against the official schema set in CI) | `docs/E2B_R3.md`, ADR-009, `services/intake-gateway`, `scripts/fetch-e2b-xsd.sh` |
 | M8 | Kafka, ONNX in Java, JMS, narrative | pending | |
 | M9 | Frontend | pending | |
 | M10 | Operations | pending | |
@@ -181,6 +181,42 @@ with a 5-minute start-up timeout); `@PreAuthorize` denials surfaced as 500 throu
 (now mapped to 403/401); Spring Security 7 adds a `FACTOR_BEARER` authority to JWT logins (test asserts
 roles only).
 
+## M7: E2B(R3) and SOAP
+
+Built:
+- `common/e2b`: E2B(R3) writer, hardened reader, schema validator (VALID / INVALID / SCHEMA_UNAVAILABLE) and
+  `IcsrMapping` (E2B code lists ↔ `report.received`). Field mapping and gaps: `docs/E2B_R3.md`.
+- Official schemas: `scripts/fetch-e2b-xsd.sh` downloads EMA's published copy of the ICH E2B(R3) schema set
+  (50 files, following every include/import) at build time; nothing is committed. GitHub's runners reach
+  it; this container does not. CI job *E2B(R3) export against the official schemas* runs the E2B tests
+  with it, and the main Java job fetches it too.
+- `intake-gateway`: contract-first SOAP (Spring-WS, WSDL from `partner-intake.xsd`) with `SubmitCase` and
+  `GetCaseStatus`; WS-Security UsernameToken + Timestamp (ADR-009); request bodies validated against the
+  contract; SOAP Client faults that explain bad XML, foreign roots, batches with more than one ICSR and
+  schema errors. REST intake for pharmacy reports (`POST /api/intake/reports`) and reviewer E2B file
+  uploads (`POST /api/intake/e2b`). Every accepted report gets a receipt and exactly one outbox event in one
+  transaction; byte-identical resends return the original receipt; changed messages are follow-ups.
+  Own Flyway schema (Oracle and SQL Server).
+- `case-service`: `ReportIntake` (report.received → new case, new version for a follow-up that keeps
+  confirmed codes and reopens review, nothing for a resend); `E2bExportService` (approved case with an
+  approved narrative → E2B(R3) XML, validated; `queueable()` only when VALID); `GET /api/cases/{id}/e2b`
+  and `/e2b/validation`.
+- `common/web`: Spring MVC client errors (404, 405, 415) keep their status instead of becoming 500;
+  unreadable bodies are 400.
+
+Tests (local run in this container, Oracle Free via Testcontainers, no schema set available locally):
+- common 18 tests (2 schema tests skipped locally, run in CI), intake-gateway 11 (1 schema test skipped
+  locally), case-service 13; all green.
+- JaCoCo line coverage (local): common 91.0% (514/565), intake-gateway 87.1% (229/263), case-service 87.6%
+  (408/466).
+- Official-schema results come from CI: see "M7 CI evidence" below.
+
+Problems hit: Spring Boot's web-services auto-configuration backs off when the application declares
+`@EnableWs` (the dispatcher servlet was never registered; fixed by relying on Boot); WSDL generation needs
+`wsdl4j` on the classpath; a `${random.uuid}` test password resolves to a new value on every lookup, so
+server and test client disagreed (fixed with a fixed test-only value); Oracle 23 maps Java `boolean` to its
+native `BOOLEAN` type, not `NUMBER(1)`.
+
 ## Environment re-tests
 
 ### After the worker restart (during M6)
@@ -204,4 +240,8 @@ the start of each data milestone.
 | TypeScript | newest version | 6.0.3, not 7.0.2 | typescript-eslint 8.72 (latest) supports TypeScript < 6.1 only (Amendment 1 item 4: "newest the whole toolchain supports") |
 | Kafka 4.4 | Kafka 4.4 | broker image `apache/kafka:4.4.0`; client 4.2.1 as managed by Spring Boot 4.1.1 | overriding the client under spring-kafka 4.1.1 risks incompatibilities; Kafka clients and brokers are wire-compatible |
 | Docker locally | §6 fallback: rely on GitHub Actions | the container's Docker daemon can be started, so Testcontainers also runs locally | better local verification |
+| E2B(R3) JAXB classes | generate JAXB classes from the ICH XSDs into `common` | DOM writer/reader for the mapped subset, validated against the official schemas in CI | the schemas are not committed and cannot be downloaded in the build container, so code generation would break offline builds; validation keeps the output honest (`docs/E2B_R3.md`) |
+| FDA regional elements | fetch FDA regional E2B(R3) elements | not included | FDA hosts refuse both this container and GitHub's runners |
+| E2B schema source | ICH XSDs | EMA's published copy of the ICH E2B(R3) schema set | ICH and FDA downloads are blocked; EMA's copy is reachable from CI |
+| ICH sample messages | round-trip official samples if the package has them | own fixtures only | the ICH package could not be downloaded |
 | gitleaks locally | n/a | Docker Hub `zricethezav/gitleaks` image locally; CI uses `ghcr.io/gitleaks/gitleaks` | ghcr.io image layers are served from a blocked host in this container |

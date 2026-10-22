@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- intake-gateway: Report intake: REST from the pharmacy, SOAP (Spring-WS) from partners, E2B(R3) XML import. -->
+<!-- intake-gateway: every way a report enters PharmaVigil. REST for the pharmacy's one-click reports, a
+     contract-first SOAP service (Spring-WS, WS-Security UsernameToken) for partners and CROs sending
+     ICH E2B(R3) messages, and E2B(R3) file import. Each accepted report becomes a report.received event. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -12,10 +14,6 @@
   <artifactId>intake-gateway</artifactId>
   <name>intake-gateway</name>
 
-  <properties>
-    <coverage.skip>true</coverage.skip>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>io.pharmavigil</groupId>
@@ -27,17 +25,146 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-flyway</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-oracle</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-sqlserver</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webservices</artifactId>
+    </dependency>
+    <dependency>
+      <!-- WSDL generation (DefaultWsdl11Definition) -->
+      <groupId>wsdl4j</groupId>
+      <artifactId>wsdl4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.ws</groupId>
+      <artifactId>spring-ws-security</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.opensaml</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.wss4j</groupId>
+      <artifactId>wss4j-ws-security-dom</artifactId>
+      <version>4.0.1</version>
+      <exclusions>
+        <!-- SAML support is not used (UsernameToken only) and OpenSAML is not on Maven Central. -->
+        <exclusion>
+          <groupId>org.opensaml</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.oracle.database.jdbc</groupId>
+      <artifactId>ojdbc11</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-webmvc-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webservices-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.pharmavigil</groupId>
+      <artifactId>common</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-testcontainers</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-oracle-free</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-mssqlserver</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.jvnet.jaxb</groupId>
+        <artifactId>jaxb-maven-plugin</artifactId>
+        <version>4.0.16</version>
+        <executions>
+          <execution>
+            <goals><goal>generate</goal></goals>
+          </execution>
+        </executions>
+        <configuration>
+          <schemaDirectory>src/main/resources/xsd</schemaDirectory>
+          <schemaIncludes><include>partner-intake.xsd</include></schemaIncludes>
+          <generatePackage>io.pharmavigil.intake.soap.generated</generatePackage>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>

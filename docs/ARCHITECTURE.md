@@ -40,6 +40,10 @@ Checked against Maven Central, PyPI and npm when M0 was built.
 | Maven | 3.9.11 | |
 | Spring Boot | 4.1.1 | latest GA; Spring Framework 7.0.9 |
 | Spring Web Services | 5.0.2 | managed by Boot |
+| Apache WSS4J | 4.0.1 (`wss4j-ws-security-dom`, OpenSAML excluded) | WS-Security UsernameToken + Timestamp (ADR-009) |
+| WSDL4J | 1.6.3 | managed by Boot; WSDL generation |
+| JAXB Maven plugin | `org.jvnet.jaxb:jaxb-maven-plugin` 4.0.16 | partner-intake contract classes |
+| E2B(R3) schemas | EMA's copy of the ICH set, fetched at build time | `scripts/fetch-e2b-xsd.sh`, not committed (docs/E2B_R3.md) |
 | Spring for Apache Kafka | 4.1.1 | managed by Boot |
 | Kafka client | 4.2.1 | managed by Boot; talks to the 4.4 broker (Kafka clients and brokers are wire-compatible across versions) |
 | Kafka broker | 4.4.0 (`apache/kafka`, KRaft) | Amendment 1 |

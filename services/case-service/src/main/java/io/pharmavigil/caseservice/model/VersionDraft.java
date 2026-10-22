@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import io.pharmavigil.caseservice.model.CaseEnums.CodeSource;
 
@@ -31,6 +32,17 @@ public class VersionDraft {
     public String seriousCriteria;
     public List<DrugDraft> drugs = new ArrayList<>();
     public List<ReactionDraft> reactions = new ArrayList<>();
+
+    /** True when a report carries the same content as this draft (coding results are not compared). */
+    public boolean sameReportedContent(VersionDraft o) {
+        return (patientAge == null ? o.patientAge == null : o.patientAge != null && patientAge.compareTo(o.patientAge) == 0)
+                && Objects.equals(patientSex, o.patientSex) && Objects.equals(reporterType, o.reporterType)
+                && Objects.equals(country, o.country) && Objects.equals(onsetDate, o.onsetDate)
+                && Objects.equals(reportedText, o.reportedText) && Objects.equals(seriousCriteria, o.seriousCriteria)
+                && drugs.equals(o.drugs)
+                && reactions.stream().map(ReactionDraft::reportedTerm).toList()
+                        .equals(o.reactions.stream().map(ReactionDraft::reportedTerm).toList());
+    }
 
     public static VersionDraft from(CaseVersion v) {
         VersionDraft d = new VersionDraft();

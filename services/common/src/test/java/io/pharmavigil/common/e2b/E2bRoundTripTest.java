@@ -6,13 +6,8 @@ package io.pharmavigil.common.e2b;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.List;
 
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -22,17 +17,7 @@ import org.xmlunit.diff.Diff;
 class E2bRoundTripTest {
 
     static IcsrCase sample() {
-        return new IcsrCase("PV-BATCH-1", "PV-MSG-1", "PHARMAVIGIL", "MOCK-REGULATOR",
-                OffsetDateTime.of(2026, 10, 2, 9, 30, 0, 0, ZoneOffset.UTC), "US-PHARMAVIGIL-PV-2026-0000000001",
-                "US-PHARMAVIGIL-PV-2026-0000000001", 1, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 2), 2, "US",
-                new BigDecimal("54"), 2,
-                List.of(new IcsrCase.Reaction("muscle pain", "myalgia", null, null, LocalDate.of(2026, 9, 28),
-                                false, false, false, false, false, false),
-                        new IcsrCase.Reaction("dark urine & weakness", "rhabdomyolysis", null, null, null,
-                                false, false, true, false, false, false)),
-                List.of(new IcsrCase.Drug(1, "Atorvastatin", "83367", "20 mg daily", null),
-                        new IcsrCase.Drug(2, "Lisinopril", "29046", null, null)),
-                "A 54-year-old woman developed muscle pain <three> weeks after starting atorvastatin.");
+        return E2bSamples.sample();
     }
 
     @Test
@@ -96,5 +81,17 @@ class E2bRoundTripTest {
         E2bValidator.Result r = new E2bValidator(Path.of(dir)).validate(new E2bWriter().write(sample()));
         assertThat(r.errors()).isEmpty();
         assertThat(r.valid()).isTrue();
+    }
+
+    @Test
+    void officialSchemaRejectsABrokenMessage() {
+        // Proves the validation above is not vacuous: the same schema set flags an element the standard lacks.
+        String dir = System.getenv("PV_E2B_XSD_DIR");
+        Assumptions.assumeTrue(dir != null && Files.isDirectory(Path.of(dir)), "ICH schema set not fetched");
+        String broken = new E2bWriter().write(sample())
+                .replaceFirst("<investigationEvent([^>]*)>", "<investigationEvent$1><notAnE2bElement/>");
+        E2bValidator.Result r = new E2bValidator(Path.of(dir)).validate(broken);
+        assertThat(r.outcome()).isEqualTo(E2bValidator.Outcome.INVALID);
+        assertThat(r.errors()).anyMatch(e -> e.contains("notAnE2bElement"));
     }
 }
