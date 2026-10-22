@@ -1,0 +1,217 @@
+{
+  "scope": "synthetic test fixture (invented reports, not FAERS)",
+  "pairs": 425,
+  "trend_pairs": 20,
+  "with_safetyformer": false,
+  "evaluation": {
+    "primary_suspect/omop": {
+      "pairs": 9,
+      "scorable_pairs": 8,
+      "scorable_positives": 3,
+      "scorable_negatives": 5,
+      "unscorable_pairs": 1,
+      "methods": {
+        "prr": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "prr_lo": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ror": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ror_lo": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ic": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ic025": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ebgm": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "eb05": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        }
+      },
+      "drugs_not_found_in_gold": [
+        "Unknownium"
+      ]
+    },
+    "primary_suspect/euadr": {
+      "pairs": 9,
+      "scorable_pairs": 8,
+      "scorable_positives": 3,
+      "scorable_negatives": 5,
+      "unscorable_pairs": 1,
+      "methods": {
+        "prr": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "prr_lo": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ror": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ror_lo": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ic": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ic025": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ebgm": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "eb05": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        }
+      },
+      "drugs_not_found_in_gold": [
+        "Unknownium"
+      ]
+    },
+    "all_roles/omop": {
+      "pairs": 9,
+      "scorable_pairs": 8,
+      "scorable_positives": 3,
+      "scorable_negatives": 5,
+      "unscorable_pairs": 1,
+      "methods": {
+        "prr": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "prr_lo": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ror": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ror_lo": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ic": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ic025": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ebgm": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "eb05": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        }
+      },
+      "drugs_not_found_in_gold": [
+        "Unknownium"
+      ]
+    },
+    "all_roles/euadr": {
+      "pairs": 9,
+      "scorable_pairs": 8,
+      "scorable_positives": 3,
+      "scorable_negatives": 5,
+      "unscorable_pairs": 1,
+      "methods": {
+        "prr": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "prr_lo": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ror": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ror_lo": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ic": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ic025": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "ebgm": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "eb05": {
+          "auc": 1.0,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        }
+      },
+      "drugs_not_found_in_gold": [
+        "Unknownium"
+      ]
+    }
+  },
+  "disclaimer": "Spontaneous reports do not prove that a drug caused a reaction."
+}

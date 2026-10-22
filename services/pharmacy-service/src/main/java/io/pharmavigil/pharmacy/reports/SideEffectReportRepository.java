@@ -10,4 +10,7 @@ public interface SideEffectReportRepository extends JpaRepository<SideEffectRepo
 
     @Query("select r from SideEffectReport r join fetch r.drug join fetch r.patient order by r.createdAt desc")
     List<SideEffectReport> findRecent();
+
+    /** Oldest reports still waiting for the safety platform (the forwarder's work list). */
+    List<SideEffectReport> findTop50ByStatusOrderByIdAsc(SideEffectReport.Status status);
 }
