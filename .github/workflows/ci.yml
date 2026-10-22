@@ -51,6 +51,21 @@ jobs:
         working-directory: services
         run: mvn -B -ntp -Pmssql verify
 
+  e2b-schema-discovery:
+    # Temporary (M7): the build container cannot reach fda.gov or ich.org, so this job lists the official
+    # E2B(R3) schema download links from FDA's guidance page and ICH's page for the fetch script.
+    name: E2B(R3) schema link discovery
+    runs-on: ubuntu-latest
+    steps:
+      - name: List schema links
+        run: |
+          for page in \
+            "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/e2br3-electronic-transmission-individual-case-safety-reports-implementation-guide-data-elements-and" \
+            "https://www.ich.org/page/e2br3-individual-case-safety-report-icsr-specification-and-related-files"; do
+            echo "== $page"
+            curl -sSL -A "Mozilla/5.0" "$page" | grep -oiE 'href="[^"]+"[^<]{0,200}' | grep -iE 'schema|xsd|zip|media/[0-9]+/download' | head -40 || true
+          done
+
   python:
     name: Python (${{ matrix.package }})
     runs-on: ubuntu-latest
