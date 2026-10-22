@@ -1,0 +1,6 @@
+primaryid$caseid$pt$drug_rec_act
+1001$100$Myalgia$
+1002$100$Myalgia$
+1002$100$Rhabdomyolysis$
+2001$200$Rash$
+3001$300$Haemorrhage$

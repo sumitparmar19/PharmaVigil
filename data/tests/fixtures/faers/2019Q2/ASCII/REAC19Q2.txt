@@ -1,0 +1,4 @@
+primaryid$caseid$pt$drug_rec_act
+1003$100$Rhabdomyolysis$
+1003$100$Acute kidney injury$
+4001$400$Headache$

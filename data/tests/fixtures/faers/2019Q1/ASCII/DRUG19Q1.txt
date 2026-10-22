@@ -1,0 +1,7 @@
+primaryid$caseid$drug_seq$role_cod$drugname$prod_ai$val_vbm$route$dose_vbm$cum_dose_chr$cum_dose_unit$dechal$rechal$lot_num$exp_dt$nda_num$dose_amt$dose_unit$dose_form$dose_freq
+1001$100$1$PS$LIPITOR 20MG$ATORVASTATIN CALCIUM$1$ORAL$20 MG$$$$$$$$20$MG$TABLET$QD$
+1002$100$1$PS$LIPITOR 20MG$ATORVASTATIN CALCIUM$1$ORAL$20 MG$$$$$$$$20$MG$TABLET$QD$
+1002$100$2$C$NORCO$ACETAMINOPHEN\HYDROCODONE BITARTRATE$1$ORAL$1 TAB$$$$$$$$1$TAB$TABLET$PRN$
+2001$200$1$PS$AMOXICILLIN 250 MG/5ML$AMOXICILLIN$1$ORAL$5 ML TID, given
+with food$$$$$$$$5$ML$SUSPENSION$TID$
+3001$300$1$PS$WARFARIN$WARFARIN SODIUM$1$ORAL$$$$$$$$$$$$$

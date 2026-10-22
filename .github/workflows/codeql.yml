@@ -3,6 +3,7 @@ name: CodeQL
 
 on:
   push:
+    branches: [main]
   pull_request:
   schedule:
     - cron: "17 3 * * 1"
@@ -26,14 +27,14 @@ jobs:
           - language: javascript-typescript
             build-mode: none
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - if: matrix.language == 'java-kotlin'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
@@ -41,6 +42,6 @@ jobs:
         name: Compile Java
         working-directory: services
         run: mvn -B -ntp -DskipTests compile
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
         with:
           category: /language:${{ matrix.language }}

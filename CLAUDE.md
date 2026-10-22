@@ -84,7 +84,7 @@ analysis/   progress, reports, run outputs (metrics JSON, logs, charts) per mile
 cd services && mvn -B verify
 
 # Python
-cd data && uv venv && uv pip install -e '.[dev]' && .venv/bin/pytest && .venv/bin/ruff check .
+cd data && uv venv && uv pip install -e '.[dev,spark]' && .venv/bin/pytest && .venv/bin/ruff check .
 cd ml   && uv venv && uv pip install -e '.[dev]' && .venv/bin/pytest && .venv/bin/ruff check .
 
 # Frontend

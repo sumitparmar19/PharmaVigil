@@ -8,9 +8,9 @@ the repo.
 
 | # | Milestone | Status | Evidence |
 |---|---|---|---|
-| M0 | Bootstrap, context and rules | in progress | this file, `analysis/M0_REVIEW.md`, CI workflows |
+| M0 | Bootstrap, context and rules | ✅ done (CI green; Dependency review waits on owner step 3) | this file, `analysis/M0_REVIEW.md`, CI workflows |
 | M1 | Legacy audit | **removed by owner** (Amendment 1, item 1) | n/a |
-| M2 | Data platform | pending | |
+| M2 | Data platform | code complete and tested on fixtures; real FAERS/VAERS run pending network (owner step 1); reference sets real | `analysis/m2/refsets.json`, `data/tests/` |
 | M3 | Signal baselines | pending | |
 | M4 | SafetyFormer | pending | |
 | M5 | Coder, triage, duplicates | pending | |
@@ -35,6 +35,44 @@ the repo.
 - Local results before the first push: `mvn -B verify` green (6 modules, 6 tests); `pytest` green in
   `data` and `ml`; frontend typecheck, lint, 2 Vitest tests and build green; gitleaks found no leaks
   in the history.
+
+## M2: data platform
+
+Built (`data/pharmavigil_data/`):
+- `faers/ascii.py`, `faers/bronze.py`: quarter-at-a-time download → Parquet per table → manifest (zip
+  SHA-256, rows, repaired/dropped rows) → raw zip deleted. Handles both the FAERS layout and the legacy
+  AERS layout (`faers/schema.py`), rows broken by embedded newlines, trailing delimiters, and the
+  quarterly deletion lists.
+- `faers/silver.py` (Spark): repeated report keys removed, deleted cases removed, one report per case
+  (case version, then FDA date, then report id), age band, sex, seriousness, outcomes. Returns counts
+  at every step (before/after de-duplication).
+- `rxnorm.py`: RxNav client (exact, then approximate match; reduced to TTY=IN ingredients), SQLite cache,
+  15 requests/s limiter, stops after repeated errors and never caches failures.
+- `faers/gold.py` (Spark): `report`, `report_drug`, `report_reaction`; normalization coverage (all
+  mentions and primary-suspect mentions).
+- `refsets.py`: OMOP and EU-ADR reference sets from OHDSI MethodEvaluation at commit
+  `d7305910f6c6a390a9e423ffc1685a97c017183e`; outcome → PT map in `resources/outcome_pt_map.csv`.
+- `vaers.py`: narratives joined to coder-assigned PTs.
+- `quality.py`, `cli.py` (`pv-data`), `tables.py` (local Delta or Databricks Unity Catalog).
+- Databricks notebooks `data/notebooks/databricks/00–03` for the full 2004Q1 onward run.
+- Dataset cards: `docs/DATASET_CARD_FAERS.md`, `docs/DATASET_CARD_VAERS.md`.
+
+Tests: 42 pytest tests (`data/tests/`), including an end-to-end Spark run over hand-made FAERS and AERS
+fixtures that checks every de-duplication count, the kept versions, derived fields, gold rows and
+coverage, and mocked-API tests for RxNav.
+
+Real data so far:
+- Reference sets (`analysis/m2/refsets.json`): OMOP 399 pairs (165 positive / 234 negative, 4
+  outcomes, 182 drugs); EU-ADR 93 pairs (43 positive / 50 negative, 10 outcomes, 65 drugs).
+
+Pending (blocked hosts, owner step 1): FAERS bronze 2019Q1 onward, de-duplication counts vs FDA's
+published totals, RxNorm normalization coverage, VAERS narratives, data-quality report.
+
+Open checks for the first real run:
+- The RxNav approximate-match score threshold (`APPROXIMATE_MIN_SCORE = 8.0`) is a starting value; it is
+  checked against a sample of real matches before the coverage number is reported.
+- Every PT in `outcome_pt_map.csv` is checked against the FAERS vocabulary (`quality.json` lists any
+  missing).
 
 ## Environment re-tests
 

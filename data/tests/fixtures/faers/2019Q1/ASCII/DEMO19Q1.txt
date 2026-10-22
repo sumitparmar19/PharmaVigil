@@ -1,0 +1,5 @@
+primaryid$caseid$caseversion$i_f_code$event_dt$mfr_dt$init_fda_dt$fda_dt$rept_cod$auth_num$mfr_num$mfr_sndr$lit_ref$age$age_cod$age_grp$sex$e_sub$wt$wt_cod$rept_dt$to_mfr$occp_cod$reporter_country$occr_country
+1001$100$1$I$20190105$$20190110$20190110$EXP$$M-1$MFR$$45$YR$$F$Y$70$KG$20190110$$MD$US$US$
+1002$100$2$F$20190105$$20190110$20190301$EXP$$M-1$MFR$$45$YR$$F$Y$70$KG$20190301$$MD$US$US$
+2001$200$1$I$2018$$20190201$20190201$DIR$$$$$8$MON$$M$N$$$20190201$$CN$US$US$
+3001$300$1$I$201902$$20190215$20190215$EXP$$M-3$MFR$$70$YR$$F$Y$$$20190215$$HP$GB$GB$

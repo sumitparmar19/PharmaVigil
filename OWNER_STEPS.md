@@ -58,5 +58,46 @@ GitHub redirects the old link after a rename, so the build keeps working either 
 
 ---
 
+## 3. Turn on the Dependency graph: OPEN
+
+**Why:** the "Dependency review" check on the pull request fails with "Dependency review is not
+supported on this repository. Please ensure that Dependency graph is enabled". Only the repository
+owner can switch it on.
+
+1. Open https://github.com/sumitparmar19/Pharmacy-Managment/settings/security_analysis
+2. Find **Dependency graph**.
+3. Click **Enable**.
+4. Open the pull request, click the **Checks** tab, select **Dependency review**, and click
+   **Re-run jobs**.
+
+**Send back to the planning chat:** whether the Dependency review check is green after the re-run.
+
+---
+
+## 4. Run the full FAERS history on Databricks Free Edition: OPEN
+
+**Why:** the full 2004Q1 onward history is too large for the build container. The same code runs on
+Databricks as notebooks.
+
+1. Open https://www.databricks.com/learn/free-edition and click **Sign up**. Use your UB email.
+2. After the workspace opens, click **Workspace** in the left sidebar.
+3. Click **Create** → **Git folder**.
+4. In **Git repository URL**, paste `https://github.com/sumitparmar19/Pharmacy-Managment` and click
+   **Create Git folder**.
+5. In the Git folder, open `data` → `notebooks` → `databricks` → `00_setup_and_check`.
+6. At the top, set the **git_ref** box to `claude/determined-wozniak-8tf7pa` (until the pull request
+   is merged, then `main`).
+7. Click **Run all**. When it finishes, the last cell shows three status lines.
+8. If all three show `200`, open `01_faers_bronze`, set **git_ref** the same way, set **last** to the
+   newest quarter listed at https://fis.fda.gov/extensions/FPD-QDE-FAERS/FPD-QDE-FAERS.html, and click
+   **Run all**. If it stops on a time-out, click **Run all** again; finished quarters are skipped.
+9. Open `02_faers_silver_gold`, set **git_ref**, click **Run all**.
+10. Open `03_export_for_training`, click **Run all**.
+
+**Send back to the planning chat:** the three status lines from step 7, and the JSON printed by the
+last cell of `02_faers_silver_gold`.
+
+---
+
 *More steps are added as milestones need them (Databricks, Kaggle, MedDRA licence, narrative labels,
 Azure, Grafana Cloud, GitHub secrets, release tags).*

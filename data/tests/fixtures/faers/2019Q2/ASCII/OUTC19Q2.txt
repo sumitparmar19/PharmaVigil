@@ -1,0 +1,3 @@
+primaryid$caseid$outc_cod
+1003$100$HO
+1003$100$LT

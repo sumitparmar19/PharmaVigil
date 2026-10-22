@@ -1,0 +1,55 @@
+outcome_name,pt
+OMOP Acute Liver Failure 1,acute hepatic failure
+OMOP Acute Liver Failure 1,subacute hepatic failure
+OMOP Acute Liver Failure 1,hepatic failure
+OMOP Acute Liver Failure 1,hepatitis fulminant
+OMOP Acute Liver Failure 1,hepatic necrosis
+OMOP Acute Liver Failure 1,hepatotoxicity
+OMOP Acute Liver Failure 1,drug-induced liver injury
+OMOP Acute Liver Failure 1,liver injury
+OMOP Acute Liver Failure 1,hepatocellular injury
+OMOP Acute Liver Failure 1,cholestatic liver injury
+OMOP Acute Liver Failure 1,mixed liver injury
+OMOP Acute Liver Failure 1,hepatitis acute
+OMOP Acute Liver Failure 1,hepatitis cholestatic
+OMOP Acute myocardial Infarction  1,acute myocardial infarction
+OMOP Acute myocardial Infarction  1,myocardial infarction
+OMOP Acute myocardial Infarction  1,silent myocardial infarction
+OMOP Acute Renal Failure 1,acute kidney injury
+OMOP Acute Renal Failure 1,renal failure
+OMOP Acute Renal Failure 1,renal tubular necrosis
+OMOP Acute Renal Failure 1,nephropathy toxic
+OMOP Acute Renal Failure 1,prerenal failure
+OMOP Acute Renal Failure 1,anuria
+HOI Upper GI #3,upper gastrointestinal haemorrhage
+HOI Upper GI #3,gastrointestinal haemorrhage
+HOI Upper GI #3,gastric haemorrhage
+HOI Upper GI #3,gastric ulcer haemorrhage
+HOI Upper GI #3,duodenal ulcer haemorrhage
+HOI Upper GI #3,peptic ulcer haemorrhage
+HOI Upper GI #3,gastroduodenal haemorrhage
+HOI Upper GI #3,oesophageal haemorrhage
+HOI Upper GI #3,haematemesis
+HOI Upper GI #3,melaena
+Anaphylaxis #1,anaphylactic reaction
+Anaphylaxis #1,anaphylactic shock
+Anaphylaxis #1,anaphylactoid reaction
+Anaphylaxis #1,anaphylactoid shock
+OMOP Aplastic Anemia 1,aplastic anaemia
+OMOP Aplastic Anemia 1,bone marrow failure
+Leukopenia Including Neutropenia and Agranulocytosis,leukopenia
+Leukopenia Including Neutropenia and Agranulocytosis,neutropenia
+Leukopenia Including Neutropenia and Agranulocytosis,agranulocytosis
+Leukopenia Including Neutropenia and Agranulocytosis,febrile neutropenia
+Leukopenia Including Neutropenia and Agranulocytosis,neutrophil count decreased
+Leukopenia Including Neutropenia and Agranulocytosis,white blood cell count decreased
+Stevens-Johnson Syndrome #1,stevens-johnson syndrome
+Stevens-Johnson Syndrome #1,toxic epidermal necrolysis
+Stevens-Johnson Syndrome #1,sjs-ten overlap
+Rhabdomyolysis #1,rhabdomyolysis
+Rhabdomyolysis #1,myoglobinuria
+Cardiac Valve Fibrosis #1,cardiac valve fibrosis
+Cardiac Valve Fibrosis #1,cardiac valve disease
+Cardiac Valve Fibrosis #1,aortic valve incompetence
+Cardiac Valve Fibrosis #1,mitral valve incompetence
+Cardiac Valve Fibrosis #1,tricuspid valve incompetence
