@@ -15,7 +15,11 @@ export PV_REPO_PATH="$(git rev-parse --show-toplevel)"
 export PV_GIT_REF="$(git rev-parse HEAD)"
 AUTH="admin:$JENKINS_ADMIN_PASSWORD"
 JAR=$(mktemp)
-trap 'rm -f "$JAR"; docker compose down -v >/dev/null 2>&1 || true' EXIT
+# Jenkins fetches refs/heads/* only; a pull request's checkout is a detached merge commit on no branch, so a
+# temporary branch makes the commit reachable for that fetch.
+RUN_BRANCH=pv-jenkins-run
+git branch -f "$RUN_BRANCH" HEAD
+trap 'rm -f "$JAR"; git branch -D "$RUN_BRANCH" >/dev/null 2>&1 || true; docker compose down -v >/dev/null 2>&1 || true' EXIT
 
 docker compose up -d --build
 echo "waiting for Jenkins and the pharmavigil job"
