@@ -140,7 +140,8 @@ typed by the owner, never by Terraform.
 
 ## 7. Owner steps still open (in order)
 
-From `OWNER_STEPS.md`: 1 network access re-check → 3 Dependency graph → 4 FAERS on Databricks → 5 SafetyFormer on
+From `OWNER_STEPS.md` (step 3, Dependency graph, is done): 1 network access re-check → 13 confirm the two CodeQL
+alerts are closed → 4 FAERS on Databricks → 5 SafetyFormer on
 Kaggle → 6 coder on Kaggle → 7 label 50 narratives → 8 MedDRA licence → 9 Azure for a day (`docs/AZURE.md`) →
 10 optional Claude narratives → 11 optional Grafana Cloud → 12 v1.0 release after merge.
 

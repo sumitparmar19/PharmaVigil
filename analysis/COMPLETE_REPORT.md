@@ -24,31 +24,32 @@ deploy everything. Part F lists what the planning chat should check.
 
 ## Part A. Is the pull request ready to merge?
 
-**Yes for the code, with two checks that only Sumit can turn green.** All code-related checks pass on the
-current head. The two red checks are repository settings and owner decisions, not code failures.
+**Yes.** Every check is green on commit `6cd7b95` (17 check runs; *Azure plan* is skipped by design). GitHub
+reports the pull request as mergeable with no conflicts. The only remaining condition is the planning chat's
+review of this report.
 
-### A1. Checks on the PR head (`b18a556`, plus the report commit that adds this file)
+### A1. Checks on the PR head (`6cd7b95`, the commit that added this report; later commits change only documents)
 
 | Check | Result | Run / evidence |
 |---|---|---|
-| CI · Java (Maven verify, Oracle Database Free, official E2B(R3) schemas) | ✅ | run 40062510903 |
-| CI · Java on SQL Server (portability profile) | ✅ | run 40062510903 |
-| CI · E2B(R3) export against the official schemas | ✅ | run 40062510903 |
-| CI · Python (data), Python (ml) | ✅ | run 40062510903 |
-| CI · Frontend (typecheck, lint, Vitest, build) | ✅ | run 40062510903 |
-| CI · Full stack (docker compose + Playwright) | ✅ | run 40062510903 |
-| CI · Azure Terraform (fmt, validate, test, Checkov) | ✅ | run 40062510903 |
-| CI · Secret scan (gitleaks, full history) | ✅ | run 40062510903 |
-| CodeQL analysis (Java, Python, TypeScript) | ✅ | run 40062510896 |
-| Kubernetes e2e (kind) | ✅ | run 40062510902 (and 40059501640 on `1c14a94`) |
-| Jenkins pipeline (headless) | ✅ on `1c14a94` (run 40059501594); re-running on the newest head | `analysis/m10/jenkins-run.log` |
+| CI · Java (Maven verify, Oracle Database Free, official E2B(R3) schemas) | ✅ | run 40063279665 |
+| CI · Java on SQL Server (portability profile) | ✅ | run 40063279665 |
+| CI · E2B(R3) export against the official schemas | ✅ | run 40063279665 |
+| CI · Python (data), Python (ml) | ✅ | run 40063279665 |
+| CI · Frontend (typecheck, lint, Vitest, build) | ✅ | run 40063279665 |
+| CI · Full stack (docker compose + Playwright) | ✅ | run 40063279665 |
+| CI · Azure Terraform (fmt, validate, test, Checkov) | ✅ | run 40063279665 |
+| CI · Secret scan (gitleaks, full history) | ✅ | run 40063279665 |
+| CodeQL analysis (Java, Python, TypeScript) | ✅ | run 40063279680 |
+| CodeQL (code-scanning result) | ✅ "No new alerts in code changed by this pull request" (it was red earlier for the two alerts in A2) | check 120781254274 |
+| Kubernetes e2e (kind) | ✅ | run 40063279659 (also 40059501640 on `1c14a94`) |
+| Jenkins pipeline (headless) | ✅ | run 40063279684 (log committed from run 40059501594 on `1c14a94`, `analysis/m10/jenkins-run.log`) |
+| Dependency review | ✅ after the Dependency graph was switched on (owner step 3) | run 40063279746 |
 | Azure plan | skipped (by design until owner step 9 sets the Azure variables) | — |
-| **Dependency review** | ❌ "Dependency review is not supported on this repository" | owner step 3: switch on Dependency graph |
-| **CodeQL (code-scanning alerts)** | ❌ 2 open alerts, both judged false positives (A2) | owner step 13: dismiss or ask for a change |
 
 GitHub reports the PR as mergeable with no conflicts (`mergeable_state: clean`).
 
-### A2. The two CodeQL alerts (open since 22 Oct, replied to on the PR, left for Sumit to decide)
+### A2. The two CodeQL alerts (raised 22 Oct, replied to on the PR; the check is green now)
 
 1. **"Clear-text logging of sensitive information"**, `data/notebooks/databricks/02_faers_silver_gold.py:56`.
    The line prints the evidence JSON that owner step 4 asks you to copy. Every value is an aggregate over public
@@ -61,7 +62,7 @@ GitHub reports the PR as mergeable with no conflicts (`mergeable_state: clean`).
    Spring Security's documented setting for bearer-token APIs. If a cookie session is ever added, CSRF must
    return.
 
-Recommendation: dismiss both (step 13 in Part E). If the planning chat prefers code changes instead, say so and
+Recommendation: keep both as dismissed or closed (step 13 in Part E checks that). If the planning chat prefers code changes instead, say so and
 they will be made.
 
 ### A3. What "complete" means here and what it does not
@@ -354,12 +355,11 @@ Each item says where the detailed click-by-click steps are. Never send a secret 
 ### E1. Review and merge
 
 1. Send this report to the planning chat and wait for its review.
-2. **Step 3 (Dependency graph):** open https://github.com/sumitparmar19/PharmaVigil/settings/security_analysis →
-   **Dependency graph** → **Enable**. Then on the PR: **Checks** → **Dependency review** → **Re-run jobs**.
-3. **Step 13 (CodeQL alerts):** if the planning chat agrees with A2, open the PR → **Files changed**, or
-   **Security → Code scanning**, open each of the two alerts → **Dismiss alert** → reason **False positive**
-   (logging alert) and **Won't fix** (CSRF alert, comment: "stateless bearer-token API, no cookies").
-4. When the checks are green: on the PR click **Merge pull request** → **Confirm merge**.
+2. **Step 3 (Dependency graph):** done; *Dependency review* is green.
+3. **Step 13 (CodeQL alerts):** the CodeQL check is green. Open **Security → Code scanning** and check that
+   neither alert is still open; if one is, open it → **Dismiss alert** → **False positive** (logging alert) or
+   **Won't fix** (CSRF alert, comment: "stateless bearer-token API, no cookies").
+4. After the planning chat approves: on the PR click **Merge pull request** → **Confirm merge**.
 5. **Step 12:** create the `v1.0` release (`OWNER_STEPS.md` step 12).
 
 ### E2. Run everything on your own computer (no cloud needed)

@@ -58,7 +58,9 @@ The steps are kept for the record.
 
 ---
 
-## 3. Turn on the Dependency graph: OPEN
+## 3. Turn on the Dependency graph: DONE
+
+**Done:** the Dependency review check passed on `6cd7b95` (run 40063279746).
 
 **Why:** the "Dependency review" check on the pull request fails with "Dependency review is not
 supported on this repository. Please ensure that Dependency graph is enabled". Only the repository
@@ -228,7 +230,7 @@ a copy you can show without running the stack (it shows data only while a Promet
 
 **Send back to the planning chat:** the release URL.
 
-## 13. Decide on the two CodeQL alerts: OPEN
+## 13. Decide on the two CodeQL alerts: OPEN (the check is green; confirm the alerts' state)
 
 **Why:** the "CodeQL" check on the pull request is red because of two alerts that Claude Code judged false
 positives (reasons in `analysis/COMPLETE_REPORT.md`, part A2, and in the replies on the pull request). Only the
