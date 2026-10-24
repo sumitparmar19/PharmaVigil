@@ -95,3 +95,31 @@ def test_versions_keep_every_case_version(built, spark) -> None:
     # No RxNorm map table was saved in this fixture, so drugs fall back to their name keys.
     assert rows["FAERS:1003"]["drugs"] == ["name:ATORVASTATIN CALCIUM"]
     assert rows["FAERS:1002"]["pts"] == ["myalgia", "rhabdomyolysis"]
+
+
+def test_demo_slice_and_p1_counts(built, spark, tmp_path) -> None:
+    """Phase 2: the replay sample keeps only the listed fields of real de-duplicated cases from the chosen
+    quarters (one line per case, with drugs and reactions); the P1 counts agree with the de-duplication."""
+    import json
+
+    from pharmavigil_data.demo_slice import build_demo_slice, data_counts
+
+    meta = build_demo_slice(spark, tmp_path / "demo", ["2019Q2"], 50)
+    rows = [json.loads(line) for line in (tmp_path / "demo" / "replay_reports.jsonl").read_text().splitlines()]
+    assert meta["written"] == len(rows) > 0 and meta["requested"] == 50
+    assert {r["quarter"] for r in rows} == {"2019Q2"}
+    assert len({r["faers_caseid"] for r in rows}) == len(rows)
+    for r in rows:
+        assert set(r) == {"faers_primaryid", "faers_caseid", "quarter", "fda_date", "event_date", "age_years", "sex",
+                          "reporter_type", "country", "outcomes", "drugs", "reactions"}
+        assert r["reporter_type"] in {"PHYSICIAN", "PHARMACIST", "OTHER_HCP", "LAWYER", "CONSUMER"}
+        assert r["drugs"] and all(d["role"] in {"PS", "SS", "C", "I"} for d in r["drugs"])
+        assert r["reactions"] and all(pt == pt.lower() for pt in r["reactions"])
+    assert len(meta["sha256"]) == 64
+
+    counts = data_counts(spark, "fixture scope")
+    assert counts["quarters"] == ["2012Q3", "2019Q1", "2019Q2"]
+    assert counts["unique_cases_after_dedup"] == 4
+    assert counts["faers_report_rows"] == sum(b["demo_rows"] for b in counts["bronze_quarters_with_zip_sha256"])
+    assert counts["drug_mentions_mapped_to_rxnorm"] <= counts["drug_mentions"]
+    assert counts["scope"] == "fixture scope"

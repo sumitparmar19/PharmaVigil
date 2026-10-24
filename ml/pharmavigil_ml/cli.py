@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from datetime import date
 from pathlib import Path
@@ -144,6 +145,17 @@ def cmd_export_signals(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_p4(args: argparse.Namespace) -> int:
+    from .p4 import run
+
+    result = run(Path(args.gold), Path(args.versions), Path(args.encoder), Path(args.out), Path(args.models_dir),
+                 Path(args.bundle), args.scope, date.fromisoformat(args.test_from), args.triage_sample,
+                 args.dup_sample_cases, args.coder_labels, args.coder_threshold)
+    print(json.dumps({"triage": result["triage"].get("pr_auc"), "duplicates": result["duplicates"].get("pr_auc"),
+                      "bundle_files": len(result["bundle_files"])}, default=str))
+    return 0
+
+
 def cmd_java_bundle(args: argparse.Namespace) -> int:
     from .export.java_bundle import fixture_bundle
 
@@ -229,6 +241,21 @@ def build_parser() -> argparse.ArgumentParser:
     es.add_argument("--refsets", help="folder with omop.parquet / euadr.parquet (adds the reference badge)")
     es.add_argument("--outcome-map", default=str(DEFAULT_OUTCOME_MAP))
     es.set_defaults(func=cmd_export_signals)
+
+    p4 = sub.add_parser("p4", help="Phase 2: triage + duplicates on real FAERS, zero-shot coder, trained bundle")
+    p4.add_argument("--gold", default=str(DEFAULT_LAKE / "gold" / "faers"))
+    p4.add_argument("--versions", default=str(DEFAULT_LAKE / "silver" / "faers" / "versions"))
+    p4.add_argument("--encoder", default=str(REPO / "ml" / "artifacts" / "encoders" / "pubmedbert-base-embeddings"))
+    p4.add_argument("--out", default=str(REPO / "analysis" / "p4"))
+    p4.add_argument("--models-dir", default=str(REPO / "ml" / "artifacts" / "p4"))
+    p4.add_argument("--bundle", default=str(REPO / "ml" / "artifacts" / "bundle"))
+    p4.add_argument("--scope", required=True)
+    p4.add_argument("--test-from", required=True)
+    p4.add_argument("--triage-sample", type=int, default=2_000_000)
+    p4.add_argument("--dup-sample-cases", type=int, default=300_000)
+    p4.add_argument("--coder-labels", type=int, default=3000)
+    p4.add_argument("--coder-threshold", type=float, default=0.97)
+    p4.set_defaults(func=cmd_p4)
 
     jb = sub.add_parser("java-bundle", help="M8: tiny synthetic model bundle for the Java case-service tests")
     jb.add_argument("--out", required=True)

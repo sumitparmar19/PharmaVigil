@@ -27,11 +27,23 @@ network *and* memory use for 7 days; the demo's steady-state memory use (below) 
 Every container has an explicit limit; the Java services run with `-XX:MaxRAMPercentage=60` and the serial GC,
 Kafka with a 384 MB heap, Artemis with 256 MB.
 
-| Container | Limit | Measured (idle) | Measured (during a 200-report replay) |
-|---|---|---|---|
-| MEASURED_ROWS |
+| Container | Limit |
+|---|---|
+| oracle | 2,800 MiB |
+| kafka | 768 MiB |
+| artemis | 512 MiB |
+| pharmacy-service | 512 MiB |
+| intake-gateway | 576 MiB |
+| case-service | 1,280 MiB |
+| signal-service | 640 MiB |
+| submission-gateway | 512 MiB |
+| frontend (nginx) | 96 MiB |
+| prometheus | 320 MiB |
+| grafana | 320 MiB |
+| caddy | 128 MiB |
+| **total of the limits** | **8,464 MiB (8.3 GiB)** |
 
-Total of the limits: LIMIT_TOTAL. Scope of the measurement: MEASURE_SCOPE.
+Measured usage (idle and during a replay) is added here from `analysis/p6/` once measured; not measured yet.
 
 ## Deploy, roll back, reset
 

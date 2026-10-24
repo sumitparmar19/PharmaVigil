@@ -51,7 +51,7 @@ public class StatusController {
             @Value("${pv.status.peers:pharmacy-service=http://pharmacy-service:8081,"
                     + "intake-gateway=http://intake-gateway:8082,signal-service=http://signal-service:8084,"
                     + "submission-gateway=http://submission-gateway:8085}") String peers,
-            @Value("${spring.kafka.bootstrap-servers}") String bootstrap) {
+            @Value("${spring.kafka.bootstrap-servers:localhost:9092}") String bootstrap) {
         this.bundle = bundle;
         this.clock = clock;
         this.peers = new LinkedHashMap<>();
