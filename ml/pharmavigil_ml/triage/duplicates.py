@@ -125,11 +125,22 @@ def train_duplicates(versions: pd.DataFrame, out_dir: Path, scope: str = "", rou
     return DuplicateResult(metrics, booster, x_te)
 
 
-def load_versions(path: Path) -> pd.DataFrame:
-    """Read the silver `versions` table (Delta folder or Parquet export)."""
+def load_versions(path: Path, sample_cases: int | None = None, seed: int = 13) -> pd.DataFrame:
+    """Read the silver `versions` table (Delta folder or Parquet export). With `sample_cases`, only the versions
+    of that many randomly chosen cases are read: the case ids are read first and the rest is filtered while
+    reading, so the full table (12.8M versions with drug and PT lists) never has to fit in memory."""
+    import pyarrow.compute as pc
+    import pyarrow.dataset as ds
+
     if (path / "_delta_log").exists():
         from deltalake import DeltaTable
 
-        return DeltaTable(str(path)).to_pandas()
-    return pd.read_parquet(path)
+        dataset = DeltaTable(str(path)).to_pyarrow_dataset()
+    else:
+        dataset = ds.dataset(str(path), format="parquet")
+    if not sample_cases:
+        return dataset.to_table().to_pandas()
+    ids = pd.Series(pc.unique(dataset.to_table(columns=["caseid"])["caseid"]).to_pylist())
+    keep = ids.sample(min(sample_cases, len(ids)), random_state=seed)
+    return dataset.to_table(filter=ds.field("caseid").isin(keep.tolist())).to_pandas()
 
