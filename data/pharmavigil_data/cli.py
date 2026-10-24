@@ -234,7 +234,9 @@ def cmd_p1_counts(args: argparse.Namespace) -> int:
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(data_counts(get_spark(), args.scope), indent=2, default=str))
+    cov = ANALYSIS_DIR / "normalization_coverage.json"
+    coverage = json.loads(cov.read_text())["normalization_coverage"] if cov.exists() else None
+    out.write_text(json.dumps(data_counts(get_spark(), args.scope, coverage), indent=2, default=str))
     print(f"wrote {out}")
     return 0
 

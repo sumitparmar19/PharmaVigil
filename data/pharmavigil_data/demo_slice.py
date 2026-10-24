@@ -31,8 +31,10 @@ def _gold(spark: SparkSession) -> tuple[DataFrame, DataFrame, DataFrame]:
             read_table(spark, "gold", "faers", "report_reaction"))
 
 
-def data_counts(spark: SparkSession, scope: str) -> dict[str, object]:
-    """Counts at every layer, with the quarters loaded and each source zip's SHA-256."""
+def data_counts(spark: SparkSession, scope: str, coverage: dict[str, object] | None = None) -> dict[str, object]:
+    """Counts at every layer, with the quarters loaded and each source zip's SHA-256. Gold keeps one row per
+    (drug mention, RxNorm ingredient), so a combination product gives several rows; mention-level RxNorm coverage
+    comes from the gold step's own count (`coverage`, analysis/m2/normalization_coverage.json)."""
     report, drug, reaction = _gold(spark)
     bronze = manifest_summary()
     ps = drug.where((F.col("role") == "PS") & F.col("rxcui").isNotNull()).select("primaryid", "ingredient")
@@ -44,8 +46,9 @@ def data_counts(spark: SparkSession, scope: str) -> dict[str, object]:
         "quarters": [b["quarter"] for b in bronze],
         "faers_report_rows": sum(int(b["demo_rows"]) for b in bronze),
         "unique_cases_after_dedup": report.count(),
-        "drug_mentions": drug.count(),
-        "drug_mentions_mapped_to_rxnorm": drug.where(F.col("rxcui").isNotNull()).count(),
+        "gold_drug_ingredient_rows": drug.count(),
+        "drug_mentions_mapped_to_rxnorm": drug.select("primaryid", "mention_id").distinct().count(),
+        "rxnorm_coverage_of_drug_mentions": coverage,
         "distinct_ingredients": drug.where(F.col("rxcui").isNotNull()).select("rxcui").distinct().count(),
         "reaction_rows": reaction.count(),
         "distinct_pts": reaction.select("pt").distinct().count(),

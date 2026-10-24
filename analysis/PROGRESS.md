@@ -22,6 +22,35 @@ the repo.
 | M11 | Azure infrastructure (code only) | ✅ validated (fmt, validate, terraform test, Checkov) locally and in CI; never applied (owner step 9) | `infra/azure`, `docs/AZURE.md` |
 | M12 | Docs, evidence, report | ✅ done | README, ADRs 1–10, `analysis/PROJECT_REPORT.md`, `analysis/COMPLETE_REPORT.md`, `RESUME_EVIDENCE.md`, `INTERVIEW_PREP.md` |
 
+## Phase 2 (real data, live demo, proof)
+
+| # | Step | Status | Evidence |
+|---|---|---|---|
+| P0 | Network re-test, housekeeping | ✅ done | "Start of Phase 2 (P0)" below |
+| P1 | Real FAERS through bronze → silver → gold, demo slice | ✅ done (VAERS waits on owner step 14) | `analysis/p1/data_counts.json`, `analysis/m2/*.json` |
+
+### P1: real FAERS (subset: FAERS 2019Q1–2026Q2)
+
+All numbers from `analysis/p1/data_counts.json` and `analysis/m2/` (written by the pipeline; nothing typed by hand).
+
+- 30 quarterly ASCII zips from fis.fda.gov (2019Q1–2026Q2), each zip's SHA-256 in `data_counts.json`
+  (`bronze_run.json` lists the first 29; 2026Q2 was loaded on its own when FDA published it).
+- 12,902,877 report rows → 12,902,673 unique report keys → 12,837,383 after FDA's deleted-case lists →
+  **10,848,477 unique cases** (latest version of each case). 12,837,383 report versions feed the duplicate model.
+- RxNorm: the 20,000 most frequent drug-name keys (99.2% of 46,107,190 mentions in silver) looked up in RxNav
+  (7,196 exact, 8,221 approximate, 4,583 not found; 45,179 API calls, cached). In the de-duplicated cases
+  40,904,129 of 41,528,250 drug mentions (98.5%) map to an ingredient; primary-suspect drugs 99.96%.
+- Gold: 4,182 ingredients, 22,231 preferred terms, 32,183,623 reaction rows, 1,921,617 distinct primary-suspect
+  drug–event pairs (5,255,053 with any role); 57.1% of cases are serious by FDA's outcome codes.
+- Gold keeps one row per (mention, ingredient), so combination products give several rows (44,605,375 rows);
+  the first counts run labelled that number "drug mentions", which was wrong and was fixed before committing.
+- Demo slice: 5,000 de-duplicated cases from 2026Q2 (seed 20260), structured fields only, no free text;
+  `replay_reports.jsonl` SHA-256 ff09fa855d8174ce6b53ae98b5a2a2bc18270f9b886bccfae315c5b3fc939fe9. It ships in the
+  demo-data archive, not in git.
+- Not done: VAERS 2019–2025. vaers.hhs.gov serves the data files only after a CAPTCHA, which must not be
+  bypassed; owner step 14 asks Sumit to download the zips by hand.
+- Run time on the build container (4 CPUs, 15 GiB): silver 6 min, RxNorm lookups 60 min, gold 6 min, counts 2 min.
+
 ## M0: bootstrap
 
 - Removed the previous application's files in one commit (`M0: start PharmaVigil fresh`).

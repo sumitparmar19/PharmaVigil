@@ -121,5 +121,5 @@ def test_demo_slice_and_p1_counts(built, spark, tmp_path) -> None:
     assert counts["quarters"] == ["2012Q3", "2019Q1", "2019Q2"]
     assert counts["unique_cases_after_dedup"] == 4
     assert counts["faers_report_rows"] == sum(b["demo_rows"] for b in counts["bronze_quarters_with_zip_sha256"])
-    assert counts["drug_mentions_mapped_to_rxnorm"] <= counts["drug_mentions"]
+    assert 0 < counts["drug_mentions_mapped_to_rxnorm"] <= counts["gold_drug_ingredient_rows"]
     assert counts["scope"] == "fixture scope"
