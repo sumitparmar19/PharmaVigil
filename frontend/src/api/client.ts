@@ -2,7 +2,7 @@
 // nginx container route them to the right service), carry the bearer token, and turn RFC 7807 problem details
 // into ApiError so pages can show the server's explanation.
 import type {
-  CaseDetail, DispenseResponse, Drug, Patient, Prescription, QueueItem, ReportView, ReviewResult, Seriousness,
+  CaseDetail, DemoCase, DemoInfo, DemoRun, DemoStages, DispenseResponse, Evidence, Drug, Patient, Prescription, QueueItem, ReportView, ReviewResult, Seriousness,
   Session, SignalMeta, SignalMethod, SubmissionView, TopSignals, Trend,
 } from "./types";
 
@@ -28,8 +28,8 @@ export class ApiClient {
     this.fetchImpl = fetchImpl;
   }
 
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const headers: Record<string, string> = { Accept: "application/json" };
+  private async request<T>(method: string, path: string, body?: unknown, accept = "application/json"): Promise<T> {
+    const headers: Record<string, string> = { Accept: accept };
     const token = this.token();
     if (token) headers.Authorization = `Bearer ${token}`;
     if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -52,6 +52,7 @@ export class ApiClient {
     }
     if (res.status === 204) return undefined as T;
     const text = await res.text();
+    if (accept !== "application/json") return text as T;
     return (text ? JSON.parse(text) : undefined) as T;
   }
 
@@ -108,8 +109,31 @@ export class ApiClient {
   submit(id: number) {
     return this.request<SubmissionView>("POST", `/api/cases/${id}/submit`);
   }
+  e2bXml(id: number) {
+    return this.request<string>("GET", `/api/cases/${id}/e2b`, undefined, "application/xml");
+  }
   submissions(id: number) {
     return this.request<SubmissionView[]>("GET", `/api/cases/${id}/submissions`);
+  }
+
+  // demo mode (Phase 2): public account info, the replay run and its per-stage counters
+  demoInfo() {
+    return this.request<DemoInfo>("GET", "/api/auth/demo");
+  }
+  startDemoRun(size: number) {
+    return this.request<DemoRun>("POST", "/api/intake/demo/runs", { size });
+  }
+  demoRun(runId: string) {
+    return this.request<DemoRun>("GET", `/api/intake/demo/runs/${runId}`);
+  }
+  demoStages(runId: string) {
+    return this.request<DemoStages>("GET", `/api/cases/demo/runs/${runId}`);
+  }
+  demoCases(runId: string) {
+    return this.request<DemoCase[]>("GET", `/api/cases/demo/runs/${runId}/cases`);
+  }
+  evidence() {
+    return this.request<Evidence>("GET", "/evidence.json");
   }
 
   // signal-service
@@ -119,6 +143,9 @@ export class ApiClient {
   trend(rxcui: string, pt: string) {
     return this.request<Trend>("GET",
       `/api/signals/trend?rxcui=${encodeURIComponent(rxcui)}&pt=${encodeURIComponent(pt)}`);
+  }
+  searchSignals(q: string, limit = 50) {
+    return this.request<TopSignals>("GET", `/api/signals/search?q=${encodeURIComponent(q)}&limit=${limit}`);
   }
   signalMeta() {
     return this.request<SignalMeta>("GET", "/api/signals/meta");

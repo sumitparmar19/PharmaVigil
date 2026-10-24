@@ -1,0 +1,73 @@
+# Builds the images of the five services and the UI for linux/amd64 and linux/arm64 (the live demo runs on an
+# arm64 Oracle Cloud VM) and, on main, pushes them to GHCR as ghcr.io/sumitparmar19/pharmavigil-<name>, tagged with
+# the commit SHA and "demo". On pull requests the same images are built but not pushed, so a broken image is
+# caught before merge. The "Deploy demo" workflow then rolls the new tag out (docs/DEMO_HOSTING.md).
+name: Demo images
+
+on:
+  push:
+    branches: [main]
+    paths: ["services/**", "frontend/**", ".github/workflows/demo-images.yml"]
+  pull_request:
+    paths: ["services/**", "frontend/**", ".github/workflows/demo-images.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: demo-images-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io/sumitparmar19
+  PUSH: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+
+jobs:
+  images:
+    name: Multi-arch images (amd64 + arm64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build the service jars (and copy the OpenTelemetry agent)
+        working-directory: services
+        run: mvn -B -ntp -DskipTests package
+      - uses: docker/setup-qemu-action@v4
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v3
+        if: env.PUSH == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build (and on main push) the service images
+        run: |
+          for s in pharmacy-service intake-gateway case-service signal-service submission-gateway; do
+            tags="--tag $REGISTRY/pharmavigil-$s:${GITHUB_SHA::12} --tag $REGISTRY/pharmavigil-$s:demo"
+            out=$([ "$PUSH" = "true" ] && echo "--push" || echo "--output=type=cacheonly")
+            docker buildx build --platform linux/amd64,linux/arm64 -f services/Dockerfile --build-arg SERVICE=$s \
+              --label org.opencontainers.image.source=https://github.com/${{ github.repository }} \
+              $tags $out services
+          done
+      - name: Build (and on main push) the UI image
+        run: |
+          tags="--tag $REGISTRY/pharmavigil-frontend:${GITHUB_SHA::12} --tag $REGISTRY/pharmavigil-frontend:demo"
+          out=$([ "$PUSH" = "true" ] && echo "--push" || echo "--output=type=cacheonly")
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --label org.opencontainers.image.source=https://github.com/${{ github.repository }} \
+            $tags $out frontend
+      - name: Summary
+        run: |
+          echo "### Images (${GITHUB_SHA::12}, pushed: $PUSH)" >> "$GITHUB_STEP_SUMMARY"
+          for s in pharmacy-service intake-gateway case-service signal-service submission-gateway frontend; do
+            echo "- \`$REGISTRY/pharmavigil-$s:${GITHUB_SHA::12}\` (linux/amd64, linux/arm64)" >> "$GITHUB_STEP_SUMMARY"
+          done

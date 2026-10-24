@@ -206,10 +206,12 @@ export interface Signal {
   eb05: number | null;
   eb95: number | null;
   safetyformer: number | null;
+  /** Reference-set label of the pair, e.g. "OMOP positive"; null when the pair is in no reference set. */
+  reference?: string | null;
 }
 
 export interface TopSignals {
-  method: SignalMethod;
+  method: SignalMethod | "search";
   scope: string | null;
   signals: Signal[];
   disclaimer: string;
@@ -235,4 +237,67 @@ export interface SignalMeta {
   evaluation: Record<string, unknown> | null;
   warningEb05: number;
   disclaimer: string;
+}
+
+// demo mode (Phase 2)
+export interface DemoInfo {
+  enabled: boolean;
+  password?: string;
+  accounts?: { username: string; role: string }[];
+}
+
+export interface DemoRun {
+  runId: string;
+  account: string;
+  startedAt: string;
+  finishedAt: string | null;
+  size: number;
+  sent: number;
+  accepted: number;
+  rejected: number;
+  viaSoap: number;
+  viaRest: number;
+  errors: string[];
+}
+
+export interface DemoStages {
+  runId: string;
+  received: number;
+  deduplicated: number;
+  codedByModel: number;
+  manualCoding: number;
+  triaged: number;
+  serious: number;
+  approved: number;
+  submitted: number;
+  acknowledged: number;
+  rejected: number;
+  possibleDuplicates: number;
+}
+
+export interface DemoCase {
+  id: number;
+  caseNumber: string;
+  status: CaseStatus;
+  seriousness: Seriousness;
+}
+
+export interface EvidenceItem {
+  label: string;
+  value: string;
+  scope: string;
+  file: string;
+  status: "measured" | "pending";
+  note?: string;
+}
+
+export interface EvidenceSection {
+  title: string;
+  items: EvidenceItem[];
+}
+
+export interface Evidence {
+  generatedAt: string;
+  repository: string;
+  sections: EvidenceSection[];
 }

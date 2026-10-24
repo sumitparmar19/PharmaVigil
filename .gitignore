@@ -86,3 +86,8 @@ ops/helm/*/Chart.lock
 *.tfvars
 .terraform.lock.hcl.bak
 crash.log
+
+# Live demo data and secrets on the server (ops/demo/fetch-demo-data.sh, OWNER_STEPS.md)
+ops/demo/data/
+ops/demo/.env
+playwright-live-report/

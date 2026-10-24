@@ -254,6 +254,21 @@ repository owner can dismiss an alert.
 
 **Send back to the planning chat:** whether the CodeQL check is green (or that you want code changes instead).
 
+## 14. Give this session three VAERS files: OPEN
+
+**Why:** the MedDRA coder learns from VAERS narratives with the coding VAERS staff gave them. The VAERS site puts a
+CAPTCHA (a "type the letters you see" check) in front of every download, which only a person may answer, so the
+build container cannot fetch the files itself.
+
+1. Open https://vaers.hhs.gov/data/datasets.html in your browser.
+2. In the **Data Sets** table, click **2023**, type the letters from the picture, and click **Download File**. The
+   file `2023VAERSData.zip` is saved.
+3. Do the same for **2024** and **2025**.
+4. In the Claude Code session that builds PharmaVigil, click the **📎 / +** button in the message box, attach the
+   three zip files, and send: `VAERS 2023-2025 attached.`
+
+**Send back to the planning chat:** "VAERS files attached" (the files themselves go only to the Claude Code session).
+
 ---
 
 *More steps are added as milestones need them (Databricks, Kaggle, MedDRA licence, narrative labels,

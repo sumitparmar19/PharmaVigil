@@ -27,7 +27,7 @@ public class SignalStore {
 
     public record Signal(String rxcui, String ingredient, String pt, long reports, Double prr, Double prrLo,
             Double prrHi, Double ror, Double rorLo, Double rorHi, Double ic, Double ic025, Double ic975, Double ebgm,
-            Double eb05, Double eb95, Double safetyformer) {
+            Double eb05, Double eb95, Double safetyformer, String reference) {
     }
 
     public record TrendPoint(int year, long reports) {
@@ -78,7 +78,8 @@ public class SignalStore {
 
     void insertSignals(long snapshotId, List<Map<String, String>> rows) {
         String sql = "INSERT INTO drug_event_signal (snapshot_id, rxcui, ingredient, pt, a, n_drug, n_event, n_total, "
-                + String.join(", ", SCORES) + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?" + ", ?".repeat(SCORES.length) + ")";
+                + String.join(", ", SCORES) + ", reference) VALUES (?, ?, ?, ?, ?, ?, ?, ?"
+                + ", ?".repeat(SCORES.length) + ", ?)";
         for (int from = 0; from < rows.size(); from += BATCH) {
             List<Map<String, String>> chunk = rows.subList(from, Math.min(rows.size(), from + BATCH));
             jdbc.batchUpdate(sql, chunk, chunk.size(), (ps, r) -> {
@@ -93,6 +94,8 @@ public class SignalStore {
                 for (int i = 0; i < SCORES.length; i++) {
                     setDouble(ps, 9 + i, r.get(SCORES[i]));
                 }
+                String ref = r.get("reference"); // absent in exports made before Phase 2
+                ps.setString(9 + SCORES.length, ref == null || ref.isBlank() ? null : ref);
             });
         }
     }
@@ -136,7 +139,7 @@ public class SignalStore {
     static final RowMapper<Signal> SIGNAL = (rs, i) -> new Signal(rs.getString("rxcui"), rs.getString("ingredient"),
             rs.getString("pt"), rs.getLong("a"), dbl(rs, "prr"), dbl(rs, "prr_lo"), dbl(rs, "prr_hi"), dbl(rs, "ror"),
             dbl(rs, "ror_lo"), dbl(rs, "ror_hi"), dbl(rs, "ic"), dbl(rs, "ic025"), dbl(rs, "ic975"), dbl(rs, "ebgm"),
-            dbl(rs, "eb05"), dbl(rs, "eb95"), dbl(rs, "safetyformer"));
+            dbl(rs, "eb05"), dbl(rs, "eb95"), dbl(rs, "safetyformer"), rs.getString("reference"));
 
     /** Pairs of one drug at or above the EB05 threshold, strongest first. */
     public List<Signal> warnings(long snapshotId, String rxcui, double minEb05, int limit) {
@@ -157,6 +160,17 @@ public class SignalStore {
         return jdbc.query("SELECT * FROM drug_event_signal WHERE snapshot_id = ? AND " + orderColumn
                 + " IS NOT NULL ORDER BY " + orderColumn + " DESC, a DESC, rxcui, pt", ps -> {
                     ps.setLong(1, snapshotId);
+                    ps.setMaxRows(limit);
+                }, SIGNAL);
+    }
+
+    /** Pairs whose ingredient starts with the search text (case-insensitive), strongest EB05 first. */
+    public List<Signal> search(long snapshotId, String ingredientPrefix, int limit) {
+        String p = ingredientPrefix.strip().toUpperCase(java.util.Locale.ROOT).replace("%", "").replace("_", "");
+        return jdbc.query("SELECT * FROM drug_event_signal WHERE snapshot_id = ? AND UPPER(ingredient) LIKE ? "
+                + "ORDER BY eb05 DESC, a DESC, pt", ps -> {
+                    ps.setLong(1, snapshotId);
+                    ps.setString(2, p + "%");
                     ps.setMaxRows(limit);
                 }, SIGNAL);
     }
