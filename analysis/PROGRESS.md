@@ -18,7 +18,7 @@ the repo.
 | M7 | E2B(R3) and SOAP | ✅ done (exports validate against the official schema set in CI) | `docs/E2B_R3.md`, ADR-009, `services/intake-gateway`, `scripts/fetch-e2b-xsd.sh` |
 | M8 | Kafka, ONNX in Java, JMS, narrative | ✅ done (end-to-end test in CI) | ADR-008, `services/e2e-tests`, `analysis/models/MANIFEST.md` |
 | M9 | Frontend | ✅ done locally (unit tests and the browser smoke test against the full stack); CI job added | `frontend/`, `docker-compose.yml`, `frontend/e2e/` |
-| M10 | Operations | in progress: metrics, tracing, dashboards, alerts, k6 done; Helm charts and kind workflow written (CI result pending); Jenkins next | `docs/OBSERVABILITY.md`, `docs/PERFORMANCE.md`, `analysis/m10/` |
+| M10 | Operations | ✅ metrics, tracing, dashboards, alerts, k6; Helm + Strimzi on kind and the Jenkins pipeline green in CI | `docs/OBSERVABILITY.md`, `docs/PERFORMANCE.md`, `analysis/m10/` |
 | M11 | Azure infrastructure (code only) | written; fmt, validate, terraform test and Checkov clean locally; CI job added; never applied (owner step 9) | `infra/azure`, `docs/AZURE.md` |
 | M12 | Docs, evidence, report | pending | |
 
@@ -348,6 +348,27 @@ Built (ADR-010, `docs/KUBERNETES.md`):
 Checked here: `helm lint` 9 charts, 0 failures; `helm template` renders 8 Deployments, 8 Services, 1 ConfigMap;
 the non-root UI image serves the app as uid 101. The cluster run needs quay.io (Strimzi images), which this
 container cannot reach, so its result comes from CI.
+
+CI result: the first two kind runs failed (services crash-looped because Oracle never opened: ORA-01081 on an
+in-pod restart, then an emptyDir hiding the pre-built database); after the fixes in the problems table of
+`analysis/PROJECT_REPORT.md` the workflow is green on `86366ce` (run 40055335527) and on `1c14a94` (run 40059501640, 9 min:
+cluster, Strimzi, Helm install, Playwright smoke test 2/2).
+
+## M10: operations (part 3: Jenkins)
+
+Built (`docs/JENKINS.md`): `ops/jenkins/Jenkinsfile` (checkout → Java build and unit tests ∥ frontend checks →
+integration tests on Testcontainers → JaCoCo gate → six images → Helm lint → kind deploy → Playwright smoke
+test), a Jenkins 2.580.1 LTS controller configured as code (JCasC + job-dsl) and `run-headless.sh`, which starts
+it, triggers one build over the REST API and writes the console log.
+
+CI result: green on `1c14a94` (workflow *Jenkins pipeline (headless)*, run 40059501594, 13.5 min); the console log is
+`analysis/m10/jenkins-run.log`. In that run: 33 Vitest tests, 40 unit tests and 103 integration tests with
+0 failures (2 and 3 skipped: they need the official E2B(R3) schemas, which the main CI fetches and the Jenkins
+job does not), the coverage gate met for all six services (81.9%–94.8% line coverage), 11 pods Running on kind, smoke test
+2/2. Three fixes were needed on the way: the job could not find a pull request's merge commit (no branch points
+to it; a temporary branch now does), images were built with Docker's legacy builder, which reads
+`services/.dockerignore` differently and left out the OpenTelemetry agent (the image now has buildx), and the
+kind cluster was deleted before the failure diagnostics ran (teardown moved to `post { cleanup }`).
 
 ## M11: Azure infrastructure (code only)
 

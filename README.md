@@ -31,7 +31,7 @@ acknowledged by a (mock) regulator over JMS. Drug–event signals computed from 
 | Data platform, signal baselines, SafetyFormer, coder, triage, duplicates | code complete, tested on fixtures and synthetic data | `data/tests`, `ml/tests` |
 | **Real-data model results** | **pending**: FAERS, VAERS, RxNav and Hugging Face are unreachable from the build environment | owner steps 1, 4–7 |
 | Observability, load test | measured on the local stack | `docs/OBSERVABILITY.md`, `docs/PERFORMANCE.md` |
-| Helm on Kubernetes (kind), Jenkins | charts, kind workflow and Jenkinsfile in CI | `docs/KUBERNETES.md`, `docs/JENKINS.md` |
+| Helm on Kubernetes (kind), Jenkins | whole stack on kind and the full Jenkins pipeline green in CI (`analysis/m10/jenkins-run.log`) | `docs/KUBERNETES.md`, `docs/JENKINS.md` |
 | Azure (AKS, ACR, Key Vault) | Terraform validated and Checkov-clean; **never applied** | `docs/AZURE.md`, owner step 9 |
 
 ## The problem

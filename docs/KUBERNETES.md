@@ -74,4 +74,5 @@ last 200 log lines of every pod.
 
 Checked locally in the build container: `helm lint` on all nine charts (0 failures) and `helm template` of the
 umbrella chart (8 Deployments, 8 Services, 1 ConfigMap). The cluster run itself happens only in CI, because this
-container cannot pull the Strimzi images from quay.io.
+container cannot pull the Strimzi images from quay.io; it is green on PR #1 (run 40059501640, about 9 minutes), and the
+Jenkins pipeline runs the same scripts (`docs/JENKINS.md`).

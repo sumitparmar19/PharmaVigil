@@ -50,6 +50,6 @@ docker compose up -d --build     # then http://localhost:8090, job "pharmavigil"
 
 The workflow *Jenkins pipeline (headless)* runs `run-headless.sh` on a GitHub runner whenever `ops/jenkins/`
 changes (or on demand) and keeps the console log as an artifact; the log of a successful run is committed as
-`analysis/m10/jenkins-run.log`. Jenkinsfile Runner was not used: its image on Docker Hub is only tagged `latest`
+`analysis/m10/jenkins-run.log` (run 40059501594, about 13.5 minutes, every stage green). Jenkinsfile Runner was not used: its image on Docker Hub is only tagged `latest`
 and could not be checked against the current Jenkins LTS, while a real controller also exercises the JCasC
 setup that users run.

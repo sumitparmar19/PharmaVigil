@@ -39,7 +39,7 @@
 | M7 | E2B(R3) and SOAP | ✅ | `59302f8` (+ `0195fb0`, `1d0f78c`, `ce8658a`, `d3641a0`) | `docs/E2B_R3.md`, ADR-004, ADR-009 |
 | M8 | Kafka, ONNX in Java, JMS, narrative | ✅ | `d293aa3`, `85a53f1`, `e9f86d7`, `20aad47`, `fdcb825`, `c4b372a` | ADR-001, ADR-002, ADR-008, `EndToEndTest` |
 | M9 | Frontend | ✅ | `70044bf` | 33 Vitest tests, Playwright smoke test (CI) |
-| M10 | Operations | observability and k6 ✅; kind and Jenkins fixes pushed, CI result pending | `10b6958`, `2b2647a`, `5ab1744` | `docs/OBSERVABILITY.md`, `docs/PERFORMANCE.md`, `docs/KUBERNETES.md`, `docs/JENKINS.md`, `analysis/m10/` |
+| M10 | Operations | ✅ (kind e2e run 40059501640, Jenkins run 40059501594) | `10b6958`, `2b2647a`, `5ab1744`, `58a898b`, `1c14a94` | `docs/OBSERVABILITY.md`, `docs/PERFORMANCE.md`, `docs/KUBERNETES.md`, `docs/JENKINS.md`, `analysis/m10/` (incl. `jenkins-run.log`) |
 | M11 | Azure infrastructure (code only) | ✅ validated, not applied | `871cc45` | `infra/azure`, `docs/AZURE.md` |
 | M12 | Docs, evidence, report | ✅ | `c7b64fb` and this commit | README, ADRs 1–10, `RESUME_EVIDENCE.md`, `INTERVIEW_PREP.md` |
 
@@ -61,6 +61,12 @@
 | Python `ml` | 49 | 0 | — | pytest + ruff |
 | Frontend | 33 Vitest + 2 Playwright | 0 | — | typecheck, lint, build |
 | Terraform | 2 `terraform test` runs | 0 | — | Checkov 16 passed / 0 failed / 20 skipped with reasons (local) |
+
+**Delivery pipelines** (GitHub `ubuntu-latest`, PR head `1c14a94`): *Kubernetes e2e (kind)* run 40059501640 green in 9 min
+(kind cluster, Strimzi Kafka, Helm install of the whole stack, Playwright smoke test 2/2). *Jenkins pipeline
+(headless)* run 40059501594 green in 13.5 min: 103 integration tests on Testcontainers with 0 failures (3 skipped that need the
+E2B(R3) schemas, which only the main CI fetches), coverage gate met for all six services, six images, Helm lint,
+11 pods Running on kind, smoke test 2/2 (`analysis/m10/jenkins-run.log`).
 
 Coverage figures are from the local full `mvn verify` run in the build container (no schema set there, so a
 few schema-only branches are not covered); CI enforces the same gate with the schemas present.
@@ -102,7 +108,7 @@ Full table with code and evidence: [`analysis/RESUME_EVIDENCE.md`](RESUME_EVIDEN
 | C8 outbox, idempotency, DLQ, replay | ✅ |
 | C9 SOAP intake with WS-Security | ✅ |
 | C10 Oracle + SQL Server | ✅ |
-| C11 Jenkins, Helm on kind, Terraform | Terraform ✅ (validate, test, Checkov); kind and Jenkins pending CI |
+| C11 Jenkins, Helm on kind, Terraform | ✅ Jenkins pipeline and Helm on kind green in CI; Terraform validated, tested, Checkov-clean (never applied) |
 | C12 dashboards, k6 numbers | ✅ (local stack scope) |
 | C13 legacy fixes | removed by owner |
 
@@ -129,6 +135,7 @@ typed by the owner, never by Terraform.
 | The first SafetyFormer ONNX export passed parity only at the traced shape | a second-shape parity test for every Transformer export |
 | k6's summary export contained sign-in tokens | stripped before any summary is kept (`collect_results.py --strip-summary`) |
 | The mock azurerm provider cannot fill AKS's computed kubelet identity | explicit user-assigned kubelet identity (also lets AcrPull be granted before nodes pull) |
+| Jenkins: the job could not find a pull request's merge commit; images built with the legacy builder lost the OpenTelemetry agent; the cluster was deleted before diagnostics ran | temporary branch at HEAD; buildx in the Jenkins image (reproduced with `DOCKER_BUILDKIT=0`); teardown in `post { cleanup }` |
 | Build container: blocked hosts, Docker Hub rate limits, disk allowance, two container restarts | `mirror.gcr.io` locally, filesystem mirror for Terraform, cache clean-up; CI is the source of truth for anything that needs the internet |
 
 ## 7. Owner steps still open (in order)

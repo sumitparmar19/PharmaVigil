@@ -148,5 +148,7 @@ build environment cannot download FAERS; the code and notebooks to do it are rea
   backing off. I gave Oracle enough memory headroom and added an init container to every service that waits until
   the database and brokers accept connections (a Kubernetes Service only routes to ready pods), and made the
   diagnostics print restart reasons.
-- *Result:* see `analysis/PROJECT_REPORT.md` for the kind run after the fix; the same install script is used by
-  the Jenkins pipeline and the Azure deploy.
+- *Result:* the next problem was in the volume: an emptyDir mounted over Oracle's data directory hid the
+  database that the image ships pre-built, so Oracle had nothing to open. Without it, the kind workflow is green
+  (whole stack on Strimzi Kafka, Playwright smoke test 2/2), and the same install script now also passes inside
+  the Jenkins pipeline; the Azure deploy uses it too.
