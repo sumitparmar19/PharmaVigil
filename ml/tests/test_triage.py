@@ -75,3 +75,16 @@ def test_train_and_onnx_parity(tmp_path) -> None:
     path = export_lightgbm(res["booster"], res["x_test"].shape[1], tmp_path / "seriousness.onnx")
     parity = lightgbm_parity(res["booster"], path, res["x_test"][:200])
     assert parity["max_abs_diff"] < 1e-5
+
+
+def test_subgroup_metrics_split_by_country() -> None:
+    import numpy as np
+
+    from pharmavigil_ml.triage.seriousness import subgroup_metrics
+
+    y = np.array([1, 0, 1, 0, 1, 1])
+    p = np.array([0.9, 0.1, 0.8, 0.2, 0.7, 0.6])
+    us = np.array([True, True, True, True, False, False])
+    out = subgroup_metrics(y, p, us)
+    assert out["US"]["reports"] == 4 and out["US"]["roc_auc"] == 1.0
+    assert out["non-US"]["serious_rate"] == 1.0 and out["non-US"]["roc_auc"] is None

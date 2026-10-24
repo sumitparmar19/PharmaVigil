@@ -139,8 +139,16 @@ def load_versions(path: Path, sample_cases: int | None = None, seed: int = 13) -
     else:
         dataset = ds.dataset(str(path), format="parquet")
     if not sample_cases:
-        return dataset.to_table().to_pandas()
+        return _plain_lists(dataset.to_table().to_pandas())
     ids = pd.Series(pc.unique(dataset.to_table(columns=["caseid"])["caseid"]).to_pylist())
     keep = ids.sample(min(sample_cases, len(ids)), random_state=seed)
-    return dataset.to_table(filter=ds.field("caseid").isin(keep.tolist())).to_pandas()
+    return _plain_lists(dataset.to_table(filter=ds.field("caseid").isin(keep.tolist())).to_pandas())
+
+
+def _plain_lists(df: pd.DataFrame) -> pd.DataFrame:
+    """Arrow list columns arrive as numpy arrays; the pair features expect Python lists (or None)."""
+    for col in ("drugs", "pts"):
+        if col in df:
+            df[col] = df[col].map(lambda x: None if x is None else list(x))
+    return df
 

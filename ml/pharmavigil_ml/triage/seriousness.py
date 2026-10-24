@@ -62,6 +62,19 @@ def load_frames(con: duckdb.DuckDBPyConnection, limit: int | None = None) -> Fra
     return Frames(reports.sort_values(["fda_dt", "primaryid"]).reset_index(drop=True), drugs, pts)
 
 
+def subgroup_metrics(y: np.ndarray, p: np.ndarray, is_us: np.ndarray) -> dict[str, dict[str, object]]:
+    """Test metrics within US and non-US reports. FDA receives foreign reports mostly when they are serious, so
+    the reporter country alone separates much of the label; the within-group numbers show what is left."""
+    out = {}
+    for name, m in (("US", is_us), ("non-US", ~is_us)):
+        yy, pp = y[m], p[m]
+        both = 0 < yy.mean() < 1 if len(yy) else False
+        out[name] = {"reports": int(m.sum()), "serious_rate": float(yy.mean()) if len(yy) else None,
+                     "pr_auc": float(average_precision_score(yy, pp)) if both else None,
+                     "roc_auc": float(roc_auc_score(yy, pp)) if both else None}
+    return out
+
+
 def calibration_table(y: np.ndarray, p: np.ndarray, bins: int = 10) -> list[dict[str, float]]:
     edges = np.linspace(0, 1, bins + 1)
     out = []
@@ -108,6 +121,7 @@ def train_seriousness(frames: Frames, test_from: date, out_dir: Path, rounds: in
         "roc_auc": float(roc_auc_score(y_te, p)) if 0 < y_te.mean() < 1 else None,
         "brier": float(brier_score_loss(y_te, p)),
         "calibration": calibration_table(y_te, p),
+        "by_reporter_country": subgroup_metrics(y_te, p, test_r["reporter_country"].fillna("").to_numpy() == "US"),
         "top_features_mean_abs_shap": top,
         "shap_rows": int(len(shap_idx)),
         "n_features": len(names),

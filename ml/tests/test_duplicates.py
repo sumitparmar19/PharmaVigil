@@ -58,7 +58,8 @@ def test_load_versions_samples_whole_cases(tmp_path) -> None:
 
     from pharmavigil_ml.triage.duplicates import load_versions
 
-    rows = [{"report_key": f"{c}-{v}", "caseid": str(c), "caseversion": v, "pts": ["nausea"]}
+    rows = [{"report_key": f"{c}-{v}", "caseid": str(c), "caseversion": v, "fda_date": pd.Timestamp("2024-01-01"),
+             "drugs": [f"d{c % 4}"], "pts": ["nausea"]}
             for c in range(20) for v in range(1, 1 + c % 3 + 1)]
     pd.DataFrame(rows).to_parquet(tmp_path / "versions.parquet")
     full = load_versions(tmp_path)
@@ -68,3 +69,6 @@ def test_load_versions_samples_whole_cases(tmp_path) -> None:
     expected = full[full["caseid"].isin(set(sample["caseid"]))]
     assert len(sample) == len(expected)
     assert sample.equals(load_versions(tmp_path, sample_cases=5).reset_index(drop=True))
+    assert all(isinstance(x, list) for x in sample["pts"])
+    from pharmavigil_ml.triage.duplicates import make_pairs
+    assert len(make_pairs(full)) > 0
