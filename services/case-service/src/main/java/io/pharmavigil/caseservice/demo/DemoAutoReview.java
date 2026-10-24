@@ -15,13 +15,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import io.pharmavigil.caseservice.cases.CaseService;
 import io.pharmavigil.caseservice.model.CaseEnums.CodeSource;
 import io.pharmavigil.caseservice.model.CaseEnums.NarrativeSource;
 import io.pharmavigil.caseservice.model.CaseEnums.Seriousness;
 import io.pharmavigil.caseservice.model.CaseEnums.Status;
-import io.pharmavigil.caseservice.model.CaseReaction;
 import io.pharmavigil.caseservice.model.CaseVersion;
 import io.pharmavigil.caseservice.model.Narrative;
 import io.pharmavigil.caseservice.model.NarrativeRepository;
@@ -46,14 +46,20 @@ public class DemoAutoReview {
     private final ReviewService review;
     private final NarrativeRepository narratives;
     private final SubmissionEventRepository submissions;
+    private final TransactionTemplate tx;
+
+    /** What the review needs from one reaction, read inside a transaction (the collection is lazy). */
+    private record Item(CodeSource source, String pt, String reportedTerm) {
+    }
 
     public DemoAutoReview(SafetyCaseRepository repo, CaseService cases, ReviewService review,
-            NarrativeRepository narratives, SubmissionEventRepository submissions) {
+            NarrativeRepository narratives, SubmissionEventRepository submissions, TransactionTemplate tx) {
         this.repo = repo;
         this.cases = cases;
         this.review = review;
         this.narratives = narratives;
         this.submissions = submissions;
+        this.tx = tx;
     }
 
     @Scheduled(fixedDelayString = "${pv.demo.auto-review-interval-ms:2000}")
@@ -76,21 +82,22 @@ public class DemoAutoReview {
         if (drafts.isEmpty()) {
             return false; // the narrative stage has not run yet
         }
-        SafetyCase c = cases.load(caseId);
-        CaseVersion v = cases.latest(c);
-        List<CaseReaction> reactions = v.getReactions();
+        List<Item> reactions = tx.execute(t -> {
+            CaseVersion v = cases.latest(cases.load(caseId));
+            return v.getReactions().stream().map(r -> new Item(r.getCodeSource(), r.getPt(), r.getReportedTerm()))
+                    .toList();
+        });
         for (int i = 0; i < reactions.size(); i++) {
-            CaseReaction r = reactions.get(i);
-            if (r.getCodeSource() == CodeSource.REVIEWER) {
+            Item r = reactions.get(i);
+            if (r.source() == CodeSource.REVIEWER) {
                 continue;
             }
-            String pt = r.getPt() != null ? r.getPt() : r.getReportedTerm();
+            String pt = r.pt() != null ? r.pt() : r.reportedTerm();
             review.codeReaction(caseId, i, pt, cases.load(caseId).getLockVersion(), ACTOR);
         }
-        SafetyCase now = cases.load(caseId);
-        Seriousness s = now.getSeriousness();
+        Seriousness s = cases.load(caseId).getSeriousness();
         if (s == Seriousness.UNKNOWN) {
-            String criteria = cases.latest(now).getSeriousCriteria();
+            String criteria = tx.execute(t -> cases.latest(cases.load(caseId)).getSeriousCriteria());
             s = criteria == null || criteria.isBlank() ? Seriousness.NON_SERIOUS : Seriousness.SERIOUS;
         }
         review.decideSeriousness(caseId, s, ACTOR);

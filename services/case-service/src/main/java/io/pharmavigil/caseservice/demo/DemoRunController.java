@@ -34,7 +34,7 @@ public class DemoRunController {
 
     private static final String STAGES = """
             SELECT
-              (SELECT COUNT(*) FROM safety_case c WHERE c.source_report_id LIKE :prefix) AS received,
+              COUNT(DISTINCT CASE WHEN a.action = 'RECEIVED' THEN a.case_id END) AS received,
               COUNT(DISTINCT CASE WHEN a.action IN ('DUPLICATE_CHECK','DUPLICATE') THEN a.case_id END) AS deduplicated,
               COUNT(DISTINCT CASE WHEN a.action = 'STATUS' AND a.detail LIKE '% -> CODED' THEN a.case_id END) AS coded,
               COUNT(DISTINCT CASE WHEN a.action = 'STATUS' AND a.detail LIKE '% -> NEEDS_MANUAL_CODING'

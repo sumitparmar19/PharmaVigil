@@ -107,6 +107,7 @@ public class DemoReplay {
     private final Duration cooldown;
     private final long pauseMs;
     private final String soapUrl;
+    private final org.springframework.core.env.Environment env;
     private final String partnerUser;
     private final String partnerPassword;
     private final List<SliceReport> slice;
@@ -126,7 +127,7 @@ public class DemoReplay {
             @Value("${pv.demo.slice-file:}") String sliceFile,
             @Value("${pv.demo.cooldown-seconds:120}") long cooldownSeconds,
             @Value("${pv.demo.pause-ms:40}") long pauseMs,
-            @Value("${pv.demo.soap-url:http://localhost:${server.port}/ws}") String soapUrl,
+            @Value("${pv.demo.soap-url:}") String soapUrl, org.springframework.core.env.Environment env,
             @Value("${pv.soap.partner-user:}") String partnerUser,
             @Value("${pv.soap.partner-password:}") String partnerPassword) {
         this.intake = intake;
@@ -134,6 +135,7 @@ public class DemoReplay {
         this.cooldown = Duration.ofSeconds(cooldownSeconds);
         this.pauseMs = pauseMs;
         this.soapUrl = soapUrl;
+        this.env = env;
         this.partnerUser = partnerUser;
         this.partnerPassword = partnerPassword;
         this.slice = load(json, sliceFile);
@@ -287,7 +289,9 @@ public class DemoReplay {
             marshaller.setContextPath("io.pharmavigil.intake.soap.generated");
             marshaller.afterPropertiesSet();
             WebServiceTemplate client = new WebServiceTemplate(marshaller);
-            client.setDefaultUri(soapUrl);
+            // Our own SOAP endpoint over loopback HTTP, so replayed reports pass WS-Security like a partner's.
+            client.setDefaultUri(soapUrl.isBlank() ? "http://localhost:" + env.getProperty("local.server.port",
+                    env.getProperty("server.port", "8082")) + "/ws" : soapUrl);
             Wss4jSecurityInterceptor security = new Wss4jSecurityInterceptor();
             security.setSecurementActions("Timestamp UsernameToken");
             security.setSecurementUsername(partnerUser);

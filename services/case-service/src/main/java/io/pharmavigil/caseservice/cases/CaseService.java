@@ -135,11 +135,22 @@ public class CaseService {
         d.reporterType = r.reporterType();
         d.country = r.country();
         d.onsetDate = r.onsetDate();
-        d.reportedText = r.reportedText();
+        d.reportedText = reportedText(r);
         d.seriousCriteria = r.seriousCriteria();
         d.drugs.addAll(r.drugs());
         r.reactionTerms().forEach(t -> d.reactions.add(VersionDraft.ReactionDraft.uncoded(t)));
         return d;
+    }
+
+    /** Text kept as reported. E2B(R3) H.1 is optional (FAERS publishes none), so a report without a narrative
+     *  is stored with a plainly labelled stand-in built from its reaction terms instead of failing intake. */
+    static String reportedText(IncomingReport r) {
+        if (r.reportedText() != null && !r.reportedText().isBlank()) {
+            return r.reportedText();
+        }
+        String terms = String.join("; ", r.reactionTerms());
+        String text = "No case narrative was reported. Reported reactions: " + (terms.isEmpty() ? "none" : terms) + ".";
+        return text.length() <= 4000 ? text : text.substring(0, 3997) + "...";
     }
 
     /** Create the next version from the latest one; fails with a conflict if the case moved on. */

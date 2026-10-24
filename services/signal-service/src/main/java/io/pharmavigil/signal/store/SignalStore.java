@@ -166,9 +166,11 @@ public class SignalStore {
 
     /** Pairs whose ingredient starts with the search text (case-insensitive), strongest EB05 first. */
     public List<Signal> search(long snapshotId, String ingredientPrefix, int limit) {
-        String p = ingredientPrefix.strip().toUpperCase(java.util.Locale.ROOT).replace("%", "").replace("_", "");
+        // The search text is matched literally: LIKE wildcards in it are escaped, not interpreted.
+        String p = ingredientPrefix.strip().toUpperCase(java.util.Locale.ROOT)
+                .replace("!", "!!").replace("%", "!%").replace("_", "!_");
         return jdbc.query("SELECT * FROM drug_event_signal WHERE snapshot_id = ? AND UPPER(ingredient) LIKE ? "
-                + "ORDER BY eb05 DESC, a DESC, pt", ps -> {
+                + "ESCAPE '!' ORDER BY eb05 DESC, a DESC, pt", ps -> {
                     ps.setLong(1, snapshotId);
                     ps.setString(2, p + "%");
                     ps.setMaxRows(limit);
