@@ -26,15 +26,30 @@ def _norm(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", name.lower()).strip()
 
 
+# Reference-set drug names that differ from the RxNorm ingredient name in gold: spelling variants, salt forms and
+# synonyms, found by listing the reference drugs with no exact match on real FAERS (analysis/p2/README.md). Names only,
+# chosen without looking at the pairs' labels. "Endopeptidases" is a drug class, not one ingredient, so it stays
+# unscorable.
+REFERENCE_NAME_OVERRIDES = {
+    "Chlorazepate": "clorazepate",
+    "Olmesartan medoxomil": "olmesartan",
+    "Tetrahydrocannabinol": "dronabinol",
+    "Thyroxine": "levothyroxine",
+    "Regular Insulin, Human": "insulin, regular, human",
+}
+
+
 def map_reference_drugs(reference: pd.DataFrame, ingredients: pd.DataFrame,
                         overrides: Mapping[str, str] | None = None) -> pd.DataFrame:
     """Add an `rxcui` column by matching exposure names to gold ingredient names.
 
     Matching tries the exact normalized name, then a singular form ("amylases" → "amylase").
-    `overrides` maps a normalized exposure name to an ingredient name for documented exceptions.
+    `overrides` maps a normalized exposure name to an ingredient name for documented exceptions; by default
+    REFERENCE_NAME_OVERRIDES.
     """
     lookup = {_norm(i): r for r, i in zip(ingredients["rxcui"], ingredients["ingredient"], strict=True)}
-    overrides = {_norm(k): _norm(v) for k, v in (overrides or {}).items()}
+    chosen = REFERENCE_NAME_OVERRIDES if overrides is None else overrides
+    overrides = {_norm(k): _norm(v) for k, v in chosen.items()}
 
     def match(name: str) -> str | None:
         key = overrides.get(_norm(name), _norm(name))
