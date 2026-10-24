@@ -16,12 +16,15 @@ file, and why its training signal is only a proxy.
 
 | Scope | Status | Evidence |
 |---|---|---|
-| FAERS subset / full | **pending full data** | `analysis/m5/duplicates.json` |
+| subset: FAERS 2019Q1–2026Q2, versions of a random 300,000 cases (130,894 train / 32,769 test pairs, 10,973 test positives) | PR-AUC **0.998**; at the best-F1 threshold (0.528) precision 0.984, recall 0.979; ONNX parity max diff 8.2e-8 | `analysis/p4/duplicates.json` |
+| full: FAERS 2004Q1 onward | not run (owner step 4) | — |
 | Code checks (synthetic versions, ONNX parity < 1e-5) | ✅ passing | `ml/tests/test_duplicates.py` |
 
 ## Limits and use
 
 - Because the positives are follow-up versions, the measured precision/recall describe how well the
-  model recognizes *follow-ups*; performance on genuine cross-case duplicates is unmeasured.
+  model recognizes *follow-ups*; performance on genuine cross-case duplicates is unmeasured. Follow-up
+  versions usually repeat most of the first report, so this task is easy and the 0.998 PR-AUC should not be
+  read as duplicate-detection accuracy in general.
 - Suggestion only: the reviewer marks or clears a duplicate in the console; nothing is merged
   automatically.

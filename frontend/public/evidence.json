@@ -7,46 +7,46 @@
       "items": [
         {
           "label": "Quarters loaded",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "30 (2019Q1–2026Q2)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p1/data_counts.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "FAERS report rows",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "12,902,877",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p1/data_counts.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "Unique cases after de-duplication",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "10,848,477",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p1/data_counts.json",
-          "status": "pending",
+          "status": "measured",
           "note": "FDA's rule: latest version of each case, deleted cases removed"
         },
         {
           "label": "Drug mentions mapped to an RxNorm ingredient",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "40,904,129 of NaN (NaN%)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p1/data_counts.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "Distinct ingredients / preferred terms",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "4,182 / 22,231",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p1/data_counts.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "Drug–event pairs (primary suspect)",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "1,921,617",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p1/data_counts.json",
-          "status": "pending"
+          "status": "measured"
         }
       ]
     },
@@ -168,17 +168,17 @@
       "items": [
         {
           "label": "Seriousness triage ROC-AUC / PR-AUC (time-split test)",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.960 / 0.969 (serious rate 55.0%)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p4/triage.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "Duplicate detection PR-AUC; precision / recall at best F1",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.998; 0.984 / 0.979",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p4/duplicates.json",
-          "status": "pending",
+          "status": "measured",
           "note": "proxy label: consecutive versions of one FAERS case"
         },
         {
@@ -186,7 +186,8 @@
           "value": "not measured yet",
           "scope": "",
           "file": "analysis/p4/coder.json",
-          "status": "pending"
+          "status": "pending",
+          "note": "zero-shot retrieval (no training labels); the 3000 most reported FAERS preferred terms in the scope. Accuracy needs narratives with human-assigned terms."
         }
       ]
     },

@@ -1,0 +1,177 @@
+{
+  "scope": "subset: FAERS 2019Q1\u20132026Q2",
+  "kind": "zero-shot retrieval (no training labels)",
+  "encoder": "NeuML/pubmedbert-base-embeddings",
+  "encoder_revision": "b79526d6ef3645e0df4530322e266f24c829f5ef",
+  "label_space": "the 3000 most reported FAERS preferred terms in the scope",
+  "quantization": "int8 dynamic (per tensor)",
+  "threshold_for_coded_without_review": 0.97,
+  "evaluation": "pending: needs narratives with human-assigned PTs (VAERS, owner step 14)",
+  "examples": [
+    {
+      "text": "itchy skin",
+      "input_ids": [
+        2,
+        20687,
+        1012,
+        4407,
+        3
+      ],
+      "suggestions": [
+        [
+          "skin weeping",
+          0.875296950340271
+        ],
+        [
+          "dry skin",
+          0.8746418952941895
+        ],
+        [
+          "skin warm",
+          0.873000979423523
+        ],
+        [
+          "sensitive skin",
+          0.8626738786697388
+        ],
+        [
+          "yellow skin",
+          0.8626113533973694
+        ]
+      ]
+    },
+    {
+      "text": "a high fever",
+      "input_ids": [
+        2,
+        43,
+        2149,
+        9087,
+        3
+      ],
+      "suggestions": [
+        [
+          "rheumatic fever",
+          0.8064190745353699
+        ],
+        [
+          "dengue fever",
+          0.7744068503379822
+        ],
+        [
+          "body temperature abnormal",
+          0.7643107175827026
+        ],
+        [
+          "hyperpyrexia",
+          0.761486291885376
+        ],
+        [
+          "temperature intolerance",
+          0.7532070875167847
+        ]
+      ]
+    },
+    {
+      "text": "muscle pain after starting the statin",
+      "input_ids": [
+        2,
+        3760,
+        3594,
+        2256,
+        6801,
+        1920,
+        10838,
+        3
+      ],
+      "suggestions": [
+        [
+          "muscle discomfort",
+          0.7463955283164978
+        ],
+        [
+          "injection site pain",
+          0.7317217588424683
+        ],
+        [
+          "abdominal pain lower",
+          0.7283480763435364
+        ],
+        [
+          "stoma site pain",
+          0.7243350148200989
+        ],
+        [
+          "breast pain",
+          0.7200281023979187
+        ]
+      ]
+    },
+    {
+      "text": "Rhabdomyolysis",
+      "input_ids": [
+        2,
+        25369,
+        6892,
+        3
+      ],
+      "suggestions": [
+        [
+          "rhabdomyolysis",
+          0.9999997019767761
+        ],
+        [
+          "myopathy",
+          0.794720470905304
+        ],
+        [
+          "muscle rupture",
+          0.77959144115448
+        ],
+        [
+          "myocarditis",
+          0.7559152841567993
+        ],
+        [
+          "muscular weakness",
+          0.755699098110199
+        ]
+      ]
+    },
+    {
+      "text": "my head hurts badly",
+      "input_ids": [
+        2,
+        3057,
+        4469,
+        15340,
+        1973,
+        11405,
+        1954,
+        3
+      ],
+      "suggestions": [
+        [
+          "head discomfort",
+          0.7989436984062195
+        ],
+        [
+          "feeling jittery",
+          0.7779141068458557
+        ],
+        [
+          "laziness",
+          0.7566313743591309
+        ],
+        [
+          "tongue biting",
+          0.7560476660728455
+        ],
+        [
+          "nervousness",
+          0.7557159662246704
+        ]
+      ]
+    }
+  ]
+}

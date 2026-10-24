@@ -1,0 +1,35 @@
+{
+  "scope": "subset: FAERS 2019Q1\u20132026Q2",
+  "training_signal": "proxy: consecutive versions of the same FAERS case are positives",
+  "pairs_train": 130894,
+  "pairs_test": 32769,
+  "positives_test": 10973,
+  "pr_auc": 0.9981908190837081,
+  "at_0.5": {
+    "precision": 0.9823647660818714,
+    "recall": 0.9797685227376287
+  },
+  "best_f1_threshold": 0.528036020831311,
+  "at_best_f1": {
+    "precision": 0.9837941768906794,
+    "recall": 0.9792217260548619,
+    "f1": 0.9815026261703585
+  },
+  "features": [
+    "drug_jaccard",
+    "pt_jaccard",
+    "shared_drugs",
+    "shared_pts",
+    "same_sex",
+    "same_age_band",
+    "same_country",
+    "same_occupation",
+    "event_date_diff_days",
+    "fda_date_diff_days"
+  ],
+  "rounds": 300,
+  "onnx_parity": {
+    "rows": 500,
+    "max_abs_diff": 8.204104429143655e-08
+  }
+}
