@@ -78,3 +78,11 @@ ops/helm/*/Chart.lock
 
 # Throwaway kind secrets written by ops/kind/deploy.sh
 .kind-secrets.env
+
+# Terraform working files and state (state lives in Azure Storage, never in git)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform.lock.hcl.bak
+crash.log

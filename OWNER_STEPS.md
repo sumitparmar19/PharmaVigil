@@ -180,6 +180,16 @@ site's home page.
 
 **Send back to the planning chat:** only the sentence "MedDRA licence active" (never the login details).
 
+## 9. Run PharmaVigil on Azure for a day: OPEN
+
+**Why:** the Azure code (Terraform, workflows) is validated in CI but has never been applied; only you can create
+the subscription and approve the deploy.
+
+Follow `docs/AZURE.md`, steps 1 to 8, in order. Each step there ends with what to send back. Destroy (step 8) on
+the same day you deploy.
+
+**Send back to the planning chat:** the eight "send back" lines from `docs/AZURE.md`.
+
 ---
 
 *More steps are added as milestones need them (Databricks, Kaggle, MedDRA licence, narrative labels,

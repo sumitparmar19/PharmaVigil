@@ -202,3 +202,35 @@ jobs:
       - name: Stop the stack
         if: always()
         run: docker compose down -v
+
+  terraform:
+    name: Azure Terraform (fmt, validate, test, Checkov)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/azure
+    env:
+      TF_VERSION: 1.16.5
+      CHECKOV_VERSION: 3.3.26
+      CHECKPOINT_DISABLE: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Terraform (checksum verified)
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fsSLO "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
+          curl -fsSLO "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS"
+          grep linux_amd64 "terraform_${TF_VERSION}_SHA256SUMS" | sha256sum -c -
+          unzip -q "terraform_${TF_VERSION}_linux_amd64.zip" -d tfbin && echo "$PWD/tfbin" >> "$GITHUB_PATH"
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+      - name: terraform test (mocked provider, no Azure account)
+        run: terraform test
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Checkov
+        run: |
+          pip install --quiet "checkov==${CHECKOV_VERSION}"
+          checkov -d . --framework terraform --skip-download --compact
