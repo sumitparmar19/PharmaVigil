@@ -7,7 +7,7 @@ name: Demo stack on arm64
 
 on:
   pull_request:
-    paths: ["docker-compose.demo.yml", "ops/demo/**", ".github/workflows/demo-arm64.yml"]
+    paths: ["docker-compose.demo.yml", "ops/demo/**", "scripts/fetch-e2b-xsd.sh", ".github/workflows/demo-arm64.yml"]
   workflow_dispatch:
 
 permissions:
