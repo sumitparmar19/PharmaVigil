@@ -2,7 +2,6 @@
 # hostname derived from the server's public IP, e.g. 203-0-113-7.sslip.io), HTTP redirected to HTTPS, the
 # read-only Grafana under /grafana/, everything else to the UI's nginx (which routes /api and applies the limits).
 {
-	email {$PV_ACME_EMAIL}
 	servers {
 		timeouts {
 			read_body 10s

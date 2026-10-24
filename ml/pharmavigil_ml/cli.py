@@ -132,11 +132,14 @@ def cmd_coder_drug_narratives(args: argparse.Namespace) -> int:
 
 
 def cmd_export_signals(args: argparse.Namespace) -> int:
+    from .signals.baselines import load_outcome_map
     from .signals.export import export_signals
 
     meta = export_signals(Path(args.gold), Path(args.signals_dir), Path(args.out), args.scope,
                           Path(args.safetyformer) if args.safetyformer else None,
-                          Path(args.baselines_json) if args.baselines_json else None)
+                          Path(args.baselines_json) if args.baselines_json else None,
+                          refsets_dir=Path(args.refsets) if args.refsets else None,
+                          outcome_pts=load_outcome_map(Path(args.outcome_map)) if args.refsets else None)
     print(f"wrote {meta['pairs']} signal pairs to {args.out}")
     return 0
 
@@ -223,6 +226,8 @@ def build_parser() -> argparse.ArgumentParser:
     es.add_argument("--scope", required=True, help='data scope label, e.g. "FAERS 2019Q1-2026Q2"')
     es.add_argument("--safetyformer", help="safetyformer_pt_scores.parquet from the M4 run")
     es.add_argument("--baselines-json", help="baselines.json from the M3 run (evaluation summary)")
+    es.add_argument("--refsets", help="folder with omop.parquet / euadr.parquet (adds the reference badge)")
+    es.add_argument("--outcome-map", default=str(DEFAULT_OUTCOME_MAP))
     es.set_defaults(func=cmd_export_signals)
 
     jb = sub.add_parser("java-bundle", help="M8: tiny synthetic model bundle for the Java case-service tests")

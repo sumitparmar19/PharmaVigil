@@ -269,6 +269,89 @@ build container cannot fetch the files itself.
 
 **Send back to the planning chat:** "VAERS files attached" (the files themselves go only to the Claude Code session).
 
+## 15. Publish the demo data as a GitHub release: OPEN (after the Phase 2 pull request is merged)
+
+**Why:** the live demo needs the trained models, the FAERS signal export and the replay sample (built in the
+build session, about the size given in `docs/DEMO_HOSTING.md`). The build session cannot create releases, so it
+sends you the file in the chat; GitHub keeps it as a release asset, outside git.
+
+1. In the Claude Code chat, find the message with the attached file `pharmavigil-demo-data.tar.gz` and download it.
+2. Open https://github.com/sumitparmar19/PharmaVigil/releases/new
+3. Click **Choose a tag**, type `demo-data-v1`, click **Create new tag: demo-data-v1 on publish**; target `main`.
+4. Title: `Demo data v1`. Description: `Models, signal export and replay sample for the live demo (see docs/DEMO_HOSTING.md).`
+5. Drag `pharmavigil-demo-data.tar.gz` into **Attach binaries**, wait until it shows as uploaded.
+6. Untick **Set as the latest release** (v1.0 stays the latest), then click **Publish release**.
+
+**Send back to the planning chat:** the release URL.
+
+## 16. Make the demo images public: OPEN (after step 15)
+
+**Why:** the demo server downloads the images from GitHub's container registry without a password, which works
+only for public packages. They contain the compiled services, no data and no secrets.
+
+1. Open https://github.com/sumitparmar19?tab=packages
+2. For each of the six packages `pharmavigil-pharmacy-service`, `pharmavigil-intake-gateway`,
+   `pharmavigil-case-service`, `pharmavigil-signal-service`, `pharmavigil-submission-gateway` and
+   `pharmavigil-frontend`: click it → **Package settings** (right side) → **Danger Zone → Change visibility** →
+   **Public** → type the package name → **I understand, change package visibility**.
+
+**Send back to the planning chat:** "Six packages public".
+
+## 17. Create the Oracle Cloud account and the demo server: OPEN (after step 16)
+
+**Why:** the live demo runs on one Oracle Cloud "Always Free" ARM server (2 OCPUs, 12 GB). Only you can open the
+account. The card check is a verification only; Always Free resources are not charged.
+
+1. Open https://signup.cloud.oracle.com and sign up with your UB e-mail. When asked for a **Home Region**, choose
+   **US East (Ashburn)**. The home region cannot be changed later. Complete the card verification.
+2. After the console opens, click the menu (☰) → **Compute → Instances → Create instance**.
+3. **Name:** `pharmavigil-demo`.
+4. **Image and shape → Edit → Change image → Ubuntu → Canonical Ubuntu 24.04** (the aarch64 build is chosen with the
+   shape) → **Select image**. **Change shape → Ampere → VM.Standard.A1.Flex**, set **OCPUs 2** and **Memory 12 GB**
+   → **Select shape**.
+5. **Networking:** keep **Create new virtual cloud network** and **Create new public subnet**; check that
+   **Automatically assign public IPv4 address** is on.
+6. **Add SSH keys:** choose **Generate a key pair for me** and click **Save private key**. Keep that file safe (it
+   is the key to the server); never send it to anyone.
+7. **Show advanced options → Management → Initialization script → Paste cloud-init script**: open
+   https://github.com/sumitparmar19/PharmaVigil/blob/main/ops/demo/cloud-init.yaml, click **Raw**, select all,
+   copy, and paste it into the box.
+8. Click **Create**. If it says **Out of capacity**: go back, under **Placement** choose another
+   **Availability domain**, and click **Create** again. If every availability domain says Out of capacity, stop
+   and tell the planning chat.
+9. When the instance is **Running**, copy its **Public IP address** from the instance page.
+10. Open the ports: on the instance page click the **Subnet** link → **Security Lists** → the default security list
+    → **Add Ingress Rules**: Source CIDR `0.0.0.0/0`, IP Protocol **TCP**, Destination Port Range `80,443` → **Add
+    Ingress Rules**.
+11. Wait 20 minutes (the server installs Docker, downloads the data and the images, and starts everything), then open
+    `https://<public IP with dashes instead of dots>.sslip.io` (for example `https://203-0-113-7.sslip.io`).
+
+**Send back to the planning chat:** the public IP, and whether the landing page opened.
+
+## 18. Connect GitHub to the demo server: OPEN (after step 17)
+
+**Why:** with these settings, GitHub deploys every new version to the server and tests the live site every day.
+
+1. Open https://github.com/sumitparmar19/PharmaVigil/settings/environments → **New environment** → name `demo` →
+   **Configure environment**.
+2. Under **Environment secrets** click **Add environment secret**: name `DEMO_SSH_KEY`; value: open the private key
+   file from step 17.6 in a text editor, select all, copy, paste. Click **Add secret**.
+3. Open **Settings → Secrets and variables → Actions → Variables** and add two repository variables:
+   `DEMO_HOST` = the public IP from step 17.9; `DEMO_URL` = `https://<public IP with dashes>.sslip.io`.
+4. Open **Actions → Deploy demo → Run workflow**, keep tag `demo`, click **Run workflow**, wait until it is green.
+5. Open **Actions → Live smoke test → Run workflow**, wait until it is green.
+
+**Send back to the planning chat:** the links of the two green runs.
+
+## 19. Turn on the project page: OPEN
+
+1. Open https://github.com/sumitparmar19/PharmaVigil/settings/pages
+2. Under **Build and deployment → Source** choose **GitHub Actions**.
+3. Open **Actions → Project page → Run workflow** and wait until it is green; its summary shows the page address
+   (https://sumitparmar19.github.io/PharmaVigil/).
+
+**Send back to the planning chat:** the page address.
+
 ---
 
 *More steps are added as milestones need them (Databricks, Kaggle, MedDRA licence, narrative labels,

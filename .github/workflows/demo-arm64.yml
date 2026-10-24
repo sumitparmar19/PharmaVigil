@@ -1,0 +1,84 @@
+# Proves the live demo stack runs on arm64 (the Oracle Cloud Ampere A1 VM is arm64): on a native GitHub arm64
+# runner, builds the images, starts docker-compose.demo.yml with the official E2B(R3) schemas and stand-in demo
+# data (the committed fixture model bundle and signal export, and 40 invented FAERS-shaped records, because the
+# real demo-data release is not reachable from CI before it is published), runs a replay through the whole pipeline
+# to the regulator's answer with ops/demo/measure.sh, and keeps the memory numbers as an artifact.
+name: Demo stack on arm64
+
+on:
+  pull_request:
+    paths: ["docker-compose.demo.yml", "ops/demo/**", ".github/workflows/demo-arm64.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-arm64-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  arm64:
+    name: Demo stack on linux/arm64
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build the service jars
+        working-directory: services
+        run: mvn -B -ntp -DskipTests package
+      - name: Build the images (native arm64)
+        run: |
+          for s in pharmacy-service intake-gateway case-service signal-service submission-gateway; do
+            docker build -q -f services/Dockerfile --build-arg SERVICE=$s -t local/pharmavigil-$s:ci services
+          done
+          docker build -q -t local/pharmavigil-frontend:ci frontend
+          docker image inspect local/pharmavigil-case-service:ci --format '{{.Architecture}}'
+      - name: Stand-in demo data and the official schemas
+        run: |
+          mkdir -p ops/demo/data/replay
+          cp -r services/case-service/src/test/resources/model-bundle ops/demo/data/models
+          cp -r services/signal-service/src/test/resources/signal-export ops/demo/data/signals
+          python3 - <<'PY'
+          import json, random
+          random.seed(7)
+          pts = ["nausea", "headache", "rash", "dizziness", "myalgia", "fatigue", "vomiting", "pruritus"]
+          with open("ops/demo/data/replay/replay_reports.jsonl", "w") as f:
+              for i in range(40):
+                  f.write(json.dumps({"faers_primaryid": str(700000 + i), "faers_caseid": str(70000 + i),
+                      "quarter": "2026Q2", "fda_date": "2026-05-04", "event_date": None, "age_years": 30 + i,
+                      "sex": random.choice(["M", "F"]), "reporter_type": random.choice(["PHYSICIAN", "PHARMACIST", "CONSUMER"]),
+                      "country": "US", "outcomes": random.choice([[], ["HO"], ["OT"]]),
+                      "drugs": [{"name": "INVENTED DRUG " + str(i % 5), "role": "PS", "route": "ORAL", "dose": None}],
+                      "reactions": random.sample(pts, 2)}) + "\n")
+          PY
+          scripts/fetch-e2b-xsd.sh ops/demo/data/xsd
+          ops/demo/make-env.sh localhost
+          sed -i 's/^PV_IMAGE_TAG=.*/PV_IMAGE_TAG=ci/' ops/demo/.env
+          echo "PV_REGISTRY=local" >> ops/demo/.env
+      - name: Start the demo stack
+        run: docker compose -f docker-compose.demo.yml --env-file ops/demo/.env up -d --wait --wait-timeout 1500
+      - name: Status
+        run: curl -fsSk https://localhost/api/status | tee /dev/stderr | grep -q '"status":"UP"'
+      - name: Replay and measure
+        run: ops/demo/measure.sh https://localhost 40 "$RUNNER_TEMP/memory_arm64.json" "GitHub ubuntu-24.04-arm runner (native arm64), fixture models and 40 invented records"
+      - name: Results
+        if: always()
+        run: |
+          cat "$RUNNER_TEMP/memory_arm64.json" || true
+          docker stats --no-stream || true
+          python3 -c "import json; d=json.load(open('$RUNNER_TEMP/memory_arm64.json')); print('stages', d['stages']); assert d['stages'].get('acknowledged', 0) > 0, 'no ACK reached'"
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.demo.yml --env-file ops/demo/.env logs --tail 150
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: demo-arm64-memory
+          path: ${{ runner.temp }}/memory_arm64.json
+          if-no-files-found: ignore

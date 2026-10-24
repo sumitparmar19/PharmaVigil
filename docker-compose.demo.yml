@@ -212,7 +212,6 @@ services:
     depends_on: [frontend, grafana]
     environment:
       PV_DEMO_HOST: ${PV_DEMO_HOST}
-      PV_ACME_EMAIL: ${PV_ACME_EMAIL:-}
     ports:
       - "80:80"
       - "443:443"
