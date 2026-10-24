@@ -32,7 +32,9 @@ timeout 600 bash -c "until curl -fs -u '$AUTH' '$URL/job/pharmavigil/api/json' >
 
 CRUMB=$(curl -fs -c "$JAR" -u "$AUTH" "$URL/crumbIssuer/api/json" \
   | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["crumbRequestField"]+":"+d["crumb"])')
-curl -fs -b "$JAR" -u "$AUTH" -H "$CRUMB" -X POST "$URL/job/pharmavigil/buildWithParameters?DEPLOY_TO_KIND=true" >/dev/null
+# A pipeline's parameters exist only after its first run, so the first build is a plain one (DEPLOY_TO_KIND
+# defaults to true in the Jenkinsfile).
+curl -sS --fail-with-body -b "$JAR" -u "$AUTH" -H "$CRUMB" -X POST "$URL/job/pharmavigil/build" >/dev/null
 echo "build triggered; waiting (up to 120 minutes)"
 timeout 600 bash -c "until curl -fs -u '$AUTH' '$URL/job/pharmavigil/1/api/json' >/dev/null; do sleep 5; done"
 timeout 7200 bash -c "until curl -fs -u '$AUTH' '$URL/job/pharmavigil/1/api/json' | grep -q '\"building\":false'; do sleep 20; done"

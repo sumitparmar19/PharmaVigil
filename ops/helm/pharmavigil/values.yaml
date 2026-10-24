@@ -2,6 +2,8 @@
 # lists its keys). Images default to pharmavigil/<service>:<global.imageTag>.
 global:
   secretName: pharmavigil-secrets
+  # Registry host for the service images (e.g. the ACR login server on AKS); empty = local images (kind).
+  imageRegistry: ""
   imageTag: "0.1.0"
   imagePullPolicy: IfNotPresent
   # Init container that holds each service until its database and brokers accept connections.

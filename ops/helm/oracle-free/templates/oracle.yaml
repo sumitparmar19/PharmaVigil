@@ -41,14 +41,14 @@ spec:
             failureThreshold: 60
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          # No volume over /opt/oracle/oradata: the faststart image ships a pre-built database there, which an
+          # emptyDir would hide (docker compose's named volume is filled from the image, Kubernetes volumes are
+          # not). The demo database lives in the container and is ephemeral.
           volumeMounts:
             - {name: init, mountPath: /container-entrypoint-initdb.d}
-            - {name: data, mountPath: /opt/oracle/oradata}
       volumes:
         - name: init
           configMap: {name: oracle-free-init, defaultMode: 0555}
-        - name: data
-          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

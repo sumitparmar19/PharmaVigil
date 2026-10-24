@@ -76,7 +76,7 @@ spec:
       {{- end }}
       containers:
         - name: {{ $name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default $g.imageTag | default .Chart.AppVersion }}"
+          image: "{{ with $g.imageRegistry }}{{ . }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.image.tag | default $g.imageTag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy | default $g.imagePullPolicy | default "IfNotPresent" }}
           ports:
             - name: http
