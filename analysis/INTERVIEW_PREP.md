@@ -152,3 +152,26 @@ build environment cannot download FAERS; the code and notebooks to do it are rea
   database that the image ships pre-built, so Oracle had nothing to open. Without it, the kind workflow is green
   (whole stack on Strimzi Kafka, Playwright smoke test 2/2), and the same install script now also passes inside
   the Jenkins pipeline; the Azure deploy uses it too.
+
+## Phase 2: the live demo (hosting, memory, proof)
+
+26. *Why Oracle Cloud Always Free and not AKS for the always-on demo?* A demo must run every day for months at no
+    cost. Always Free gives one Ampere A1 server with 2 OCPUs and 12 GB (Oracle cut it from 4/24 in June 2026), which
+    is enough for the whole stack in docker compose; AKS stays a one-day proof of the Kubernetes path (owner step 9)
+    because even the smallest node costs money every hour.
+27. *How do you fit Oracle, Kafka, Artemis, five JVMs and Grafana into 12 GB?* An explicit memory limit on every
+    container (total of the limits 8.3 GiB, under the 9 GB target), JVM heaps as a percentage of the limit with the
+    serial GC and capped metaspace, Kafka 384 MB heap, Artemis 256 MB, an int8-quantized coder, and a swap file for
+    safety. The real usage is measured with `docker stats` during a replay (`ops/demo/measure.sh`, `analysis/p6/`).
+28. *Why multi-arch images?* The demo server is arm64; CI builds every image for amd64 and arm64 with buildx (the UI
+    bundle is built once on the native platform) and a native arm64 runner starts the whole stack and runs a replay
+    to the regulator's answer before anything is deployed.
+29. *How does the "Run the pipeline" button stay honest?* It sends real FAERS reports through the real intake (SOAP
+    with WS-Security and REST), and every counter is counted from case-service's own audit trail. Replayed cases are
+    auto-reviewed so they can reach the regulator, but through the normal review calls as "demo-auto-review",
+    labelled as such on the case page.
+30. *How is a public demo protected?* No sign-up, shared read-mostly accounts, rate limits per IP and account, a
+    cooldown and size cap on replays, 16 KB request bodies, no uploads or SOAP from the internet, no outbound calls
+    from user input, secrets generated on the server, and a nightly reset.
+31. *How do you know it still works next week?* A Playwright test runs against the public URL every day and the
+    README shows its badge; `/api/status` reports each service, Kafka lag and the loaded model versions.

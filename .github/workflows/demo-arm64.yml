@@ -64,7 +64,14 @@ jobs:
       - name: Start the demo stack
         run: docker compose -f docker-compose.demo.yml --env-file ops/demo/.env up -d --wait --wait-timeout 1500
       - name: Status
-        run: curl -fsSk https://localhost/api/status | tee /dev/stderr | grep -q '"status":"UP"'
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsSk -m 10 https://localhost/api/status | tee /tmp/status.json | grep -q '"status":"UP"'; then
+              cat /tmp/status.json; exit 0
+            fi
+            sleep 10
+          done
+          cat /tmp/status.json || true; docker compose -f docker-compose.demo.yml --env-file ops/demo/.env ps; exit 1
       - name: Replay and measure
         run: ops/demo/measure.sh https://localhost 40 "$RUNNER_TEMP/memory_arm64.json" "GitHub ubuntu-24.04-arm runner (native arm64), fixture models and 40 invented records"
       - name: Results

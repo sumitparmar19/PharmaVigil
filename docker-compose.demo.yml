@@ -27,6 +27,14 @@ x-java: &java
       -XX:MaxRAMPercentage=60 -XX:+ExitOnOutOfMemoryError -XX:+UseSerialGC -Xss512k
       -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=192m
       -javaagent:/app/opentelemetry-javaagent.jar
+  # Healthy once Spring answers /actuator/health with UP (bash's /dev/tcp: the JRE image has no curl), so
+  # `up --wait` and the deploy check only pass when the services really serve.
+  healthcheck:
+    test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/$$SERVER_PORT && printf 'GET /actuator/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    interval: 10s
+    timeout: 5s
+    retries: 30
+    start_period: 120s
   logging: &logging
     driver: json-file
     options: { max-size: "10m", max-file: "3" }
@@ -98,6 +106,7 @@ services:
     mem_limit: 512m
     environment:
       <<: *java-env
+      SERVER_PORT: "8081"
       ORACLE_USER: pv_pharmacy
       SPRING_PROFILES_ACTIVE: demo
       PV_DEMO_PASSWORD: ${PV_DEMO_PASSWORD:?set PV_DEMO_PASSWORD in ops/demo/.env}
@@ -111,6 +120,7 @@ services:
     mem_limit: 576m
     environment:
       <<: *java-env
+      SERVER_PORT: "8082"
       ORACLE_USER: pv_intake
       SOAP_PARTNER_USER: ${SOAP_PARTNER_USER:?set SOAP_PARTNER_USER in ops/demo/.env}
       SOAP_PARTNER_PASSWORD: ${SOAP_PARTNER_PASSWORD:?set SOAP_PARTNER_PASSWORD in ops/demo/.env}
@@ -126,6 +136,7 @@ services:
     mem_limit: 1280m
     environment:
       <<: *java-env
+      SERVER_PORT: "8083"
       ORACLE_USER: pv_case
       PV_MODEL_DIR: /demo-data/models
       PV_E2B_XSD_DIR: /xsd
@@ -139,6 +150,7 @@ services:
     mem_limit: 640m
     environment:
       <<: *java-env
+      SERVER_PORT: "8084"
       ORACLE_USER: pv_signal
       PV_SIGNALS_DIR: /demo-data/signals
     volumes:
@@ -154,6 +166,7 @@ services:
       artemis: { condition: service_healthy }
     environment:
       <<: *java-env
+      SERVER_PORT: "8085"
       ORACLE_USER: pv_submission
       ARTEMIS_BROKER_URL: tcp://artemis:61616
       ARTEMIS_USER: ${ARTEMIS_USER}
