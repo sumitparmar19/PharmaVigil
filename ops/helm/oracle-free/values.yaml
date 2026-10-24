@@ -1,8 +1,10 @@
 # Demo Oracle Free. Passwords come from the existing Secret (global.secretName): ORACLE_PASSWORD (SYSTEM) and
 # PV_DB_PASSWORD (the five service schemas).
 image: gvenzl/oracle-free:23-slim-faststart
+# Oracle Free needs about 2 GiB for SGA and PGA; a container killed for memory cannot restart cleanly in the same
+# pod (ORA-01081, shared memory still held), so leave headroom.
 resources:
-  requests: {cpu: 250m, memory: 1Gi}
-  limits: {memory: 2Gi}
+  requests: {cpu: 250m, memory: 2Gi}
+  limits: {memory: 4Gi}
 global:
   secretName: pharmavigil-secrets

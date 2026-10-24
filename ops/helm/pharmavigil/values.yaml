@@ -4,6 +4,8 @@ global:
   secretName: pharmavigil-secrets
   imageTag: "0.1.0"
   imagePullPolicy: IfNotPresent
+  # Init container that holds each service until its database and brokers accept connections.
+  waitImage: busybox:1.37.0
 
 # Demo infrastructure; switch off to point the services at managed databases and brokers.
 oracle-free:

@@ -75,3 +75,6 @@ test-results/
 # Helm: dependency packages and lock files are rebuilt with `helm dependency build`
 ops/helm/*/charts/
 ops/helm/*/Chart.lock
+
+# Throwaway kind secrets written by ops/kind/deploy.sh
+.kind-secrets.env

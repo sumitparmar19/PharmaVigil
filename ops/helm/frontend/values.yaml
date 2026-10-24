@@ -24,3 +24,4 @@ global:
   secretName: pharmavigil-secrets
   imageTag: 0.1.0
   imagePullPolicy: IfNotPresent
+  waitImage: busybox:1.37.0

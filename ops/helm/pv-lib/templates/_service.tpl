@@ -1,7 +1,8 @@
 {{/*
 pv-lib.service renders a Deployment and a Service for one PharmaVigil service. Values (see a service chart's
 values.yaml): image, port, env, secretEnv, resources, probes (liveness/readiness paths), volumes, volumeMounts,
-service.type/nodePort.
+service.type/nodePort, waitFor (host:port list an init container waits for; a Service only accepts connections
+once it has a ready pod, so the service starts after its database and brokers instead of crash-looping).
 Secrets are never in values: secretEnv maps an env var to a key of the existing Secret global.secretName.
 */}}
 {{- define "pv-lib.name" -}}
@@ -51,6 +52,28 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
+      {{- with .Values.waitFor }}
+      initContainers:
+        - name: wait-for-dependencies
+          image: {{ $g.waitImage | default "busybox:1.37.0" }}
+          command:
+            - sh
+            - -c
+            - |
+              for target in {{ join " " . }}; do
+                until nc -z -w 2 "${target%:*}" "${target##*:}"; do echo "waiting for $target"; sleep 3; done
+              done
+          securityContext:
+            runAsUser: 65534
+            runAsGroup: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: {cpu: 10m, memory: 8Mi}
+            limits: {memory: 32Mi}
+      {{- end }}
       containers:
         - name: {{ $name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default $g.imageTag | default .Chart.AppVersion }}"
