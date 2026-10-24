@@ -102,7 +102,8 @@ pipeline {
     failure {
       sh 'ops/kind/diagnose.sh || true'
     }
-    always {
+    // cleanup runs after every other post condition, so the cluster still exists while diagnose.sh runs.
+    cleanup {
       sh 'ops/kind/teardown.sh || true'
     }
   }

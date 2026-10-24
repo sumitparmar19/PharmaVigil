@@ -13,6 +13,9 @@ ARG HELM_VERSION=v4.3.0
 ARG KUBECTL_VERSION=v1.37.1
 COPY --from=maven /usr/share/maven /usr/share/maven
 COPY --from=docker /usr/local/bin/docker /usr/local/bin/docker
+# buildx makes `docker build` use BuildKit, as compose and the kind workflow do; the legacy builder reads
+# services/.dockerignore differently and leaves out the OpenTelemetry agent.
+COPY --from=docker /usr/local/libexec/docker/cli-plugins/docker-buildx /usr/local/libexec/docker/cli-plugins/docker-buildx
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
 RUN ln -s /usr/share/maven/bin/mvn /usr/local/bin/mvn \
