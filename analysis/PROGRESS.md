@@ -19,8 +19,8 @@ the repo.
 | M8 | Kafka, ONNX in Java, JMS, narrative | ✅ done (end-to-end test in CI) | ADR-008, `services/e2e-tests`, `analysis/models/MANIFEST.md` |
 | M9 | Frontend | ✅ done locally (unit tests and the browser smoke test against the full stack); CI job added | `frontend/`, `docker-compose.yml`, `frontend/e2e/` |
 | M10 | Operations | ✅ metrics, tracing, dashboards, alerts, k6; Helm + Strimzi on kind and the Jenkins pipeline green in CI | `docs/OBSERVABILITY.md`, `docs/PERFORMANCE.md`, `analysis/m10/` |
-| M11 | Azure infrastructure (code only) | written; fmt, validate, terraform test and Checkov clean locally; CI job added; never applied (owner step 9) | `infra/azure`, `docs/AZURE.md` |
-| M12 | Docs, evidence, report | pending | |
+| M11 | Azure infrastructure (code only) | ✅ validated (fmt, validate, terraform test, Checkov) locally and in CI; never applied (owner step 9) | `infra/azure`, `docs/AZURE.md` |
+| M12 | Docs, evidence, report | ✅ done | README, ADRs 1–10, `analysis/PROJECT_REPORT.md`, `analysis/COMPLETE_REPORT.md`, `RESUME_EVIDENCE.md`, `INTERVIEW_PREP.md` |
 
 ## M0: bootstrap
 

@@ -228,6 +228,21 @@ a copy you can show without running the stack (it shows data only while a Promet
 
 **Send back to the planning chat:** the release URL.
 
+## 13. Decide on the two CodeQL alerts: OPEN
+
+**Why:** the "CodeQL" check on the pull request is red because of two alerts that Claude Code judged false
+positives (reasons in `analysis/COMPLETE_REPORT.md`, part A2, and in the replies on the pull request). Only the
+repository owner can dismiss an alert.
+
+1. Open https://github.com/sumitparmar19/PharmaVigil/security/code-scanning
+2. Click **Clear-text logging of sensitive information** → **Dismiss alert** → **False positive** → comment
+   `aggregate statistics of public FAERS data` → **Dismiss alert**.
+3. Click **Disabled Spring CSRF protection** → **Dismiss alert** → **Won't fix** → comment
+   `stateless bearer-token API, no cookies` → **Dismiss alert**.
+4. Open the pull request and check that the **CodeQL** check is green.
+
+**Send back to the planning chat:** whether the CodeQL check is green (or that you want code changes instead).
+
 ---
 
 *More steps are added as milestones need them (Databricks, Kaggle, MedDRA licence, narrative labels,
