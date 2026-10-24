@@ -1,0 +1,244 @@
+# The public live demo (Phase 2, docs/DEMO_HOSTING.md): the whole platform on one small server (Oracle Cloud
+# Always Free, 2 OCPUs / 12 GB), from the multi-arch images CI pushes to GHCR, with the real models, the FAERS
+# signal export and the replay sample from the demo-data release (ops/demo/fetch-demo-data.sh). Caddy terminates
+# HTTPS; only ports 80 and 443 are published. Every container has an explicit memory limit; the total stays under
+# 9 GB (measured numbers in docs/DEMO_HOSTING.md). Secrets come from ops/demo/.env on the server (never in git).
+#
+#   docker compose -f docker-compose.demo.yml --env-file ops/demo/.env up -d
+#
+# Not for clinical or regulatory use. Spontaneous reports do not prove that a drug caused a reaction.
+
+name: pharmavigil-demo
+
+x-java: &java
+  restart: unless-stopped
+  depends_on:
+    oracle: { condition: service_healthy }
+    kafka: { condition: service_healthy }
+  environment: &java-env
+    ORACLE_URL: jdbc:oracle:thin:@//oracle:1521/FREEPDB1
+    ORACLE_PASSWORD: ${PV_DB_PASSWORD:?set PV_DB_PASSWORD in ops/demo/.env}
+    JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in ops/demo/.env}
+    KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    PV_DEMO: "true"
+    OTEL_JAVAAGENT_ENABLED: "false"
+    # Heap is 60% of the container limit; the rest is metaspace, threads, and native memory (ONNX Runtime).
+    JAVA_TOOL_OPTIONS: >-
+      -XX:MaxRAMPercentage=60 -XX:+ExitOnOutOfMemoryError -XX:+UseSerialGC -Xss512k
+      -XX:ReservedCodeCacheSize=64m -XX:MaxMetaspaceSize=192m
+      -javaagent:/app/opentelemetry-javaagent.jar
+  # Healthy once Spring answers /actuator/health with UP (bash's /dev/tcp: the JRE image has no curl), so
+  # `up --wait` and the deploy check only pass when the services really serve.
+  healthcheck:
+    test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/$$SERVER_PORT && printf 'GET /actuator/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    interval: 10s
+    timeout: 5s
+    retries: 30
+    start_period: 120s
+  logging: &logging
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart
+    restart: unless-stopped
+    mem_limit: 2800m
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:?set ORACLE_PASSWORD in ops/demo/.env}
+      PV_DB_PASSWORD: ${PV_DB_PASSWORD}
+    volumes:
+      - ./ops/helm/oracle-free/files/oracle-init.sh:/container-entrypoint-initdb.d/01-schemas.sh:ro
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 120s
+    logging: *logging
+
+  kafka:
+    image: apache/kafka:4.3.2
+    restart: unless-stopped
+    mem_limit: 768m
+    environment:
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx384m
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_RETENTION_HOURS: 24
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+    logging: *logging
+
+  artemis:
+    image: apache/activemq-artemis:2.44.0-alpine
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      ARTEMIS_USER: ${ARTEMIS_USER:?set ARTEMIS_USER in ops/demo/.env}
+      ARTEMIS_PASSWORD: ${ARTEMIS_PASSWORD:?set ARTEMIS_PASSWORD in ops/demo/.env}
+      JDK_JAVA_OPTIONS: -Xms128m -Xmx256m
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 61616"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    logging: *logging
+
+  pharmacy-service:
+    <<: *java
+    image: ${PV_REGISTRY:-ghcr.io/sumitparmar19}/pharmavigil-pharmacy-service:${PV_IMAGE_TAG:-demo}
+    mem_limit: 512m
+    environment:
+      <<: *java-env
+      SERVER_PORT: "8081"
+      ORACLE_USER: pv_pharmacy
+      SPRING_PROFILES_ACTIVE: demo
+      PV_DEMO_PASSWORD: ${PV_DEMO_PASSWORD:?set PV_DEMO_PASSWORD in ops/demo/.env}
+      PV_DEMO_PUBLIC_PASSWORD: ${PV_DEMO_PUBLIC_PASSWORD:?set PV_DEMO_PUBLIC_PASSWORD in ops/demo/.env}
+      INTAKE_GATEWAY_URL: http://intake-gateway:8082
+      SIGNAL_SERVICE_URL: http://signal-service:8084
+
+  intake-gateway:
+    <<: *java
+    image: ${PV_REGISTRY:-ghcr.io/sumitparmar19}/pharmavigil-intake-gateway:${PV_IMAGE_TAG:-demo}
+    mem_limit: 576m
+    environment:
+      <<: *java-env
+      SERVER_PORT: "8082"
+      ORACLE_USER: pv_intake
+      SOAP_PARTNER_USER: ${SOAP_PARTNER_USER:?set SOAP_PARTNER_USER in ops/demo/.env}
+      SOAP_PARTNER_PASSWORD: ${SOAP_PARTNER_PASSWORD:?set SOAP_PARTNER_PASSWORD in ops/demo/.env}
+      PV_E2B_XSD_DIR: /xsd
+      PV_DEMO_SLICE: /demo-data/replay/replay_reports.jsonl
+    volumes:
+      - ./ops/demo/data/xsd:/xsd:ro
+      - ./ops/demo/data:/demo-data:ro
+
+  case-service:
+    <<: *java
+    image: ${PV_REGISTRY:-ghcr.io/sumitparmar19}/pharmavigil-case-service:${PV_IMAGE_TAG:-demo}
+    mem_limit: 1280m
+    environment:
+      <<: *java-env
+      SERVER_PORT: "8083"
+      ORACLE_USER: pv_case
+      PV_MODEL_DIR: /demo-data/models
+      PV_E2B_XSD_DIR: /xsd
+    volumes:
+      - ./ops/demo/data/xsd:/xsd:ro
+      - ./ops/demo/data:/demo-data:ro
+
+  signal-service:
+    <<: *java
+    image: ${PV_REGISTRY:-ghcr.io/sumitparmar19}/pharmavigil-signal-service:${PV_IMAGE_TAG:-demo}
+    mem_limit: 640m
+    environment:
+      <<: *java-env
+      SERVER_PORT: "8084"
+      ORACLE_USER: pv_signal
+      PV_SIGNALS_DIR: /demo-data/signals
+    volumes:
+      - ./ops/demo/data:/demo-data:ro
+
+  submission-gateway:
+    <<: *java
+    image: ${PV_REGISTRY:-ghcr.io/sumitparmar19}/pharmavigil-submission-gateway:${PV_IMAGE_TAG:-demo}
+    mem_limit: 512m
+    depends_on:
+      oracle: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+      artemis: { condition: service_healthy }
+    environment:
+      <<: *java-env
+      SERVER_PORT: "8085"
+      ORACLE_USER: pv_submission
+      ARTEMIS_BROKER_URL: tcp://artemis:61616
+      ARTEMIS_USER: ${ARTEMIS_USER}
+      ARTEMIS_PASSWORD: ${ARTEMIS_PASSWORD}
+      PV_E2B_XSD_DIR: /xsd
+    volumes:
+      - ./ops/demo/data/xsd:/xsd:ro
+
+  frontend:
+    image: ${PV_REGISTRY:-ghcr.io/sumitparmar19}/pharmavigil-frontend:${PV_IMAGE_TAG:-demo}
+    restart: unless-stopped
+    mem_limit: 96m
+    depends_on: [pharmacy-service, case-service, signal-service, submission-gateway, intake-gateway]
+    volumes:
+      - ./ops/demo/nginx.demo.conf:/etc/nginx/conf.d/default.conf:ro
+    logging: *logging
+
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    restart: unless-stopped
+    mem_limit: 320m
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=3d",
+              "--storage.tsdb.retention.size=1GB"]
+    volumes:
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./ops/grafana/alerts:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    logging: *logging
+
+  grafana:
+    image: grafana/grafana:13.2.3
+    restart: unless-stopped
+    mem_limit: 320m
+    depends_on: [prometheus]
+    environment:
+      # Public, read-only viewer: dashboards come from files; nobody can sign in or change anything.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_AUTH_BASIC_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      # No plugin downloads or updates at start (they pushed Grafana to its memory limit; none are needed).
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_SERVER_ROOT_URL: https://${PV_DEMO_HOST:?set PV_DEMO_HOST in ops/demo/.env}/grafana/
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in ops/demo/.env}
+    volumes:
+      - ./ops/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./ops/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    logging: *logging
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    mem_limit: 128m
+    depends_on: [frontend, grafana]
+    environment:
+      PV_DEMO_HOST: ${PV_DEMO_HOST}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./ops/demo/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    logging: *logging
+
+volumes:
+  oracle-data:
+  kafka-data:
+  prometheus-data:
+  caddy-data:
+  caddy-config:

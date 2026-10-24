@@ -50,3 +50,21 @@ def test_train_and_onnx_parity(tmp_path) -> None:
     assert "proxy" in res.metrics["training_signal"]
     path = export_lightgbm(res.booster, len(PAIR_FEATURES), tmp_path / "duplicates.onnx")
     assert lightgbm_parity(res.booster, path, res.x_test[:300])["max_abs_diff"] < 1e-5
+
+
+def test_load_versions_samples_whole_cases(tmp_path) -> None:
+    """Sampling picks cases, not rows: every version of each chosen case is read, and nothing else."""
+    import pandas as pd
+
+    from pharmavigil_ml.triage.duplicates import load_versions
+
+    rows = [{"report_key": f"{c}-{v}", "caseid": str(c), "caseversion": v, "pts": ["nausea"]}
+            for c in range(20) for v in range(1, 1 + c % 3 + 1)]
+    pd.DataFrame(rows).to_parquet(tmp_path / "versions.parquet")
+    full = load_versions(tmp_path)
+    assert len(full) == len(rows)
+    sample = load_versions(tmp_path, sample_cases=5)
+    assert sample["caseid"].nunique() == 5
+    expected = full[full["caseid"].isin(set(sample["caseid"]))]
+    assert len(sample) == len(expected)
+    assert sample.equals(load_versions(tmp_path, sample_cases=5).reset_index(drop=True))

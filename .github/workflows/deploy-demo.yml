@@ -1,0 +1,58 @@
+# Deploys the live demo on the Oracle Cloud VM (docs/DEMO_HOSTING.md): after "Demo images" has pushed a new tag
+# from main, or by hand with any tag. Connects over SSH with the key stored as the secret DEMO_SSH_KEY to the host in
+# the variable DEMO_HOST and runs ops/demo/deploy.sh, which pulls the images, restarts the stack, checks
+# https://<host>/api/status and rolls back to the previous tag if that check fails. Skipped until DEMO_HOST is set.
+name: Deploy demo
+
+on:
+  workflow_run:
+    workflows: ["Demo images"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to deploy (commit SHA prefix or 'demo')"
+        required: true
+        default: demo
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-demo
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to the demo VM
+    if: >-
+      vars.DEMO_HOST != '' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: demo
+    steps:
+      - name: Choose the tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then tag="$INPUT_TAG"; else tag="${RUN_SHA::12}"; fi
+          [[ "$tag" =~ ^[a-z0-9._-]{1,64}$ ]] || { echo "bad tag"; exit 1; }
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - name: Deploy over SSH
+        env:
+          SSH_KEY: ${{ secrets.DEMO_SSH_KEY }}
+          HOST: ${{ vars.DEMO_HOST }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/demo && chmod 600 ~/.ssh/demo
+          ssh -i ~/.ssh/demo -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 "ubuntu@$HOST" \
+            "/opt/pharmavigil/ops/demo/deploy.sh '$TAG'"
+      - name: Forget the key
+        if: always()
+        run: rm -f ~/.ssh/demo

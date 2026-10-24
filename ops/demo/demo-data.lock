@@ -1,0 +1,4 @@
+# The demo-data archive the live demo uses (ops/demo/fetch-demo-data.sh): where to download it and its SHA-256.
+# Built by ops/demo/build-demo-data.sh from the Phase 2 runs (contents and scope: docs/DEMO_HOSTING.md).
+DEMO_DATA_URL=https://github.com/sumitparmar19/PharmaVigil/releases/download/demo-data-v1/pharmavigil-demo-data.tar.gz
+DEMO_DATA_SHA256=PENDING

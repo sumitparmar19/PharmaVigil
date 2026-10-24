@@ -1,6 +1,7 @@
 // Demo data for local runs and the end-to-end stack (profile "demo"): a small drug catalog with in-date and
 // expired lots, demo prescribers, Synthea-format synthetic patients, and logins whose password comes from
-// the PV_DEMO_PASSWORD environment variable (no password is ever stored in the repository).
+// the PV_DEMO_PASSWORD environment variable (no password is ever stored in the repository). On the public live
+// demo, PV_DEMO_PUBLIC_PASSWORD adds the two shared accounts demo-pharmacist and demo-reviewer.
 package io.pharmavigil.pharmacy.config;
 
 import java.io.InputStreamReader;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import io.pharmavigil.common.security.Roles;
 import io.pharmavigil.pharmacy.auth.AppUser;
 import io.pharmavigil.pharmacy.auth.AppUserRepository;
+import io.pharmavigil.pharmacy.auth.DemoAccounts;
 import io.pharmavigil.pharmacy.catalog.Drug;
 import io.pharmavigil.pharmacy.catalog.DrugRepository;
 import io.pharmavigil.pharmacy.catalog.Lot;
@@ -60,10 +62,12 @@ public class DemoData implements ApplicationRunner {
     private final PasswordEncoder encoder;
     private final Clock clock;
     private final String demoPassword;
+    private final String publicPassword;
 
     public DemoData(DrugRepository drugs, LotRepository lots, PrescriberRepository prescribers, AppUserRepository users,
             SyntheaImporter synthea, PasswordEncoder encoder, Clock clock,
-            @Value("${PV_DEMO_PASSWORD:}") String demoPassword) {
+            @Value("${PV_DEMO_PASSWORD:}") String demoPassword,
+            @Value("${PV_DEMO_PUBLIC_PASSWORD:}") String publicPassword) {
         this.drugs = drugs;
         this.lots = lots;
         this.prescribers = prescribers;
@@ -72,6 +76,7 @@ public class DemoData implements ApplicationRunner {
         this.encoder = encoder;
         this.clock = clock;
         this.demoPassword = demoPassword;
+        this.publicPassword = publicPassword;
     }
 
     @Override
@@ -100,6 +105,12 @@ public class DemoData implements ApplicationRunner {
             users.save(new AppUser("admin", hash, Roles.ADMIN, "Demo Admin", null));
         } else {
             log.warn("PV_DEMO_PASSWORD not set (or shorter than 12 characters): no demo logins created");
+        }
+        // Public live demo (Phase 2): two accounts whose password the landing page shows on purpose.
+        if (publicPassword.length() >= DemoAccounts.MIN_PASSWORD) {
+            String hash = encoder.encode(publicPassword);
+            users.save(new AppUser(DemoAccounts.PHARMACIST, hash, Roles.PHARMACIST, "Demo Pharmacist (public)", null));
+            users.save(new AppUser(DemoAccounts.REVIEWER, hash, Roles.SAFETY_REVIEWER, "Demo Reviewer (public)", null));
         }
     }
 }

@@ -9,6 +9,8 @@ analysis/m2/ (engineering rule 10). Steps, in order:
   pv-data quality                                      # data-quality report
   pv-data faers-versions                               # every case version (duplicate-model training)
   pv-data vaers --years 2019 2025                      # VAERS narratives with coded PTs
+  pv-data p1-counts --scope "subset: FAERS 2019Q1–2026Q2"  # analysis/p1/data_counts.json (Phase 2)
+  pv-data demo-slice --quarters 2026Q2 --reports 5000  # replay file for the live demo (Phase 2)
 """
 
 from __future__ import annotations
@@ -212,7 +214,40 @@ def build_parser() -> argparse.ArgumentParser:
     v.add_argument("--years", type=int, nargs=2, metavar=("FIRST", "LAST"))
     v.add_argument("--zip", nargs="*", help="already-downloaded <year>VAERSData.zip files")
     v.set_defaults(func=cmd_vaers)
+
+    pc = sub.add_parser("p1-counts", help="Phase 2: data counts at every layer, with source checksums")
+    pc.add_argument("--scope", required=True)
+    pc.add_argument("--out", default=str(ANALYSIS_DIR.parent / "p1" / "data_counts.json"))
+    pc.set_defaults(func=cmd_p1_counts)
+
+    ds = sub.add_parser("demo-slice", help="Phase 2: sample of de-identified FAERS reports for the demo replay")
+    ds.add_argument("--quarters", nargs="+", required=True)
+    ds.add_argument("--reports", type=int, default=5000)
+    ds.add_argument("--out", default=str(paths.lake_root() / "demo"))
+    ds.set_defaults(func=cmd_demo_slice)
     return p
+
+
+def cmd_p1_counts(args: argparse.Namespace) -> int:
+    from .demo_slice import data_counts
+    from .spark import get_spark
+
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    cov = ANALYSIS_DIR / "normalization_coverage.json"
+    coverage = json.loads(cov.read_text())["normalization_coverage"] if cov.exists() else None
+    out.write_text(json.dumps(data_counts(get_spark(), args.scope, coverage), indent=2, default=str))
+    print(f"wrote {out}")
+    return 0
+
+
+def cmd_demo_slice(args: argparse.Namespace) -> int:
+    from .demo_slice import build_demo_slice
+    from .spark import get_spark
+
+    meta = build_demo_slice(get_spark(), Path(args.out), args.quarters, args.reports)
+    print(json.dumps(meta, indent=1))
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

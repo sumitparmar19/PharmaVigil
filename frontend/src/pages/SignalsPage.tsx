@@ -1,6 +1,7 @@
-// Drug–event signals learned from public FAERS reports: the top pairs per method (EBGM, PRR, ROR, IC,
-// SafetyFormer), the yearly trend of a chosen pair, and the reference-set evaluation summary. Every view states its
-// data scope and that spontaneous reports do not prove causation. With no export loaded, it says so.
+// Drug–event signals learned from public FAERS reports: the top pairs ranked by one method (EBGM, PRR, ROR, IC,
+// SafetyFormer) with every method's score side by side, a drug search, the reference-set badge where a pair is a
+// known positive or negative, the yearly trend of a chosen pair, and the reference-set evaluation summary. Every
+// view states its data scope and that spontaneous reports do not prove causation. With no export loaded, it says so.
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { Signal, SignalMethod } from "../api/types";
@@ -26,14 +27,19 @@ export function SignalsPage() {
   const { api } = useAuth();
   const [method, setMethod] = useState<SignalMethod>("ebgm");
   const [pair, setPair] = useState<Signal | null>(null);
+  const [draft, setDraft] = useState("");
+  const [search, setSearch] = useState("");
   const meta = useQuery({ queryKey: ["signal-meta"], queryFn: () => api.signalMeta() });
-  const top = useQuery({ queryKey: ["signals", method], queryFn: () => api.topSignals(method, 25) });
+  const ranked = useQuery({ queryKey: ["signals", method], queryFn: () => api.topSignals(method, 25),
+    enabled: search === "" });
+  const found = useQuery({ queryKey: ["signal-search", search], queryFn: () => api.searchSignals(search, 50),
+    enabled: search !== "" });
+  const top = search === "" ? ranked : found;
   const trend = useQuery({
     queryKey: ["trend", pair?.rxcui, pair?.pt],
     queryFn: () => api.trend(pair!.rxcui, pair!.pt),
     enabled: pair !== null,
   });
-  const m = METHODS.find((x) => x.id === method)!;
   const evaluation = meta.data?.evaluation as
     Record<string, { methods?: Record<string, { auc?: number; ci_low?: number; ci_high?: number }> }> | null | undefined;
 
@@ -52,21 +58,40 @@ export function SignalsPage() {
         <p className="mb-3 text-sm">Data scope: <strong>{meta.data.scope}</strong> · {meta.data.pairs} drug–event pairs</p>
       )}
 
-      <div role="tablist" aria-label="Method" className="mb-3 flex flex-wrap gap-2">
-        {METHODS.map((x) => (
-          <button key={x.id} role="tab" aria-selected={x.id === method} type="button"
-            className={`rounded-md border px-3 py-1 text-sm ${x.id === method ? "bg-slate-900 text-white" : "bg-white"}`}
-            onClick={() => { setMethod(x.id); setPair(null); }}>{x.label}</button>
-        ))}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div role="tablist" aria-label="Rank by" className="flex flex-wrap gap-2">
+          {METHODS.map((x) => (
+            <button key={x.id} role="tab" aria-selected={search === "" && x.id === method} type="button"
+              className={`rounded-md border px-3 py-1 text-sm ${search === "" && x.id === method ? "bg-slate-900 text-white" : "bg-white"}`}
+              onClick={() => { setMethod(x.id); setPair(null); setSearch(""); setDraft(""); }}>{x.label}</button>
+          ))}
+        </div>
+        <form role="search" className="ml-auto flex gap-2"
+          onSubmit={(e) => { e.preventDefault(); setPair(null); setSearch(draft.trim()); }}>
+          <label htmlFor="drug-search" className="sr-only">Search a drug</label>
+          <input id="drug-search" value={draft} maxLength={60} onChange={(e) => setDraft(e.target.value)}
+            placeholder="Search a drug (ingredient)" className="rounded-md border px-2 py-1 text-sm" />
+          <button type="submit" className="rounded-md border bg-white px-3 py-1 text-sm">Search</button>
+        </form>
       </div>
+      {search !== "" && <p className="mb-2 text-sm">Pairs for ingredients starting with <strong>{search}</strong>, strongest EB05 first.</p>}
 
       <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
         <section aria-label="Top signals" className="rounded-lg border bg-white p-3">
-          {top.data && top.data.signals.length === 0 && <p className="text-sm">No pairs to rank for this method.</p>}
+          {top.data && top.data.signals.length === 0 && (
+            <p className="text-sm">{search === "" ? "No pairs to rank for this method." : "No scored pairs for this drug."}</p>
+          )}
           {top.data && top.data.signals.length > 0 && (
+            <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="text-slate-600">
-                <tr><th scope="col">Drug</th><th scope="col">Reaction (PT)</th><th scope="col">Reports</th><th scope="col">{m.label}</th></tr>
+                <tr>
+                  <th scope="col">Drug</th><th scope="col">Reaction (PT)</th><th scope="col">Reports</th>
+                  {METHODS.map((x) => (
+                    <th scope="col" key={x.id} className={search === "" && x.id === method ? "text-slate-900" : ""}>{x.label}</th>
+                  ))}
+                  <th scope="col">Reference set</th>
+                </tr>
               </thead>
               <tbody>
                 {top.data.signals.map((s) => (
@@ -78,11 +103,15 @@ export function SignalsPage() {
                     </td>
                     <td>{s.pt}</td>
                     <td>{s.reports}</td>
-                    <td>{num(m.score(s), 2)}</td>
+                    {METHODS.map((x) => (
+                      <td key={x.id} className={search === "" && x.id === method ? "font-semibold" : ""}>{num(x.score(s), 2)}</td>
+                    ))}
+                    <td>{s.reference ? <span className={`rounded px-1.5 py-0.5 text-xs ${s.reference.endsWith("positive") ? "bg-emerald-100 text-emerald-900" : "bg-slate-200 text-slate-800"}`}>{s.reference}</span> : "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </section>
 

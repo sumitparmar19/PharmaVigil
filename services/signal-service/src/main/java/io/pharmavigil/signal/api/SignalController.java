@@ -103,6 +103,20 @@ public class SignalController {
                 Disclaimers.NO_CAUSATION)).orElse(new Top(method, null, List.of(), Disclaimers.NO_CAUSATION));
     }
 
+    /** Drug search for the signals page: every scored pair of the ingredients starting with q. */
+    @GetMapping("/search")
+    public Top search(@RequestParam String q, @RequestParam(defaultValue = "50") int limit) {
+        if (q.isBlank() || q.length() > 60) {
+            throw new IllegalArgumentException("q must be 1 to 60 characters");
+        }
+        var snap = store.current();
+        if (snap.isEmpty()) {
+            return new Top("search", null, List.of(), Disclaimers.NO_CAUSATION);
+        }
+        return new Top("search", snap.get().scope(), store.search(snap.get().id(), q, Math.min(Math.max(limit, 1), 200)),
+                Disclaimers.NO_CAUSATION);
+    }
+
     @GetMapping("/trend")
     public Trend trend(@RequestParam String rxcui, @RequestParam String pt) {
         return store.current().map(s -> new Trend(rxcui, pt, s.scope(), store.trend(s.id(), rxcui, pt)))

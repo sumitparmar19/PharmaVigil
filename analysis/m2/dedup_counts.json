@@ -1,0 +1,8 @@
+{
+  "dedup": {
+    "report_rows": 12902877,
+    "unique_report_keys": 12902673,
+    "after_deleted_cases": 12837383,
+    "unique_cases": 10848477
+  }
+}

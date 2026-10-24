@@ -14,10 +14,12 @@ export function Layout({ children, synthetic = false }: { children: ReactNode; s
       <Banners showSynthetic={synthetic} />
       <header className="border-b border-slate-200 bg-white">
         <nav aria-label="Main" className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2">
-          <span className="mr-4 font-semibold">PharmaVigil</span>
+          <NavLink to="/" className="mr-4 font-semibold">PharmaVigil</NavLink>
           {hasRole("PHARMACIST") && <NavLink to="/pharmacy" className={link}>Pharmacy</NavLink>}
           {hasRole("SAFETY_REVIEWER", "ADMIN") && <NavLink to="/review" className={link}>Review queue</NavLink>}
           <NavLink to="/signals" className={link}>Signals</NavLink>
+          {hasRole("PHARMACIST", "SAFETY_REVIEWER", "ADMIN") && <NavLink to="/demo" className={link}>Run the pipeline</NavLink>}
+          <NavLink to="/evidence" className={link}>Evidence</NavLink>
           {session && (
             <span className="ml-auto flex items-center gap-3 text-sm text-slate-600">
               {session.displayName}

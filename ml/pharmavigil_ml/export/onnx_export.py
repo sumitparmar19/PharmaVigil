@@ -108,5 +108,7 @@ def coder_parity(model, path: Path, input_ids: torch.Tensor,
 
     probs, emb = OnnxCoder(model.eval())(input_ids, attention_mask)
     got = _session(path).run(None, {"input_ids": input_ids.numpy(), "attention_mask": attention_mask.numpy()})
-    diff = max(float(np.max(np.abs(probs.numpy() - got[0]))), float(np.max(np.abs(emb.numpy() - got[1]))))
+    # initial=0: a retrieval-only coder has an empty head (probabilities of shape [n, 0]).
+    diff = max(float(np.max(np.abs(probs.numpy() - got[0]), initial=0.0)),
+               float(np.max(np.abs(emb.numpy() - got[1]))))
     return {"rows": int(probs.shape[0]), "max_abs_diff": diff}, probs.numpy(), emb.numpy()

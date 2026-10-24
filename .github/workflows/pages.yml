@@ -1,0 +1,46 @@
+# Publishes the project page (docs/site/) to GitHub Pages on every push to main that touches it or the evidence
+# file: the static page, the architecture diagram, and evidence.json copied from frontend/public (generated from
+# the committed result files by frontend/scripts/build-evidence.mjs). Needs Pages enabled with "GitHub Actions"
+# as the source (OWNER_STEPS.md).
+name: Project page
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/site/**", "frontend/public/evidence.json", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build the page
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Assemble
+        run: |
+          mkdir -p _site
+          cp docs/site/* _site/
+          cp frontend/public/evidence.json _site/evidence.json
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

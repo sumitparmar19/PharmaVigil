@@ -1,0 +1,206 @@
+{
+  "generatedAt": "2026-10-24",
+  "repository": "https://github.com/sumitparmar19/PharmaVigil",
+  "sections": [
+    {
+      "title": "Real FAERS data (bronze → silver → gold)",
+      "items": [
+        {
+          "label": "Quarters loaded",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p1/data_counts.json",
+          "status": "pending"
+        },
+        {
+          "label": "FAERS report rows",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p1/data_counts.json",
+          "status": "pending"
+        },
+        {
+          "label": "Unique cases after de-duplication",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p1/data_counts.json",
+          "status": "pending",
+          "note": "FDA's rule: latest version of each case, deleted cases removed"
+        },
+        {
+          "label": "Drug mentions mapped to an RxNorm ingredient",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p1/data_counts.json",
+          "status": "pending"
+        },
+        {
+          "label": "Distinct ingredients / preferred terms",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p1/data_counts.json",
+          "status": "pending"
+        },
+        {
+          "label": "Drug–event pairs (primary suspect)",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p1/data_counts.json",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Signal detection: OMOP reference set (primary-suspect drugs)",
+      "items": [
+        {
+          "label": "Scorable pairs (positives / negatives)",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p2/baselines.json",
+          "status": "pending"
+        },
+        {
+          "label": "PRR AUC",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p2/baselines.json",
+          "status": "pending"
+        },
+        {
+          "label": "ROR AUC",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p2/baselines.json",
+          "status": "pending"
+        },
+        {
+          "label": "IC AUC",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p2/baselines.json",
+          "status": "pending"
+        },
+        {
+          "label": "EBGM AUC",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p2/baselines.json",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Signal detection: EU-ADR reference set (primary-suspect drugs)",
+      "items": [
+        {
+          "label": "Scorable pairs (positives / negatives)",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p2/baselines.json",
+          "status": "pending"
+        },
+        {
+          "label": "PRR AUC",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p2/baselines.json",
+          "status": "pending"
+        },
+        {
+          "label": "ROR AUC",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p2/baselines.json",
+          "status": "pending"
+        },
+        {
+          "label": "IC AUC",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p2/baselines.json",
+          "status": "pending"
+        },
+        {
+          "label": "EBGM AUC",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p2/baselines.json",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "SafetyFormer (learned signal scores) on the same pairs",
+      "items": [
+        {
+          "label": "OMOP: SafetyFormer AUC",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p3/safetyformer.json",
+          "status": "pending"
+        },
+        {
+          "label": "OMOP: best baseline AUC on the same pairs",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p3/safetyformer.json",
+          "status": "pending"
+        },
+        {
+          "label": "EU-ADR: SafetyFormer AUC",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p3/safetyformer.json",
+          "status": "pending"
+        },
+        {
+          "label": "EU-ADR: best baseline AUC on the same pairs",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p3/safetyformer.json",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Case models (suggestions a reviewer confirms)",
+      "items": [
+        {
+          "label": "Seriousness triage ROC-AUC / PR-AUC (time-split test)",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p4/triage.json",
+          "status": "pending"
+        },
+        {
+          "label": "Duplicate detection PR-AUC; precision / recall at best F1",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p4/duplicates.json",
+          "status": "pending",
+          "note": "proxy label: consecutive versions of one FAERS case"
+        },
+        {
+          "label": "MedDRA coder",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p4/coder.json",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Live demo memory (docker stats)",
+      "items": [
+        {
+          "label": "Idle / peak during a replay (arm64_ci_fixture)",
+          "value": "5,428 MiB / 5,560 MiB",
+          "scope": "GitHub ubuntu-24.04-arm runner (native arm64), fixture models and 40 invented records",
+          "file": "analysis/p6/memory_arm64_ci_fixture.json",
+          "status": "measured"
+        }
+      ]
+    }
+  ]
+}

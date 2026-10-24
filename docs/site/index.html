@@ -1,0 +1,112 @@
+<!doctype html>
+<!-- PharmaVigil project page (GitHub Pages, built by .github/workflows/pages.yml): what the project is, how it is
+     built, the measured results and the links. The results table is filled from evidence.json, the same file the
+     live demo's evidence page reads, which is generated from the committed result files under analysis/. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PharmaVigil</title>
+  <meta name="description" content="PharmaVigil: an AI drug-safety (pharmacovigilance) platform with a live demo on real FDA FAERS reports.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="banner" role="note">Not for clinical or regulatory use. Spontaneous reports do not prove that a drug caused a reaction.</div>
+  <header class="hero">
+    <h1>PharmaVigil</h1>
+    <p class="lead">An AI drug-safety platform: a pharmacy side-effect report becomes a de-duplicated, MedDRA-coded,
+      triaged and reviewed case, sent to a regulator as a schema-valid ICH E2B(R3) message. Safety signals learned
+      from public FDA FAERS reports flow back to the pharmacy counter as evidence, never as a verdict.</p>
+    <p class="links">
+      <a class="button primary" id="live-link" href="#live">Live demo</a>
+      <a class="button" href="https://github.com/sumitparmar19/PharmaVigil">Source on GitHub</a>
+      <a class="button" href="https://github.com/sumitparmar19/PharmaVigil/blob/main/docs/DEMO_SCRIPT.md">3-minute walkthrough</a>
+    </p>
+  </header>
+
+  <main>
+    <section id="what">
+      <h2>What it does</h2>
+      <ol class="steps">
+        <li><strong>Report.</strong> A pharmacist dispenses a drug (first-expiry-first-out lots) and reports a side effect in one click; partners send E2B(R3) messages over SOAP with WS-Security.</li>
+        <li><strong>Pipeline.</strong> Kafka carries each report through de-duplication, MedDRA coding and seriousness triage; the models run inside Java with ONNX Runtime.</li>
+        <li><strong>Review.</strong> A safety reviewer accepts or corrects every AI suggestion; each decision is stored next to the model's name, version and score.</li>
+        <li><strong>Submit.</strong> The approved case is exported as ICH E2B(R3) XML, checked against the official schemas, and sent over JMS to a mock regulator that answers ACK or NACK.</li>
+        <li><strong>Signals.</strong> PRR, ROR, IC, EBGM and a self-supervised Transformer (SafetyFormer) score drug–event pairs in FAERS; the counter shows them as evidence.</li>
+      </ol>
+    </section>
+
+    <section id="architecture">
+      <h2>Architecture</h2>
+      <figure>
+        <img src="architecture.svg" alt="Pharmacy app and partners send reports to intake-gateway; Kafka carries them through case-service (de-duplication, coding, triage, review); submission-gateway sends E2B(R3) over JMS to the mock regulator; signal-service feeds evidence back to the pharmacy app." width="790" height="240">
+      </figure>
+      <ul class="tech">
+        <li>Java 21 · Spring Boot 4.1 · Spring-WS · Hibernate · Flyway</li>
+        <li>Oracle Database Free · SQL Server 2022 (portability)</li>
+        <li>Kafka (transactional outbox, idempotent consumers, dead-letter topics) · ActiveMQ Artemis (JMS)</li>
+        <li>Python · PySpark/Delta · PyTorch · LightGBM · ONNX Runtime</li>
+        <li>React 19 · TypeScript · Vite · Tailwind · Playwright</li>
+        <li>Prometheus · Grafana · OpenTelemetry · k6 · Helm · Strimzi · Jenkins · Terraform (Azure)</li>
+      </ul>
+    </section>
+
+    <section id="results">
+      <h2>Results</h2>
+      <p>Every number below comes from a script in the repository; its result file is committed and linked, and each
+        states the data it was measured on. Items not measured yet say so.</p>
+      <div id="evidence"><p class="muted">Loading the evidence…</p></div>
+    </section>
+
+    <section id="live">
+      <h2>Live demo</h2>
+      <p id="live-text">The live demo runs on one Oracle Cloud Always Free ARM server. Its address and status are in the
+        README (<a href="https://github.com/sumitparmar19/PharmaVigil#live-demo">Live demo</a>); a GitHub Action
+        tests it end to end every day.</p>
+    </section>
+
+    <section id="limits">
+      <h2>Limits</h2>
+      <ul>
+        <li>Not for clinical or regulatory use; a portfolio project.</li>
+        <li>Spontaneous reports do not prove that a drug caused a reaction.</li>
+        <li>Pharmacy patients are synthetic; replayed reports are public, de-identified FAERS records.</li>
+        <li>No MedDRA dictionary content is distributed; reaction terms are the strings FDA publishes in FAERS.</li>
+        <li>Built with AI assistance (Claude Code), disclosed in the README and in every commit.</li>
+      </ul>
+    </section>
+  </main>
+  <footer>PharmaVigil · <a href="https://github.com/sumitparmar19/PharmaVigil">github.com/sumitparmar19/PharmaVigil</a></footer>
+
+  <script>
+    // Fill the results from evidence.json (copied next to this page by the Pages workflow).
+    fetch("evidence.json").then(r => r.json()).then(e => {
+      const root = document.getElementById("evidence");
+      root.textContent = "";
+      for (const s of e.sections) {
+        const h = document.createElement("h3"); h.textContent = s.title; root.appendChild(h);
+        const t = document.createElement("table");
+        t.innerHTML = "<thead><tr><th>Measure</th><th>Result</th><th>Data scope</th></tr></thead>";
+        const body = document.createElement("tbody");
+        for (const i of s.items) {
+          const tr = document.createElement("tr");
+          const a = document.createElement("a"); a.href = e.repository + "/blob/main/" + i.file; a.textContent = i.label;
+          const td1 = document.createElement("td"); td1.appendChild(a);
+          const td2 = document.createElement("td"); td2.textContent = i.value; td2.className = i.status === "pending" ? "pending" : "value";
+          const td3 = document.createElement("td"); td3.textContent = i.scope;
+          tr.append(td1, td2, td3); body.appendChild(tr);
+        }
+        t.appendChild(body); root.appendChild(t);
+      }
+      if (e.liveUrl) {
+        document.getElementById("live-link").href = e.liveUrl;
+        const p = document.getElementById("live-text");
+        p.textContent = "Open the live demo: ";
+        const a = document.createElement("a"); a.href = e.liveUrl; a.textContent = e.liveUrl; p.appendChild(a);
+      }
+    }).catch(() => {
+      document.getElementById("evidence").innerHTML = '<p class="muted">The evidence file could not be loaded; see analysis/ in the repository.</p>';
+    });
+  </script>
+</body>
+</html>

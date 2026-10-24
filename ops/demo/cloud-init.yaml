@@ -1,0 +1,50 @@
+#cloud-config
+# Bootstrap for the PharmaVigil live demo on one Oracle Cloud Always Free Ampere A1 VM (Ubuntu 24.04, arm64).
+# Paste this file into "Advanced options → Initialization script" when creating the VM (OWNER_STEPS.md, step 15).
+# It installs Docker, adds a 4 GB swap file, opens ports 80 and 443 in the VM's firewall (SSH stays key-only),
+# clones the repository, creates ops/demo/.env with random secrets on the VM itself, downloads the demo data,
+# starts the stack, and schedules the nightly reset. Nothing secret is in this file.
+package_update: true
+packages:
+  - docker.io
+  - docker-compose-v2
+  - git
+  - curl
+  - iptables-persistent
+write_files:
+  - path: /etc/ssh/sshd_config.d/60-pharmavigil.conf
+    content: |
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin no
+  - path: /etc/systemd/system/pharmavigil-demo.service
+    content: |
+      [Unit]
+      Description=PharmaVigil live demo (docker compose)
+      After=docker.service network-online.target
+      Requires=docker.service
+      ConditionPathExists=/opt/pharmavigil/ops/demo/.env
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      WorkingDirectory=/opt/pharmavigil
+      ExecStart=/usr/bin/docker compose -f docker-compose.demo.yml --env-file ops/demo/.env up -d
+      ExecStop=/usr/bin/docker compose -f docker-compose.demo.yml --env-file ops/demo/.env down
+      TimeoutStartSec=1800
+      [Install]
+      WantedBy=multi-user.target
+  - path: /etc/cron.d/pharmavigil-reset
+    content: |
+      # Nightly reset of the demo data (04:30 UTC).
+      30 4 * * * root /opt/pharmavigil/ops/demo/reset.sh >> /var/log/pharmavigil-reset.log 2>&1
+runcmd:
+  - [bash, -c, "fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab"]
+  - [bash, -c, "iptables -I INPUT 5 -p tcp --dport 80 -m state --state NEW -j ACCEPT && iptables -I INPUT 5 -p tcp --dport 443 -m state --state NEW -j ACCEPT && netfilter-persistent save"]
+  - [systemctl, restart, ssh]
+  - [usermod, -aG, docker, ubuntu]
+  - [git, clone, --depth, "50", "https://github.com/sumitparmar19/PharmaVigil.git", /opt/pharmavigil]
+  - [chown, -R, "ubuntu:ubuntu", /opt/pharmavigil]
+  - [sudo, -u, ubuntu, /opt/pharmavigil/ops/demo/make-env.sh]
+  - [sudo, -u, ubuntu, /opt/pharmavigil/ops/demo/fetch-demo-data.sh]
+  - [systemctl, daemon-reload]
+  - [systemctl, enable, --now, pharmavigil-demo.service]

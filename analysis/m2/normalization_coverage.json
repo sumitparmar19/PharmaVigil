@@ -1,0 +1,10 @@
+{
+  "normalization_coverage": {
+    "mentions": 41528250,
+    "mapped_mentions": 40904129,
+    "share_mapped": 0.9849711702274957,
+    "ps_mentions": 10846677,
+    "ps_mapped_mentions": 10842501,
+    "ps_share_mapped": 0.9996149972936412
+  }
+}

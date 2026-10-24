@@ -1,0 +1,38 @@
+/* Styles of the PharmaVigil project page (docs/site/index.html): one readable column, light and dark themes. */
+:root {
+  --bg: #f8fafc; --fg: #0f172a; --muted: #475569; --card: #ffffff; --line: #e2e8f0;
+  --accent: #0f172a; --accent-fg: #ffffff; --banner: #fef3c7; --banner-fg: #78350f; --pending: #92400e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1220; --fg: #e2e8f0; --muted: #94a3b8; --card: #111a2e; --line: #1e293b;
+    --accent: #e2e8f0; --accent-fg: #0b1220; --banner: #451a03; --banner-fg: #fde68a; --pending: #fbbf24;
+  }
+  figure img { background: #ffffff; border-radius: 8px; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: inherit; }
+.banner { background: var(--banner); color: var(--banner-fg); padding: 8px 16px; font-size: 14px; text-align: center; }
+.hero, main, footer { max-width: 900px; margin: 0 auto; padding: 0 16px; }
+.hero { padding-top: 48px; padding-bottom: 16px; }
+h1 { font-size: 40px; margin: 0 0 8px; letter-spacing: -0.02em; }
+.lead { font-size: 18px; color: var(--muted); max-width: 70ch; }
+.links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.button { display: inline-block; padding: 9px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); text-decoration: none; font-weight: 500; }
+.button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+section { margin: 40px 0; }
+h2 { font-size: 24px; margin-bottom: 8px; }
+h3 { font-size: 17px; margin: 24px 0 8px; }
+.steps li { margin-bottom: 8px; }
+figure { margin: 16px 0; }
+figure img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+.tech { color: var(--muted); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+th, td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+thead th { border-top: none; color: var(--muted); font-weight: 600; }
+td.value { font-weight: 600; font-variant-numeric: tabular-nums; }
+td.pending { color: var(--pending); }
+.muted { color: var(--muted); }
+footer { padding: 32px 16px 48px; color: var(--muted); font-size: 14px; }
+@media (max-width: 600px) { h1 { font-size: 32px; } th:nth-child(3), td:nth-child(3) { display: none; } }
