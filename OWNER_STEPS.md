@@ -190,6 +190,44 @@ the same day you deploy.
 
 **Send back to the planning chat:** the eight "send back" lines from `docs/AZURE.md`.
 
+## 10. Optional: let Claude draft case narratives: OPEN
+
+**Why:** without a key, narratives come from a fixed template (everything still works). With a key, case-service
+drafts them with Claude from the coded facts only; a reviewer still approves every narrative.
+
+1. Open https://console.anthropic.com, sign in, open **API Keys**, click **Create Key**, name it `pharmavigil-local`,
+   copy it.
+2. On your computer, open the `.env` file in the repository folder (created by `scripts/dev-up.sh`) and add two
+   lines: `ANTHROPIC_API_KEY=` followed by the key, and `CLAUDE_MODEL=` followed by a current model id from
+   https://docs.anthropic.com (Models overview).
+3. Run `docker compose up -d case-service` and send a new report from the pharmacy page.
+
+**Send back to the planning chat:** whether the new case's narrative is labelled "Draft by …" (Claude) or
+"Template draft" (never the key).
+
+## 11. Optional: import the dashboards into Grafana Cloud: OPEN
+
+**Why:** the three dashboards run locally with `scripts/dev-up.sh --observability`; Grafana Cloud's free tier keeps
+a copy you can show without running the stack (it shows data only while a Prometheus sends to it).
+
+1. Sign up at https://grafana.com (free tier) and open your Grafana stack.
+2. Open **Dashboards → New → Import**, click **Upload dashboard JSON file**, choose
+   `ops/grafana/dashboards/pipeline-health.json`, pick your Prometheus data source, click **Import**.
+3. Repeat for `ai-quality.json` and `safety-signals.json`.
+
+**Send back to the planning chat:** the three dashboard titles as Grafana lists them.
+
+## 12. Create the v1.0 release after the pull request is merged: OPEN
+
+**Why:** the build container cannot push tags.
+
+1. After the pull request is merged, open the repository on GitHub, click **Releases → Draft a new release**.
+2. Click **Choose a tag**, type `v1.0`, click **Create new tag: v1.0 on publish**, target `main`.
+3. Title `PharmaVigil v1.0`; in the description paste the "Summary" section of `analysis/PROJECT_REPORT.md`.
+4. Click **Publish release**.
+
+**Send back to the planning chat:** the release URL.
+
 ---
 
 *More steps are added as milestones need them (Databricks, Kaggle, MedDRA licence, narrative labels,

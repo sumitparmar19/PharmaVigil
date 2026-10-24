@@ -427,3 +427,12 @@ the start of each data milestone.
 | Demo signal data | signal-service serves FAERS-derived warnings | serves nothing until a real export is loaded | the FAERS hosts are blocked here; synthetic numbers would look like evidence, so only tests use a synthetic export |
 | Java test models | — | tiny synthetic model bundle committed under case-service test resources | lets CI exercise the real ONNX path; listed in the model manifest as fixtures |
 | gitleaks locally | n/a | Docker Hub `zricethezav/gitleaks` image locally; CI uses `ghcr.io/gitleaks/gitleaks` | ghcr.io image layers are served from a blocked host in this container |
+| Legacy audit (M1) | audit the 2024 app | removed | owner decision (Amendment 1, item 1); claim C13 dropped |
+| Local images | build every image with Docker | locally the UI image is built from the already-built bundle and base images come from `mirror.gcr.io` | `npm ci` inside a Docker build cannot pass this container's TLS proxy and Docker Hub rate-limits it; CI builds the real images from Docker Hub |
+| Kafka on Kubernetes | Kafka 4.4 | Strimzi 0.51.0 runs Kafka 4.2.0 | the newest Kafka that Strimzi 0.51 supports; compose keeps 4.3.2; clients are compatible with both |
+| Jenkinsfile proof | Jenkinsfile Runner or equivalent | a real JCasC Jenkins LTS controller started on a runner, one build triggered over REST, console log kept | Jenkinsfile Runner's image is only tagged `latest`; a real controller also tests the JCasC setup users run |
+| Jenkins plugins | pinned versions | unpinned plugin names; installed versions printed at the top of each run log | the plugin update site is blocked here, so no version could be checked before use |
+| Azure OIDC | OIDC app registration | user-assigned managed identities with GitHub federated credentials | same OIDC sign-in without directory permissions, which student tenants often withhold |
+| Azure secrets | Key Vault with empty secrets | Key Vault and access rules only; the owner types the six values in the portal | secret resources would put values into the Terraform state |
+| Terraform locally | `terraform init` from the registry | provider zip from releases.hashicorp.com (SHA256SUMS checked) through a filesystem mirror; lock file carries all platforms' official hashes | registry.terraform.io is blocked here |
+| Oracle on Kubernetes | — | no volume over `/opt/oracle/oradata` | the faststart image's pre-built database lives there; a Kubernetes volume hid it (compose's named volume is filled from the image) |
