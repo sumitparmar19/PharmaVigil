@@ -19,7 +19,7 @@ the repo.
 | M8 | Kafka, ONNX in Java, JMS, narrative | ✅ done (end-to-end test in CI) | ADR-008, `services/e2e-tests`, `analysis/models/MANIFEST.md` |
 | M9 | Frontend | ✅ done locally (unit tests and the browser smoke test against the full stack); CI job added | `frontend/`, `docker-compose.yml`, `frontend/e2e/` |
 | M10 | Operations | in progress: metrics, tracing, dashboards, alerts, k6 done; Helm charts and kind workflow written (CI result pending); Jenkins next | `docs/OBSERVABILITY.md`, `docs/PERFORMANCE.md`, `analysis/m10/` |
-| M11 | Azure infrastructure (code only) | pending | |
+| M11 | Azure infrastructure (code only) | written; fmt, validate, terraform test and Checkov clean locally; CI job added; never applied (owner step 9) | `infra/azure`, `docs/AZURE.md` |
 | M12 | Docs, evidence, report | pending | |
 
 ## M0: bootstrap
@@ -349,6 +349,34 @@ Checked here: `helm lint` 9 charts, 0 failures; `helm template` renders 8 Deploy
 the non-root UI image serves the app as uid 101. The cluster run needs quay.io (Strimzi images), which this
 container cannot reach, so its result comes from CI.
 
+## M11: Azure infrastructure (code only)
+
+Built (`infra/azure`, `docs/AZURE.md`):
+- Terraform 1.16.5, azurerm 5.9.0: resource group; AKS on the Free tier (one B4ms node, Entra ID sign-in only,
+  Azure RBAC, CNI overlay with network policy, Azure Policy, Key Vault CSI driver, automatic patch upgrades) with
+  user-assigned control-plane and kubelet identities; ACR Basic (AcrPull for the kubelet identity); Key Vault with
+  RBAC (Terraform never handles secret values: the owner types them in, so they never reach the state file); Log
+  Analytics (1 GB/day cap); a $20 monthly budget with three e-mail alerts; the GitHub deploy identity with a
+  federated credential limited to the protected `azure` environment. Default tags on every resource.
+- `bootstrap.sh` (owner runs it once in Cloud Shell): state storage with Entra ID access only and two managed
+  identities that GitHub signs in as through OIDC (plan: read-only for pull requests; apply: only in the `azure`
+  environment). No client secret or access key exists anywhere.
+- Workflows: *Azure plan* (pull requests, read-only, skipped until the owner has set the variables),
+  *Azure deploy* (manual, approval required; infrastructure or application), *Azure destroy* (manual, typed
+  confirmation, approval required). The application deploy reuses `ops/k8s/install.sh`, the same install the
+  kind test runs.
+- CI job *Azure Terraform*: fmt, init without backend, validate, `terraform test`, Checkov.
+
+Checked locally (the registry is blocked here, so the provider came from releases.hashicorp.com with its
+SHA256SUMS verified, through a filesystem mirror): `terraform fmt` and `validate` clean; `terraform test` 2/2
+(mocked provider: names, tags, OIDC subject, AKS/ACR settings, budget, owner-only secret access, e-mail
+validation); Checkov 3.3.26: 16 passed, 0 failed, 20 skipped, each skip with its reason beside the resource
+(paid SKUs, private networking, purge protection on a demo vault).
+
+Deviation: the build instructions name an "OIDC app registration"; user-assigned managed identities with
+federated credentials are used instead (same OIDC sign-in, no directory permissions needed; student tenants
+often do not allow app registrations).
+
 ### M7 and M8 CI evidence
 
 CI run 39763594556 on commit `c4b372a` (GitHub Actions, `ubuntu-latest`, official E2B(R3) schema set fetched
@@ -365,6 +393,11 @@ from EMA in both the Java job and the schema job):
   only because the repository's Dependency graph is off (owner step 3).
 
 ## Environment re-tests
+
+### Start of M12
+
+Still refused at the proxy: fis.fda.gov, api.fda.gov, vaers.hhs.gov, rxnav.nlm.nih.gov, www.accessdata.fda.gov,
+huggingface.co, download.pytorch.org, database.ich.org, arxiv.org. Real-data numbers stay pending.
 
 ### After the worker restart (during M6)
 

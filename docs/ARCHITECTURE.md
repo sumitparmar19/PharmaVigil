@@ -99,6 +99,20 @@ Checked against Maven Central, PyPI and npm when M0 was built.
 | Kafka | `apache/kafka:4.3.2` | single KRaft node |
 | ActiveMQ Artemis | `apache/activemq-artemis:2.44.0-alpine` | |
 
+### Kubernetes, CI/CD and Azure
+
+| Component | Version | Note |
+|---|---|---|
+| kind | v0.33.0 | Kubernetes e2e workflow and the Jenkinsfile's deploy stage |
+| Helm | v4.3.0 | charts in `ops/helm` (library + six service charts + Oracle Free, Artemis, umbrella) |
+| kubectl | v1.37.1 | in the Jenkins image (runners bring their own) |
+| Strimzi | 0.51.0 | runs Kafka 4.2.0 on Kubernetes (the newest Kafka it supports) |
+| busybox | 1.37.0 | init container that waits for the database and brokers |
+| Jenkins | 2.580.1 LTS (JDK 21) | `ops/jenkins`, configuration as code; plugins unpinned, versions printed in each run log |
+| Terraform | 1.16.5 | `infra/azure` (newer 1.16.6/1.16.7/1.17.0 were less than two weeks old) |
+| azurerm provider | 5.9.0 | 5.10.0 was less than two weeks old |
+| Checkov | 3.3.26 | newer 3.3.27–3.3.30 were less than two weeks old |
+
 ### Observability and load (compose profile `observability`)
 
 | Component | Version | Note |
