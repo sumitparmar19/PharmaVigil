@@ -1,0 +1,6 @@
+/* Tailwind entry point for the PharmaVigil UI. */
+@import "tailwindcss";
+
+/* Chart color tokens (categorical slot 1), stepped separately for dark mode. */
+:root { --series-1: #2a78d6; }
+@media (prefers-color-scheme: dark) { :root { --series-1: #3987e5; } }

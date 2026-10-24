@@ -1,0 +1,51 @@
+# Terraform plan for infra/azure on pull requests (M11): read-only. Signs in to Azure through GitHub OIDC as the
+# "plan" app registration (Reader on the subscription, Storage Blob Data Reader on the state), so a pull request can
+# never change anything. Skipped until the owner has done docs/AZURE.md steps 2-3 (the variables exist).
+name: Azure plan
+
+on:
+  pull_request:
+    paths:
+      - "infra/azure/**"
+      - ".github/workflows/azure-plan.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TF_VERSION: 1.16.5
+
+jobs:
+  plan:
+    name: terraform plan (read-only)
+    if: vars.AZURE_PLAN_CLIENT_ID != ''
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/azure
+    env:
+      ARM_USE_OIDC: "true"
+      ARM_CLIENT_ID: ${{ vars.AZURE_PLAN_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_budget_alert_email: ${{ secrets.BUDGET_ALERT_EMAIL }}
+      TF_VAR_owner_object_id: ${{ vars.AZURE_OWNER_OBJECT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Terraform (checksum verified)
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fsSLO "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
+          curl -fsSLO "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS"
+          grep linux_amd64 "terraform_${TF_VERSION}_SHA256SUMS" | sha256sum -c -
+          unzip -q "terraform_${TF_VERSION}_linux_amd64.zip" -d tfbin && echo "$PWD/tfbin" >> "$GITHUB_PATH"
+      - name: terraform init
+        run: >
+          terraform init -input=false
+          -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP }}"
+          -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT }}"
+          -backend-config="container_name=tfstate"
+          -backend-config="key=pharmavigil.tfstate"
+      - name: terraform plan
+        run: terraform plan -input=false -lock=false -no-color

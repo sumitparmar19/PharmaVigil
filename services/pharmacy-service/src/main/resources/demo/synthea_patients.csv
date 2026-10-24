@@ -1,0 +1,6 @@
+Id,BIRTHDATE,DEATHDATE,SSN,DRIVERS,PASSPORT,PREFIX,FIRST,MIDDLE,LAST,SUFFIX,MAIDEN,MARITAL,RACE,ETHNICITY,GENDER,BIRTHPLACE,ADDRESS,CITY,STATE,COUNTY,FIPS,ZIP,LAT,LON,HEALTHCARE_EXPENSES,HEALTHCARE_COVERAGE,INCOME
+demo-0001,1958-03-14,,,,,Mr.,Alden512,,Marsh307,,,M,white,nonhispanic,M,Demo Town,1 Demo Way,Demo City,NY,Demo County,,00000,0,0,0,0,0
+demo-0002,1971-11-02,,,,,Ms.,Bea41,,Okafor730,,,S,black,nonhispanic,F,Demo Town,2 Demo Way,Demo City,NY,Demo County,,00000,0,0,0,0,0
+demo-0003,1989-06-27,,,,,Mr.,Chen88,,Liang615,,,S,asian,nonhispanic,M,Demo Town,3 Demo Way,Demo City,NY,Demo County,,00000,0,0,0,0,0
+demo-0004,2001-01-09,,,,,Ms.,Dalia19,,Romero202,,,S,white,hispanic,F,Demo Town,4 Demo Way,Demo City,NY,Demo County,,00000,0,0,0,0,0
+demo-0005,1946-08-30,,,,,Mrs.,Edith73,,Novak944,,,M,white,nonhispanic,F,Demo Town,5 Demo Way,Demo City,NY,Demo County,,00000,0,0,0,0,0

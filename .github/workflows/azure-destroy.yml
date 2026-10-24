@@ -1,0 +1,57 @@
+# Manual teardown of the Azure environment (M11, docs/AZURE.md step 8): terraform destroy in the protected "azure"
+# environment, as the "apply" app registration (GitHub OIDC). Type "destroy" to confirm.
+name: Azure destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "destroy" to delete every PharmaVigil resource in Azure'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure
+  cancel-in-progress: false
+
+env:
+  TF_VERSION: 1.16.5
+
+jobs:
+  destroy:
+    name: terraform destroy
+    if: inputs.confirm == 'destroy'
+    runs-on: ubuntu-latest
+    environment: azure
+    defaults:
+      run:
+        working-directory: infra/azure
+    env:
+      ARM_USE_OIDC: "true"
+      ARM_CLIENT_ID: ${{ vars.AZURE_APPLY_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_budget_alert_email: ${{ secrets.BUDGET_ALERT_EMAIL }}
+      TF_VAR_owner_object_id: ${{ vars.AZURE_OWNER_OBJECT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Terraform (checksum verified)
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fsSLO "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
+          curl -fsSLO "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS"
+          grep linux_amd64 "terraform_${TF_VERSION}_SHA256SUMS" | sha256sum -c -
+          unzip -q "terraform_${TF_VERSION}_linux_amd64.zip" -d tfbin && echo "$PWD/tfbin" >> "$GITHUB_PATH"
+      - name: terraform init
+        run: >
+          terraform init -input=false
+          -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP }}"
+          -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT }}"
+          -backend-config="container_name=tfstate"
+          -backend-config="key=pharmavigil.tfstate"
+      - name: terraform destroy
+        run: terraform destroy -input=false -auto-approve -no-color

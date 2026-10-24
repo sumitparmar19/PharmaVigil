@@ -1,0 +1,110 @@
+// PharmaVigil delivery pipeline (M10): checkout → build and unit tests → integration tests → coverage gate →
+// images → Helm lint → deploy to kind → smoke test. Runs on the Jenkins controller from ops/jenkins (JCasC,
+// docker compose); CI proves it with a headless run (ops/jenkins/run-headless.sh, analysis/m10/jenkins-run.log).
+// Secrets: none are stored in Jenkins; the kind deploy creates random throwaway values for its own cluster.
+pipeline {
+  agent any
+  options {
+    timestamps()
+    timeout(time: 120, unit: 'MINUTES')
+    buildDiscarder(logRotator(numToKeepStr: '20'))
+    disableConcurrentBuilds()
+  }
+  parameters {
+    booleanParam(name: 'DEPLOY_TO_KIND', defaultValue: true, description: 'Deploy to a fresh kind cluster and run the smoke test')
+  }
+  environment {
+    IMAGE_TAG = '0.1.0'
+    MAVEN_ARGS = '-B -ntp'
+    PV_SECRETS_FILE = "${env.WORKSPACE}/.kind-secrets.env"
+    KIND_CLUSTER = "pv-jenkins"
+    // Tests that need no containers (Docker unreachable is fine); everything else runs as integration tests.
+    UNIT_TESTS = 'ApiExceptionHandlerTest,CsvAndEmptyStateTest,DisclaimersTest,E2bRoundTripTest,FefoTest,IcsrMappingTest,ModelParityTest,NarrativeDrafterTest,PrescriptionAndSyntheaTest,SignalClientTest,TokenServiceTest,TraceParentTest'
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+        sh 'git log -1 --format="%h %s"'
+      }
+    }
+    stage('Build and unit tests') {
+      parallel {
+        stage('Java') {
+          steps {
+            dir('services') {
+              sh 'mvn -DskipTests install'
+              sh 'mvn test -Djacoco.skip=true -Dsurefire.failIfNoSpecifiedTests=false -Dtest="$UNIT_TESTS"'
+            }
+          }
+        }
+        stage('Frontend') {
+          steps {
+            dir('frontend') {
+              sh 'npm ci'
+              sh 'npm run typecheck && npm run lint && npm test && npm run build'
+            }
+          }
+        }
+      }
+    }
+    stage('Integration tests') {
+      steps {
+        dir('services') {
+          // Oracle Database Free, Kafka and Artemis from Testcontainers (Docker socket of the host).
+          sh 'mvn verify'
+        }
+      }
+      post {
+        always {
+          junit allowEmptyResults: true, testResults: 'services/*/target/surefire-reports/*.xml'
+        }
+      }
+    }
+    stage('Coverage gate') {
+      steps {
+        dir('services') {
+          // JaCoCo line coverage >= 70% per service (engineering rule 9), on the data of the integration run.
+          sh 'mvn -o jacoco:check@check'
+          sh '../ops/jenkins/coverage-summary.sh'
+        }
+      }
+    }
+    stage('Images') {
+      steps {
+        sh 'ops/kind/build-images.sh'
+      }
+    }
+    stage('Helm lint') {
+      steps {
+        sh '''
+          for c in pharmacy-service intake-gateway case-service signal-service submission-gateway frontend pharmavigil; do
+            helm dependency build "ops/helm/$c" >/dev/null
+          done
+          helm lint ops/helm/pharmavigil ops/helm/oracle-free ops/helm/artemis
+        '''
+      }
+    }
+    stage('Deploy to kind') {
+      when { expression { params.DEPLOY_TO_KIND } }
+      steps {
+        sh 'ops/kind/deploy.sh'
+      }
+    }
+    stage('Smoke test') {
+      when { expression { params.DEPLOY_TO_KIND } }
+      steps {
+        sh 'ops/kind/smoke.sh'
+      }
+    }
+  }
+  post {
+    failure {
+      sh 'ops/kind/diagnose.sh || true'
+    }
+    // cleanup runs after every other post condition, so the cluster still exists while diagnose.sh runs.
+    cleanup {
+      sh 'ops/kind/teardown.sh || true'
+    }
+  }
+}

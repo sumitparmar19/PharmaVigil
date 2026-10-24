@@ -1,0 +1,17 @@
+# Umbrella chart: the whole PharmaVigil stack except Kafka, which the Strimzi operator runs from the manifests in
+# ops/k8s/strimzi/ (ADR-010). Install: docs/KUBERNETES.md.
+apiVersion: v2
+name: pharmavigil
+description: PharmaVigil on Kubernetes (five services, UI, demo Oracle Free and Artemis)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - {name: pharmacy-service, version: 0.1.0, repository: "file://../pharmacy-service"}
+  - {name: intake-gateway, version: 0.1.0, repository: "file://../intake-gateway"}
+  - {name: case-service, version: 0.1.0, repository: "file://../case-service"}
+  - {name: signal-service, version: 0.1.0, repository: "file://../signal-service"}
+  - {name: submission-gateway, version: 0.1.0, repository: "file://../submission-gateway"}
+  - {name: frontend, version: 0.1.0, repository: "file://../frontend"}
+  - {name: oracle-free, version: 0.1.0, repository: "file://../oracle-free", condition: oracle-free.enabled}
+  - {name: artemis, version: 0.1.0, repository: "file://../artemis", condition: artemis.enabled}

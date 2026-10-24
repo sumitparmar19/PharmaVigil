@@ -1,0 +1,43 @@
+# Proves ops/jenkins/Jenkinsfile runs (M10): starts the Jenkins controller from ops/jenkins (JCasC, plugins) on the
+# runner, runs the whole pipeline once (tests, coverage gate, images, Helm lint, kind deploy, Playwright smoke test)
+# and keeps the console log as an artifact (copied to analysis/m10/jenkins-run.log). Runs when the Jenkins setup
+# changes, or on demand.
+name: Jenkins pipeline (headless)
+
+on:
+  pull_request:
+    paths:
+      - "ops/jenkins/**"
+      - ".github/workflows/jenkins.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jenkins-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  jenkins:
+    name: Jenkinsfile on a JCasC Jenkins
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - name: Free disk space for the images
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL && df -h /
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Run the pipeline in Jenkins
+        run: ops/jenkins/run-headless.sh "$RUNNER_TEMP/jenkins-run.log"
+      - name: Console log
+        if: always()
+        run: cat "$RUNNER_TEMP/jenkins-run.log" || true
+      - name: Keep the log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jenkins-run-log
+          path: ${{ runner.temp }}/jenkins-run.log
+          if-no-files-found: ignore

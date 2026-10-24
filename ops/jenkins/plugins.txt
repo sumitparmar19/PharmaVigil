@@ -1,0 +1,9 @@
+# Jenkins plugins for the PharmaVigil controller (latest versions compatible with the Jenkins LTS in the
+# Dockerfile; the versions actually installed are printed at the top of every headless run log).
+configuration-as-code
+job-dsl
+workflow-aggregator
+git
+timestamper
+junit
+pipeline-stage-view

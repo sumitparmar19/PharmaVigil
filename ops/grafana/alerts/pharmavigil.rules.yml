@@ -1,0 +1,72 @@
+# PharmaVigil alert rules (Prometheus format). Prometheus evaluates them (ops/prometheus/prometheus.yml) and Grafana
+# lists them under Alerting as data-source-managed rules. Thresholds suit the demo stack; docs/OBSERVABILITY.md
+# says what each one means and what to do.
+groups:
+  - name: pharmavigil-availability
+    rules:
+      - alert: PvServiceDown
+        expr: up{job="pharmavigil"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.service }} is not answering /actuator/prometheus"
+          description: "Prometheus cannot scrape {{ $labels.instance }} for 2 minutes."
+
+  - name: pharmavigil-pipeline
+    rules:
+      - alert: PvOutboxBacklogGrowing
+        expr: sum by (service) (pv_outbox_backlog) > 100
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.service }} has {{ $value }} unpublished outbox events"
+          description: "Events are stored but not reaching Kafka (broker down or unreachable). Nothing is lost;
+            they are published in order once Kafka is back."
+      - alert: PvConsumerLagHigh
+        expr: max by (service, topic) (kafka_consumer_fetch_manager_records_lag{topic=~".+[.].+"}) > 1000
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.service }} is {{ $value }} messages behind on {{ $labels.topic }}"
+      - alert: PvIntakeToCodedSlow
+        expr: histogram_quantile(0.95, sum by (le) (rate(pv_report_intake_to_coded_seconds_bucket[10m]))) > 60
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "p95 intake-to-coded time is {{ $value | humanizeDuration }}"
+      - alert: PvPipelineStageFailing
+        expr: sum by (stage) (rate(pv_pipeline_stage_seconds_count{outcome="error"}[5m])) > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "Pipeline stage {{ $labels.stage }} keeps failing"
+          description: "Failed messages are retried three times and then go to the stage's .dlq topic."
+      - alert: PvJmsDeadLetters
+        expr: pv_jms_queue_depth{queue="DLQ"} > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $value }} JMS messages are in the broker's dead-letter queue"
+      - alert: PvRegulatorNack
+        expr: sum(increase(pv_regulator_answers_total{outcome="NACK"}[1h])) > 0
+        labels: {severity: info}
+        annotations:
+          summary: "The regulator rejected a submission in the last hour; the case is back in review"
+
+  - name: pharmavigil-ai
+    rules:
+      - alert: PvCodingMostlyManual
+        expr: >
+          sum(increase(pv_pipeline_outcome_total{stage="coding",result="NEEDS_MANUAL_CODING"}[30m]))
+          / sum(increase(pv_pipeline_outcome_total{stage="coding"}[30m])) > 0.5
+        for: 30m
+        labels: {severity: info}
+        annotations:
+          summary: "More than half of new cases need manual coding"
+          description: "The coder may be missing (PV_MODEL_DIR) or unsure; cases still flow to reviewers."
+      - alert: PvSignalSnapshotMissing
+        expr: max(pv_signals_snapshot_pairs) != max(pv_signals_snapshot_pairs)
+        for: 1h
+        labels: {severity: info}
+        annotations:
+          summary: "signal-service has no signal snapshot; the counter shows no warnings"

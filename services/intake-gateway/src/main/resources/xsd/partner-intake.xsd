@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PharmaVigil partner intake contract (contract-first SOAP, Spring-WS). Licensing partners and CROs send
+  an ICH E2B(R3) ICSR message (the full MCCI_IN200100UV01 XML, as text) with SubmitCase and poll
+  GetCaseStatus. The WSDL is generated from this schema; JAXB classes are generated at build time.
+  Callers authenticate with a WS-Security UsernameToken (ADR-009).
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="https://pharmavigil.io/schemas/partner-intake/v1"
+           targetNamespace="https://pharmavigil.io/schemas/partner-intake/v1"
+           elementFormDefault="qualified">
+
+  <xs:simpleType name="NonEmptyText">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="IntakeStatus">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="ACCEPTED"/>
+      <xs:enumeration value="DUPLICATE"/>
+      <xs:enumeration value="RECEIVED"/>
+      <xs:enumeration value="IN_REVIEW"/>
+      <xs:enumeration value="SUBMITTED"/>
+      <xs:enumeration value="ACKNOWLEDGED"/>
+      <xs:enumeration value="REJECTED"/>
+      <xs:enumeration value="UNKNOWN"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="SubmitCaseRequest">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="partnerReference" type="tns:NonEmptyText"/>
+        <xs:element name="e2bMessage" type="tns:NonEmptyText"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="SubmitCaseResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="receiptId" type="xs:string"/>
+        <xs:element name="status" type="tns:IntakeStatus"/>
+        <xs:element name="safetyReportId" type="xs:string"/>
+        <xs:element name="warning" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="GetCaseStatusRequest">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="safetyReportId" type="tns:NonEmptyText"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="GetCaseStatusResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="safetyReportId" type="xs:string"/>
+        <xs:element name="status" type="tns:IntakeStatus"/>
+        <xs:element name="caseNumber" type="xs:string" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

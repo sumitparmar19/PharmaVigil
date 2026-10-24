@@ -1,0 +1,11 @@
+# kind cluster for the Kubernetes end-to-end test (.github/workflows/kind-e2e.yml): one node; the UI's NodePort
+# 30080 is published on the host's port 8080 so the Playwright smoke test runs unchanged.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 8080
+        listenAddress: "127.0.0.1"
+        protocol: TCP

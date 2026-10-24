@@ -1,0 +1,45 @@
+{
+  "scope": "local docker compose stack, synthetic load-test reports, fixture models",
+  "window": {
+    "start_unix": 1792669437,
+    "end_unix": 1792669758,
+    "seconds": 321
+  },
+  "hardware": {
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "logical_cpus": 4,
+    "memory_gib": 15.7,
+    "os": "Linux 6.18.44-fc-v140"
+  },
+  "k6": {
+    "intake_requests": 5729,
+    "intake_requests_failed": 0,
+    "intake_http_p95_ms": 20.27492539999999
+  },
+  "prometheus": {
+    "reports_accepted_total": 5911.798573333333,
+    "reports_per_min_peak_1m": 2398.6666666666665,
+    "cases_coded_total": 5779.019047619047,
+    "coded_per_min_peak_1m": 1926.6666666666665,
+    "intake_to_coded_p50_s": 4.345377710260565,
+    "intake_to_coded_p95_s": 20.901105773825186,
+    "intake_to_coded_max_s": 23.042466641,
+    "max_consumer_lag_records": 0.0,
+    "max_outbox_backlog_rows": 1599.0,
+    "coding_stage_p95_s": 0.01795048679259077,
+    "pipeline_stage_failures": 5.3500000000000005
+  },
+  "queries": {
+    "reports_accepted_total": "sum(increase(pv_reports_received_total{kind!=\"duplicate\"}[321s]))",
+    "reports_per_min_peak_1m": "max_over_time((sum(rate(pv_reports_received_total{kind!=\"duplicate\"}[1m])) * 60)[321s:15s])",
+    "cases_coded_total": "sum(increase(pv_report_intake_to_coded_seconds_count[321s]))",
+    "coded_per_min_peak_1m": "max_over_time((sum(rate(pv_report_intake_to_coded_seconds_count[1m])) * 60)[321s:15s])",
+    "intake_to_coded_p50_s": "histogram_quantile(0.50, sum by (le) (increase(pv_report_intake_to_coded_seconds_bucket[321s])))",
+    "intake_to_coded_p95_s": "histogram_quantile(0.95, sum by (le) (increase(pv_report_intake_to_coded_seconds_bucket[321s])))",
+    "intake_to_coded_max_s": "max_over_time(pv_report_intake_to_coded_seconds_max[321s])",
+    "max_consumer_lag_records": "max_over_time(max(kafka_consumer_fetch_manager_records_lag_max)[321s:15s])",
+    "max_outbox_backlog_rows": "max_over_time(sum(pv_outbox_backlog)[321s:15s])",
+    "coding_stage_p95_s": "histogram_quantile(0.95, sum by (le) (increase(pv_pipeline_stage_seconds_bucket{stage=\"coding\"}[321s])))",
+    "pipeline_stage_failures": "sum(increase(pv_pipeline_stage_seconds_count{outcome=\"error\"}[321s]))"
+  }
+}

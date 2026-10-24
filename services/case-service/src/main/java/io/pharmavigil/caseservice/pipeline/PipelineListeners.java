@@ -1,0 +1,81 @@
+// Kafka listeners for the case pipeline and for submission results. They only parse the message and hand it to PipelineStages; a message
+// that is not valid JSON of the expected shape is a poison message and goes straight to the dead-letter topic.
+package io.pharmavigil.caseservice.pipeline;
+
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
+import io.pharmavigil.caseservice.metrics.CaseMetrics;
+import io.pharmavigil.caseservice.review.ReviewService;
+
+import io.pharmavigil.common.events.CaseEvent;
+import io.pharmavigil.common.events.ReportReceived;
+import io.pharmavigil.common.events.SubmissionStatus;
+import io.pharmavigil.common.events.Topics;
+import io.pharmavigil.common.kafka.PoisonMessageException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+
+@Component
+public class PipelineListeners {
+
+    static final String GROUP = "case-service";
+
+    private final PipelineStages stages;
+    private final NarrativeStage narratives;
+    private final ReviewService reviews;
+    private final JsonMapper json;
+    private final CaseMetrics metrics;
+
+    public PipelineListeners(PipelineStages stages, NarrativeStage narratives, ReviewService reviews,
+            JsonMapper json, CaseMetrics metrics) {
+        this.stages = stages;
+        this.narratives = narratives;
+        this.reviews = reviews;
+        this.json = json;
+        this.metrics = metrics;
+    }
+
+    @KafkaListener(id = "case-received", topics = Topics.REPORT_RECEIVED, groupId = GROUP)
+    public void received(String payload) {
+        metrics.stage("dedup", () -> stages.onReportReceived(parse(payload, ReportReceived.class)));
+    }
+
+    @KafkaListener(id = "case-deduped", topics = Topics.REPORT_DEDUPED, groupId = GROUP)
+    public void deduped(String payload) {
+        metrics.stage("coding", () -> stages.onDeduped(parse(payload, CaseEvent.class)));
+    }
+
+    @KafkaListener(id = "case-coded", topics = Topics.REPORT_CODED, groupId = GROUP)
+    public void coded(String payload) {
+        metrics.stage("triage", () -> stages.onCoded(parse(payload, CaseEvent.class)));
+    }
+
+    @KafkaListener(id = "case-triaged", topics = Topics.CASE_TRIAGED, groupId = GROUP)
+    public void triaged(String payload) {
+        metrics.stage("narrative", () -> narratives.onTriaged(parse(payload, CaseEvent.class)));
+    }
+
+    @KafkaListener(id = "case-submission-status", topics = Topics.SUBMISSION_STATUS, groupId = GROUP)
+    public void submissionStatus(String payload) {
+        metrics.stage("submission-status", () -> {
+            SubmissionStatus s = parse(payload, SubmissionStatus.class);
+            if (s.eventId() == null || s.status() == null) {
+                throw new PoisonMessageException("submission.status without eventId or status", null);
+            }
+            reviews.onSubmissionStatus(s);
+        });
+    }
+
+    <T> T parse(String payload, Class<T> type) {
+        try {
+            T value = json.readValue(payload, type);
+            if (value == null) {
+                throw new PoisonMessageException("empty " + type.getSimpleName(), null);
+            }
+            return value;
+        } catch (JacksonException | IllegalArgumentException e) {
+            throw new PoisonMessageException("not a valid " + type.getSimpleName() + ": " + e.getMessage(), e);
+        }
+    }
+}

@@ -1,0 +1,93 @@
+# Kubernetes end-to-end test (M10, ADR-010): builds the six images, starts a kind cluster, installs the Strimzi
+# operator and a Kafka cluster from ops/k8s/strimzi, installs the umbrella Helm chart with random throwaway
+# secrets, and runs the same Playwright smoke test as the compose job against the UI's NodePort.
+name: Kubernetes e2e (kind)
+
+on:
+  pull_request:
+    paths:
+      - "ops/helm/**"
+      - "ops/k8s/**"
+      - "ops/kind/**"
+      - "services/**/src/main/**"
+      - "services/**/pom.xml"
+      - "services/Dockerfile"
+      - "frontend/**"
+      - ".github/workflows/kind-e2e.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kind-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  KIND_VERSION: v0.33.0
+  HELM_VERSION: v4.3.0
+  STRIMZI_VERSION: 0.51.0
+
+jobs:
+  kind:
+    name: Helm on kind + Strimzi + Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Free disk space for the images
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install kind and Helm (pinned, checksums verified)
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          cd "$RUNNER_TEMP"
+          curl -fsSLo kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+          curl -fsSLo kind.sha256 "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64.sha256sum"
+          echo "$(cut -d' ' -f1 kind.sha256)  kind" | sha256sum -c -
+          install kind bin/kind
+          curl -fsSLo helm.tgz "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz"
+          curl -fsSLo helm.sha256 "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum"
+          echo "$(cut -d' ' -f1 helm.sha256)  helm.tgz" | sha256sum -c -
+          tar xzf helm.tgz && install linux-amd64/helm bin/helm
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Build the service jars
+        working-directory: services
+        run: mvn -B -ntp -DskipTests package
+      - name: Build the images
+        run: ops/kind/build-images.sh
+      - name: Deploy to kind (Strimzi, Kafka, Secret, Helm chart)
+        env:
+          PV_SECRETS_FILE: ${{ runner.temp }}/pv-kind.env
+        run: ops/kind/deploy.sh
+      - name: Browser smoke test against the cluster
+        env:
+          PV_SECRETS_FILE: ${{ runner.temp }}/pv-kind.env
+          PLAYWRIGHT_WITH_DEPS: "1"
+        run: ops/kind/smoke.sh
+      - name: Cluster state and logs
+        if: failure()
+        run: ops/kind/diagnose.sh
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: kind-playwright-report
+          path: frontend/playwright-report/
+          if-no-files-found: ignore
+      - name: Delete the cluster
+        if: always()
+        env:
+          PV_SECRETS_FILE: ${{ runner.temp }}/pv-kind.env
+        run: ops/kind/teardown.sh

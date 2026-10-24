@@ -1,0 +1,3 @@
+ISR$PT
+8000001$Myocardial infarction
+8000002$Rash

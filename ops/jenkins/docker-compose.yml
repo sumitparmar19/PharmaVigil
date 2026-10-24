@@ -1,0 +1,23 @@
+# Starts the PharmaVigil Jenkins controller with the pipeline preloaded (casc.yaml): `ops/jenkins/run-headless.sh`
+# does it for you, or set JENKINS_ADMIN_PASSWORD, DOCKER_GID (`stat -c %g /var/run/docker.sock`) and run
+# `docker compose up -d --build` here, then open http://localhost:8090. Host networking lets the builds reach
+# the Testcontainers ports, the kind API server and the UI on 127.0.0.1:8080.
+services:
+  jenkins:
+    build: .
+    network_mode: host
+    group_add: ["${DOCKER_GID:-0}"]
+    environment:
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:?set JENKINS_ADMIN_PASSWORD}
+      JENKINS_OPTS: --httpPort=8090
+      PV_REPO_URL: file:///repo
+      PV_GIT_REF: ${PV_GIT_REF:-*/main}
+      # Testcontainers: with host networking the started containers are reached on localhost.
+      TESTCONTAINERS_HOST_OVERRIDE: localhost
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${PV_REPO_PATH:-../..}:/repo:ro
+      - jenkins-home:/var/jenkins_home
+
+volumes:
+  jenkins-home:

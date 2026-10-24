@@ -1,0 +1,104 @@
+# Manual deploy to Azure (M11, docs/AZURE.md). Runs in the protected "azure" environment, so the owner approves
+# every run. "infrastructure" applies infra/azure as the "apply" app registration (GitHub OIDC, no secrets);
+# "application" pushes the images to ACR and installs the chart on AKS as the deploy identity Terraform created.
+name: Azure deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      part:
+        description: "infrastructure (terraform apply) or application (images + Helm on AKS)"
+        required: true
+        type: choice
+        options: [infrastructure, application]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure
+  cancel-in-progress: false
+
+env:
+  TF_VERSION: 1.16.5
+  HELM_VERSION: v4.3.0
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.part }}
+    runs-on: ubuntu-latest
+    environment: azure
+    timeout-minutes: 60
+    env:
+      ARM_USE_OIDC: "true"
+      ARM_CLIENT_ID: ${{ vars.AZURE_APPLY_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_budget_alert_email: ${{ secrets.BUDGET_ALERT_EMAIL }}
+      TF_VAR_owner_object_id: ${{ vars.AZURE_OWNER_OBJECT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Terraform (checksum verified)
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fsSLO "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
+          curl -fsSLO "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS"
+          grep linux_amd64 "terraform_${TF_VERSION}_SHA256SUMS" | sha256sum -c -
+          unzip -q "terraform_${TF_VERSION}_linux_amd64.zip" -d tfbin && echo "$PWD/tfbin" >> "$GITHUB_PATH"
+      - name: terraform init
+        working-directory: infra/azure
+        run: >
+          terraform init -input=false
+          -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP }}"
+          -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT }}"
+          -backend-config="container_name=tfstate"
+          -backend-config="key=pharmavigil.tfstate"
+      - name: terraform apply
+        if: inputs.part == 'infrastructure'
+        working-directory: infra/azure
+        run: terraform apply -input=false -auto-approve -no-color
+      - name: Outputs
+        id: tf
+        working-directory: infra/azure
+        run: |
+          terraform output -no-color
+          for o in resource_group aks_name acr_login_server key_vault_name; do
+            echo "$o=$(terraform output -raw $o)" >> "$GITHUB_OUTPUT"
+          done
+      - uses: actions/setup-java@v6
+        if: inputs.part == 'application'
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build the service jars
+        if: inputs.part == 'application'
+        working-directory: services
+        run: mvn -B -ntp -DskipTests package
+      - name: Sign in as the deploy identity (OIDC)
+        if: inputs.part == 'application'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Install Helm and kubelogin
+        if: inputs.part == 'application'
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin" && cd "$RUNNER_TEMP"
+          curl -fsSLo helm.tgz "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz"
+          curl -fsSLo helm.sha256 "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum"
+          echo "$(cut -d' ' -f1 helm.sha256)  helm.tgz" | sha256sum -c -
+          tar xzf helm.tgz && install linux-amd64/helm bin/helm
+          sudo az aks install-cli --only-show-errors
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Deploy the application
+        if: inputs.part == 'application'
+        env:
+          RESOURCE_GROUP: ${{ steps.tf.outputs.resource_group }}
+          AKS_NAME: ${{ steps.tf.outputs.aks_name }}
+          ACR_LOGIN_SERVER: ${{ steps.tf.outputs.acr_login_server }}
+          KEY_VAULT_NAME: ${{ steps.tf.outputs.key_vault_name }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: ops/azure/deploy-app.sh

@@ -1,0 +1,5 @@
+# Values for the kind end-to-end test: the UI is published through NodePort 30080 (see ops/kind/cluster.yaml).
+frontend:
+  service:
+    type: NodePort
+    nodePort: 30080

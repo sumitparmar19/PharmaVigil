@@ -1,0 +1,78 @@
+rxcui,pt,year,reports
+rx0,pt24,2019,2
+rx0,pt24,2021,5
+rx0,pt24,2022,2
+rx1,acute kidney injury,2019,9
+rx1,acute kidney injury,2020,3
+rx1,acute kidney injury,2021,6
+rx1,acute kidney injury,2022,6
+rx1,pt13,2020,2
+rx1,pt13,2021,3
+rx1,pt13,2022,4
+rx1,pt21,2019,3
+rx1,pt21,2020,3
+rx1,pt21,2021,1
+rx1,pt21,2022,4
+rx10,pt8,2019,2
+rx10,pt8,2020,2
+rx10,pt8,2021,1
+rx10,pt8,2022,4
+rx11,pt19,2020,2
+rx11,pt19,2022,7
+rx12,pt11,2020,2
+rx12,pt11,2021,6
+rx12,pt11,2022,2
+rx12,pt9,2019,1
+rx12,pt9,2020,4
+rx12,pt9,2021,2
+rx12,pt9,2022,1
+rx12,pt9,2023,1
+rx13,pt17,2019,3
+rx13,pt17,2020,2
+rx13,pt17,2021,3
+rx13,pt17,2022,1
+rx13,pt2,2019,1
+rx13,pt2,2020,2
+rx13,pt2,2021,3
+rx13,pt2,2022,2
+rx17,pt12,2020,3
+rx17,pt12,2021,2
+rx17,pt12,2022,2
+rx17,pt12,2023,1
+rx18,pt4,2019,2
+rx18,pt4,2020,1
+rx18,pt4,2021,2
+rx18,pt4,2022,4
+rx2,pt19,2019,2
+rx2,pt19,2020,1
+rx2,pt19,2021,1
+rx2,pt19,2022,4
+rx2,pt19,2023,1
+rx2,pt7,2019,3
+rx2,pt7,2020,2
+rx2,pt7,2021,2
+rx2,pt7,2022,5
+rx2,pt9,2019,4
+rx2,pt9,2021,2
+rx2,pt9,2022,2
+rx2,rhabdomyolysis,2019,5
+rx2,rhabdomyolysis,2020,1
+rx2,rhabdomyolysis,2021,7
+rx2,rhabdomyolysis,2022,9
+rx3,hepatic failure,2019,3
+rx3,hepatic failure,2020,4
+rx3,hepatic failure,2021,4
+rx3,hepatic failure,2022,2
+rx3,hepatic failure,2023,3
+rx6,pt13,2019,4
+rx6,pt13,2020,2
+rx6,pt13,2021,1
+rx6,pt13,2022,1
+rx9,pt1,2019,2
+rx9,pt1,2020,2
+rx9,pt1,2021,3
+rx9,pt1,2022,1
+rx9,pt14,2019,2
+rx9,pt14,2020,3
+rx9,pt14,2021,1
+rx9,pt14,2022,4

@@ -1,0 +1,54 @@
+# PharmaVigil models: signal baselines, the SafetyFormer Transformer, the MedDRA coder,
+# seriousness triage, duplicate detection and ONNX export with parity tests.
+[project]
+name = "pharmavigil-ml"
+version = "0.1.0"
+description = "Signal detection (baselines + SafetyFormer), MedDRA coder, triage and ONNX export"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+  "numpy>=2.5,<3",
+  "scipy>=1.18,<2",
+  "pandas>=2.3,<3",
+  "pyarrow>=21,<27",
+  "duckdb>=2.0,<3",
+  "scikit-learn>=1.9,<2",
+  "matplotlib>=3.11,<4",
+  "deltalake>=1.0,<2",
+]
+
+[project.optional-dependencies]
+train = [
+  "torch>=2.14,<3",
+  "mlflow>=3.17,<4",
+  "onnx>=1.23,<2",
+  "onnxruntime>=1.31,<2",
+  "onnxscript>=0.7,<1",
+  "lightgbm>=4.7,<5",
+  "onnxmltools>=1.16,<2",
+  "skl2onnx>=1.20,<2",
+  "transformers>=5.20,<6",
+  "tokenizers>=0.23,<1",
+]
+dev = ["pytest>=8", "pytest-cov>=6", "ruff>=0.8"]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["pharmavigil_ml*"]
+
+[project.scripts]
+pv-ml = "pharmavigil_ml.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+extend-exclude = ["notebooks"]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

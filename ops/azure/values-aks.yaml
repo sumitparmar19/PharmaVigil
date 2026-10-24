@@ -1,0 +1,5 @@
+# Values for AKS (docs/AZURE.md): images come from ACR (global.imageRegistry is set by ops/azure/deploy-app.sh).
+# The UI stays a ClusterIP Service; it is opened through `kubectl port-forward` from Cloud Shell, so nothing with
+# demo logins is exposed on a public IP.
+global:
+  imagePullPolicy: IfNotPresent

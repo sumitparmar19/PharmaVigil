@@ -1,0 +1,15 @@
+{
+ "features": [
+  "drug_jaccard",
+  "pt_jaccard",
+  "shared_drugs",
+  "shared_pts",
+  "same_sex",
+  "same_age_band",
+  "same_country",
+  "same_occupation",
+  "event_date_diff_days",
+  "fda_date_diff_days"
+ ],
+ "threshold": 0.5
+}

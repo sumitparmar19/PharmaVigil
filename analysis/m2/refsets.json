@@ -1,0 +1,22 @@
+{
+  "omop": {
+    "pairs": 399,
+    "positives": 165,
+    "negatives": 234,
+    "outcomes": 4,
+    "drugs": 182,
+    "url": "https://raw.githubusercontent.com/OHDSI/MethodEvaluation/d7305910f6c6a390a9e423ffc1685a97c017183e/data/omopReferenceSet.rda",
+    "commit": "d7305910f6c6a390a9e423ffc1685a97c017183e",
+    "sha256": "8d0964fce92c557d98cb751ec2aea7c1e3e1643696231a177128579a5662fa15"
+  },
+  "euadr": {
+    "pairs": 93,
+    "positives": 43,
+    "negatives": 50,
+    "outcomes": 10,
+    "drugs": 65,
+    "url": "https://raw.githubusercontent.com/OHDSI/MethodEvaluation/d7305910f6c6a390a9e423ffc1685a97c017183e/data/euadrReferenceSet.rda",
+    "commit": "d7305910f6c6a390a9e423ffc1685a97c017183e",
+    "sha256": "5cea251e7ab03a232f871abfb448655b8474ffab325bb19b4fbae8d139203c32"
+  }
+}

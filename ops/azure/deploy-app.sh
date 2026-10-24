@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Deploys the application to the AKS cluster that infra/azure created (docs/AZURE.md): pushes the six images to
+# ACR, signs in to the cluster with Entra ID (kubelogin), copies the six application secrets from Key Vault into a
+# private temp file (values masked in GitHub logs, never printed), and runs ops/k8s/install.sh.
+#   env: RESOURCE_GROUP, AKS_NAME, ACR_LOGIN_SERVER, KEY_VAULT_NAME, IMAGE_TAG
+set -euo pipefail
+cd "$(dirname "$0")/../.."
+: "${RESOURCE_GROUP:?}" "${AKS_NAME:?}" "${ACR_LOGIN_SERVER:?}" "${KEY_VAULT_NAME:?}" "${IMAGE_TAG:?}"
+
+echo "--- Images to $ACR_LOGIN_SERVER (tag $IMAGE_TAG)"
+az acr login --name "${ACR_LOGIN_SERVER%%.*}"
+IMAGE_TAG="$IMAGE_TAG" ops/kind/build-images.sh
+for s in pharmacy-service intake-gateway case-service signal-service submission-gateway frontend; do
+  docker tag "pharmavigil/$s:$IMAGE_TAG" "$ACR_LOGIN_SERVER/pharmavigil/$s:$IMAGE_TAG"
+  docker push -q "$ACR_LOGIN_SERVER/pharmavigil/$s:$IMAGE_TAG"
+done
+
+echo "--- Cluster credentials (Entra ID, no local accounts)"
+az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$AKS_NAME" --overwrite-existing
+kubelogin convert-kubeconfig -l azurecli
+
+echo "--- Application secrets from Key Vault"
+SECRETS_FILE=$(mktemp)
+trap 'rm -f "$SECRETS_FILE"' EXIT
+for pair in ORACLE_PASSWORD=oracle-password PV_DB_PASSWORD=pv-db-password JWT_SECRET=jwt-secret \
+            PV_DEMO_PASSWORD=pv-demo-password ARTEMIS_USER=artemis-user ARTEMIS_PASSWORD=artemis-password; do
+  key=${pair%%=*}
+  value=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "${pair#*=}" --query value -o tsv)
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then echo "::add-mask::$value"; fi
+  printf '%s=%s\n' "$key" "$value" >> "$SECRETS_FILE"
+done
+
+IMAGE_REGISTRY="$ACR_LOGIN_SERVER" IMAGE_TAG="$IMAGE_TAG" ops/k8s/install.sh "$SECRETS_FILE" -f ops/azure/values-aks.yaml

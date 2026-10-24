@@ -1,0 +1,169 @@
+{
+  "metrics": {
+    "http_req_blocked": {
+      "max": 2.469603,
+      "p(90)": 0.0099424,
+      "p(95)": 0.011732,
+      "avg": 0.010867434116445383,
+      "min": 0.002489,
+      "med": 0.007174
+    },
+    "http_req_duration{expected_response:true}": {
+      "p(95)": 23.5988525,
+      "avg": 11.420206433001757,
+      "min": 3.895824,
+      "med": 9.420591,
+      "max": 321.461241,
+      "p(90)": 18.987698
+    },
+    "data_sent": {
+      "count": 4614448,
+      "rate": 14355.769568613467
+    },
+    "http_reqs": {
+      "count": 6853,
+      "rate": 21.320012459498535
+    },
+    "http_req_waiting": {
+      "p(90)": 18.503225999999998,
+      "p(95)": 22.39007979999999,
+      "avg": 11.119876118050497,
+      "min": 3.796013,
+      "med": 9.174374,
+      "max": 320.667851
+    },
+    "http_req_failed": {
+      "passes": 17,
+      "fails": 6836,
+      "value": 0.0024806654020137165
+    },
+    "http_req_connecting": {
+      "med": 0,
+      "max": 1.223317,
+      "p(90)": 0,
+      "p(95)": 0,
+      "avg": 0.0010519743178170145,
+      "min": 0
+    },
+    "http_req_sending": {
+      "p(90)": 0.058498400000000006,
+      "p(95)": 0.07561759999999995,
+      "avg": 0.043936727564570184,
+      "min": 0.008638,
+      "med": 0.03415,
+      "max": 3.263305
+    },
+    "checks": {
+      "passes": 5732,
+      "fails": 0,
+      "value": 1
+    },
+    "vus_max": {
+      "value": 21,
+      "min": 21,
+      "max": 21
+    },
+    "vus": {
+      "value": 1,
+      "min": 0,
+      "max": 3
+    },
+    "iteration_duration": {
+      "avg": 60.36492169850245,
+      "min": 4.126562,
+      "med": 9.426581,
+      "max": 1195.474707,
+      "p(90)": 20.91682240000001,
+      "p(95)": 40.80394160000023
+    },
+    "http_req_receiving": {
+      "med": 0.110074,
+      "max": 63.116195,
+      "p(90)": 0.31972780000000006,
+      "p(95)": 0.680909199999999,
+      "avg": 0.29588200992266195,
+      "min": 0.035106
+    },
+    "http_req_duration": {
+      "avg": 11.459694855537725,
+      "min": 3.895824,
+      "med": 9.426728,
+      "max": 321.461241,
+      "p(90)": 19.040921600000008,
+      "p(95)": 23.638519799999997
+    },
+    "http_req_tls_handshaking": {
+      "avg": 0,
+      "min": 0,
+      "med": 0,
+      "max": 0,
+      "p(90)": 0,
+      "p(95)": 0
+    },
+    "http_req_duration{scenario:reports}": {
+      "avg": 10.447305223211185,
+      "min": 3.895824,
+      "med": 8.790491500000002,
+      "max": 168.76816,
+      "p(90)": 17.17733380000001,
+      "p(95)": 21.101450600000003,
+      "thresholds": {
+        "p(95)<1000": false
+      }
+    },
+    "iterations": {
+      "count": 6010,
+      "rate": 18.69739893208612
+    },
+    "data_received": {
+      "count": 70200469,
+      "rate": 218397.0339621539
+    },
+    "http_req_failed{scenario:reports}": {
+      "passes": 0,
+      "fails": 5730,
+      "thresholds": {
+        "rate<0.01": false
+      },
+      "value": 0
+    }
+  },
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": {
+      "setup": {
+        "name": "setup",
+        "path": "::setup",
+        "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+        "groups": {},
+        "checks": {
+          "pharmacist signed in": {
+            "path": "::setup::pharmacist signed in",
+            "id": "2e17eebae2f0545aa7539a2c579266ab",
+            "passes": 1,
+            "fails": 0,
+            "name": "pharmacist signed in"
+          },
+          "reviewer signed in": {
+            "name": "reviewer signed in",
+            "path": "::setup::reviewer signed in",
+            "id": "6acf4370a4bc67a7c36a611bf2bcc353",
+            "passes": 1,
+            "fails": 0
+          }
+        }
+      }
+    },
+    "checks": {
+      "report accepted (202)": {
+        "id": "a1c897e09a530b346c3b13826b87d9e5",
+        "passes": 5730,
+        "fails": 0,
+        "name": "report accepted (202)",
+        "path": "::report accepted (202)"
+      }
+    }
+  }
+}

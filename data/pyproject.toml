@@ -1,0 +1,43 @@
+# PharmaVigil data platform: ingestion and Delta/Parquet tables for FAERS, VAERS,
+# the OMOP/EU-ADR reference sets and FDA safety-labelling changes.
+[project]
+name = "pharmavigil-data"
+version = "0.1.0"
+description = "FAERS/VAERS ingestion, de-duplication, RxNorm normalization and quality checks"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+  "pyarrow>=26,<27",
+  "pandas>=2.3,<3",
+  "requests>=2.34,<3",
+  "rdata>=1.1,<2",
+]
+
+[project.optional-dependencies]
+spark = ["pyspark==4.2.0", "delta-spark==4.4.1"]
+dev = ["pytest>=9", "pytest-cov>=6", "ruff>=0.8", "responses>=0.26"]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+pharmavigil_data = ["resources/*.csv"]
+
+[tool.setuptools.packages.find]
+include = ["pharmavigil_data*"]
+
+[project.scripts]
+pv-data = "pharmavigil_data.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["spark: needs a local Spark session (JVM)"]
+
+[tool.ruff]
+extend-exclude = ["notebooks"]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

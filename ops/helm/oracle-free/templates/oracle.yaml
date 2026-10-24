@@ -1,0 +1,59 @@
+{{/* Demo Oracle Free: Deployment + Service "oracle-free" + the schema init script as a ConfigMap. */}}
+{{- $secret := .Values.global.secretName | default "pharmavigil-secrets" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oracle-free-init
+data:
+  01-schemas.sh: |-
+{{ .Files.Get "files/oracle-init.sh" | indent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oracle-free
+  labels: {app.kubernetes.io/name: oracle-free, app.kubernetes.io/part-of: pharmavigil}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app.kubernetes.io/name: oracle-free}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: oracle-free, app.kubernetes.io/part-of: pharmavigil}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: oracle
+          image: {{ .Values.image }}
+          ports: [{name: sql, containerPort: 1521}]
+          securityContext:
+            allowPrivilegeEscalation: false
+          env:
+            - name: ORACLE_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ $secret }}, key: ORACLE_PASSWORD}}
+            - name: PV_DB_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ $secret }}, key: PV_DB_PASSWORD}}
+          readinessProbe:
+            exec: {command: ["healthcheck.sh"]}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 60
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          # No volume over /opt/oracle/oradata: the faststart image ships a pre-built database there, which an
+          # emptyDir would hide (docker compose's named volume is filled from the image, Kubernetes volumes are
+          # not). The demo database lives in the container and is ephemeral.
+          volumeMounts:
+            - {name: init, mountPath: /container-entrypoint-initdb.d}
+      volumes:
+        - name: init
+          configMap: {name: oracle-free-init, defaultMode: 0555}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oracle-free
+spec:
+  selector: {app.kubernetes.io/name: oracle-free}
+  ports: [{name: sql, port: 1521, targetPort: sql}]

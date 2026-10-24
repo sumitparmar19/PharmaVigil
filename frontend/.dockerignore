@@ -1,0 +1,5 @@
+# Build context of the UI image: sources only.
+node_modules
+dist
+playwright-report
+test-results

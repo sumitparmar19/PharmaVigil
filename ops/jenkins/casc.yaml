@@ -1,0 +1,36 @@
+# Jenkins configuration as code for the PharmaVigil controller: one local admin whose password comes from the
+# JENKINS_ADMIN_PASSWORD environment variable (never stored here), no sign-up, and the "pharmavigil" pipeline job
+# reading ops/jenkins/Jenkinsfile from the repository at PV_REPO_URL / PV_GIT_REF.
+jenkins:
+  systemMessage: "PharmaVigil CI (local demo). Not for clinical or regulatory use."
+  numExecutors: 2
+  mode: NORMAL
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: admin
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+unclassified:
+  location:
+    url: "http://localhost:8090/"
+jobs:
+  - script: |
+      pipelineJob('pharmavigil') {
+        description('Build, unit and integration tests, coverage gate, images, Helm lint, kind deploy, smoke test (ops/jenkins/Jenkinsfile)')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote { url('${PV_REPO_URL}') }
+                branch('${PV_GIT_REF}')
+              }
+            }
+            scriptPath('ops/jenkins/Jenkinsfile')
+            lightweight(false)
+          }
+        }
+      }

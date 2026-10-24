@@ -1,0 +1,46 @@
+{
+  "scope": "local docker compose stack, synthetic load-test reports, fixture models",
+  "window": {
+    "start_unix": 1792668437,
+    "end_unix": 1792668759,
+    "seconds": 322
+  },
+  "hardware": {
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "logical_cpus": 4,
+    "memory_gib": 15.7,
+    "os": "Linux 6.18.44-fc-v140"
+  },
+  "k6": {
+    "intake_requests": 5730,
+    "intake_requests_failed": 0,
+    "intake_http_p95_ms": 21.101450600000003
+  },
+  "prometheus": {
+    "reports_accepted_total": 5997.877893333333,
+    "reports_per_min_peak_1m": 2399.9999999999995,
+    "cases_coded_total": 2870.3999999999996,
+    "coded_per_min_peak_1m": 627.9999999999999,
+    "intake_to_coded_p50_s": 27.00703715287654,
+    "intake_to_coded_p95_s": 103.08736688009962,
+    "intake_to_coded_max_s": 100.442573756,
+    "max_consumer_lag_records": 592.0,
+    "max_outbox_backlog_rows": 46.0,
+    "coding_stage_p95_s": 0.02106250041823096,
+    "pipeline_stage_failures": 4.147200000000001
+  },
+  "queries": {
+    "reports_accepted_total": "sum(increase(pv_reports_received_total{kind!=\"duplicate\"}[322s]))",
+    "reports_per_min_peak_1m": "max_over_time((sum(rate(pv_reports_received_total{kind!=\"duplicate\"}[1m])) * 60)[322s:15s])",
+    "cases_coded_total": "sum(increase(pv_report_intake_to_coded_seconds_count[322s]))",
+    "coded_per_min_peak_1m": "max_over_time((sum(rate(pv_report_intake_to_coded_seconds_count[1m])) * 60)[322s:15s])",
+    "intake_to_coded_p50_s": "histogram_quantile(0.50, sum by (le) (increase(pv_report_intake_to_coded_seconds_bucket[322s])))",
+    "intake_to_coded_p95_s": "histogram_quantile(0.95, sum by (le) (increase(pv_report_intake_to_coded_seconds_bucket[322s])))",
+    "intake_to_coded_max_s": "max_over_time(pv_report_intake_to_coded_seconds_max[322s])",
+    "max_consumer_lag_records": "max_over_time(max(kafka_consumer_fetch_manager_records_lag_max)[322s:15s])",
+    "max_outbox_backlog_rows": "max_over_time(sum(pv_outbox_backlog)[322s:15s])",
+    "coding_stage_p95_s": "histogram_quantile(0.95, sum by (le) (increase(pv_pipeline_stage_seconds_bucket{stage=\"coding\"}[322s])))",
+    "pipeline_stage_failures": "sum(increase(pv_pipeline_stage_seconds_count{outcome=\"error\"}[322s]))"
+  },
+  "note": "k6 block recomputed from the saved k6 summary of this run after a collector fix (it had counted the reviewer scenario as intake requests); Prometheus values unchanged."
+}
