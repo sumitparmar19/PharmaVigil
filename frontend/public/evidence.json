@@ -194,11 +194,11 @@
       "title": "Live demo memory (docker stats)",
       "items": [
         {
-          "label": "Idle / peak during a replay",
-          "value": "not measured yet",
-          "scope": "",
-          "file": "analysis/p6/",
-          "status": "pending"
+          "label": "Idle / peak during a replay (arm64_ci_fixture)",
+          "value": "5,428 MiB / 5,560 MiB",
+          "scope": "GitHub ubuntu-24.04-arm runner (native arm64), fixture models and 40 invented records",
+          "file": "analysis/p6/memory_arm64_ci_fixture.json",
+          "status": "measured"
         }
       ]
     }

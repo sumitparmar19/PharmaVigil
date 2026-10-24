@@ -43,7 +43,16 @@ Kafka with a 384 MB heap, Artemis with 256 MB.
 | caddy | 128 MiB |
 | **total of the limits** | **8,464 MiB (8.3 GiB)** |
 
-Measured usage (idle and during a replay) is added here from `analysis/p6/` once measured; not measured yet.
+Measured usage (`docker stats`, from `ops/demo/measure.sh`; each file under `analysis/p6/` states its scope):
+
+| Measurement | Scope | Idle | Peak during the replay | Result |
+|---|---|---|---|---|
+| `memory_arm64_ci_fixture.json` | GitHub ubuntu-24.04-arm runner (native arm64), fixture models and 40 invented records | 5,428 MiB | 5,560 MiB | 40 of 40 reports acknowledged by the mock regulator, 11 s |
+
+Largest containers in that run: Oracle 2,701 MiB (of 2,800), case-service 527 MiB, intake-gateway 388 MiB.
+Grafana sat at its 320 MiB limit because it downloads and updates plugins at start; that is now switched off
+(`GF_PLUGINS_PREINSTALL_DISABLED`). The run with the real models and the real replay sample is added once the
+demo-data archive exists.
 
 ## Deploy, roll back, reset
 

@@ -210,6 +210,8 @@ services:
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      # No plugin downloads or updates at start (they pushed Grafana to its memory limit; none are needed).
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
       GF_SERVER_ROOT_URL: https://${PV_DEMO_HOST:?set PV_DEMO_HOST in ops/demo/.env}/grafana/
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in ops/demo/.env}
