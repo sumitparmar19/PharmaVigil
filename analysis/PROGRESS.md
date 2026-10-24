@@ -415,6 +415,31 @@ from EMA in both the Java job and the schema job):
 
 ## Environment re-tests
 
+### Start of Phase 2 (P0)
+
+Network access re-saved by Sumit (owner step 1). Tested from the build container with real downloads, not only
+home pages:
+
+| Host | Result | Used for |
+|---|---|---|
+| fis.fda.gov (FAERS quarterly zips) | ✅ 200, `faers_ascii_2025q4.zip` downloads | P1 |
+| api.fda.gov (openFDA) | ✅ 200 | — |
+| www.fda.gov | ✅ 200 | — |
+| vaers.hhs.gov | ✅ 200 (dataset page) | P1, P4 |
+| rxnav.nlm.nih.gov | ✅ 200 | P1 |
+| dailymed.nlm.nih.gov | ✅ 200 | label dates (P2 time travel) |
+| huggingface.co + us.aws.cdn.hf.co | ✅ 200 (model files resolve to the `hf.co` CDN) | P4 coder |
+| cdn-lfs.huggingface.co | ❌ refused (502 at the proxy); not needed, model files now come from `*.hf.co` | — |
+| download.pytorch.org | ✅ 200 | P3, P4 |
+| quay.io | ✅ 200 (Strimzi tags) | kind |
+| get.helm.sh, GitHub release assets | ✅ 200 | tools |
+| www.accessdata.fda.gov | ❌ 404 "abuse detection" page for automated requests (the server, not the proxy) | SrLC label changes |
+| database.ich.org | ❌ 403/404 | not needed (EMA copy of the E2B schemas is fetched in CI) |
+| www.ema.europa.eu | ❌ refused by the proxy | only CI needs it, and CI reaches it |
+| cloud.oracle.com, sslip.io | ❌ refused by the proxy | not needed from the container (P6 runs on the VM) |
+
+Container resources: 4 CPUs, 15 GiB memory, 26 GB free disk after clearing old Docker images.
+
 ### Start of M12
 
 Still refused at the proxy: fis.fda.gov, api.fda.gov, vaers.hhs.gov, rxnav.nlm.nih.gov, www.accessdata.fda.gov,

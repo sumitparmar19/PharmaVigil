@@ -8,7 +8,10 @@ Status key: **OPEN** (waiting for Sumit) · **DONE**
 
 ---
 
-## 1. Turn on network access for the build session: OPEN
+## 1. Turn on network access for the build session: DONE
+
+**Done:** re-tested at the start of Phase 2 (P0); FAERS, VAERS, RxNav, Hugging Face, PyTorch, quay.io and Helm
+are reachable (`analysis/PROGRESS.md`, "Start of Phase 2").
 
 **Why:** at the start of M0 every data host was still refused inside the build container (FDA, VAERS,
 RxNav, ICH, Hugging Face, PyTorch, quay.io, Helm). Until this works, data and model numbers are built
@@ -59,6 +62,8 @@ The steps are kept for the record.
 ---
 
 ## 3. Turn on the Dependency graph: DONE
+
+**Done:** Dependency review green with 0 vulnerable packages.
 
 **Done:** the Dependency review check passed on `6cd7b95` (run 40063279746).
 
@@ -219,7 +224,9 @@ a copy you can show without running the stack (it shows data only while a Promet
 
 **Send back to the planning chat:** the three dashboard titles as Grafana lists them.
 
-## 12. Create the v1.0 release after the pull request is merged: OPEN
+## 12. Create the v1.0 release after the pull request is merged: DONE
+
+**Done:** PR #1 merged; release `v1.0` published.
 
 **Why:** the build container cannot push tags.
 
@@ -230,7 +237,9 @@ a copy you can show without running the stack (it shows data only while a Promet
 
 **Send back to the planning chat:** the release URL.
 
-## 13. Decide on the two CodeQL alerts: OPEN (the check is green; confirm the alerts' state)
+## 13. Decide on the two CodeQL alerts: DONE
+
+**Done:** both alerts dismissed (false positive / won't fix, with the agreed comments).
 
 **Why:** the "CodeQL" check on the pull request is red because of two alerts that Claude Code judged false
 positives (reasons in `analysis/COMPLETE_REPORT.md`, part A2, and in the replies on the pull request). Only the
