@@ -2,6 +2,25 @@
 
 **An AI drug-safety (pharmacovigilance) platform: from the pharmacy counter to the safety signal and back.**
 
+[![CI](https://github.com/sumitparmar19/PharmaVigil/actions/workflows/ci.yml/badge.svg)](https://github.com/sumitparmar19/PharmaVigil/actions/workflows/ci.yml)
+[![Live smoke test](https://github.com/sumitparmar19/PharmaVigil/actions/workflows/live-smoke.yml/badge.svg)](https://github.com/sumitparmar19/PharmaVigil/actions/workflows/live-smoke.yml)
+[![Demo stack on arm64](https://github.com/sumitparmar19/PharmaVigil/actions/workflows/demo-arm64.yml/badge.svg)](https://github.com/sumitparmar19/PharmaVigil/actions/workflows/demo-arm64.yml)
+
+**Live demo:** being set up on an Oracle Cloud Always Free server (owner steps 15–18); its address goes here when
+it is up. The landing page shows the two shared demo accounts (`demo-pharmacist`, `demo-reviewer`) and their
+password; there is nothing to sign up for. "Run the pipeline" sends 200 real FAERS reports through the whole system
+and shows each stage's counter as it moves.
+
+**Headline numbers** (each from a committed result file, with its data scope):
+
+| | Result | Scope and file |
+|---|---|---|
+| Real FAERS processed | 12,902,877 report rows → **10,848,477 unique cases**; RxNorm mapping covers 98.5% of drug mentions | subset: FAERS 2019Q1–2026Q2 — `analysis/p1/data_counts.json` |
+| Signal detection, best classic method | IC: **AUC 0.821** (0.779–0.860) on 388 OMOP pairs; 0.92 on 92 EU-ADR pairs | same — `analysis/p2/baselines.json` |
+| SafetyFormer (self-supervised Transformer, CPU-sized) | AUC 0.765 on OMOP, 0.813 on EU-ADR: **below the classic methods** | same — `analysis/p3/safetyformer.json` |
+| Seriousness triage | ROC AUC 0.960 overall; **0.92 within US and within non-US reports** (country alone explains part of the label) | same, time split at 2025-01-01 — `analysis/p4/triage.json` |
+| Demo stack memory on arm64 | 5,428 MiB idle, 5,560 MiB peak during a replay; 40 of 40 replayed reports acknowledged | GitHub arm64 runner, fixture models — `analysis/p6/memory_arm64_ci_fixture.json` |
+
 > **Not for clinical or regulatory use.** Spontaneous reports do not prove that a drug caused a reaction.
 > The pharmacy side uses synthetic patients only. AI outputs are suggestions; a human reviewer decides.
 
@@ -27,9 +46,10 @@ acknowledged by a (mock) regulator over JMS. Drug–event signals computed from 
 | Kafka pipeline (outbox, idempotent consumers, DLQ, replay-safe) | working, tested | `KafkaPipelineTest`, `EndToEndTest`, ADR-001 |
 | SOAP partner intake (WS-Security) and E2B(R3) import/export | working, tested | `SoapIntakeContractTest`, `docs/E2B_R3.md` |
 | Oracle primary, SQL Server portable | both test profiles green in CI | ADR-003 |
-| Models in Java (ONNX Runtime) | parity proven on a **synthetic fixture bundle** | `ModelParityTest`, ADR-008 |
-| Data platform, signal baselines, SafetyFormer, coder, triage, duplicates | code complete, tested on fixtures and synthetic data | `data/tests`, `ml/tests` |
-| **Real-data model results** | **pending**: FAERS, VAERS, RxNav and Hugging Face are unreachable from the build environment | owner steps 1, 4–7 |
+| Models in Java (ONNX Runtime) | parity proven on a synthetic fixture bundle; the bundle trained on real FAERS is in the demo-data release | `ModelParityTest`, ADR-008, `analysis/models/MANIFEST.md` |
+| Data platform | real FAERS 2019Q1–2026Q2 through bronze → silver → gold (Spark + Delta) | `analysis/p1/data_counts.json` |
+| Real-data model results | baselines, SafetyFormer, triage and duplicates measured; the coder is not evaluated (needs VAERS, owner step 14); the time-travel test is not computable (FDA's label-change database refuses automated downloads) | `analysis/p2/`, `analysis/p3/`, `analysis/p4/` |
+| Live demo | stack, images, server setup, deploy with rollback, daily smoke test: built and green on arm64 in CI; the server itself is owner steps 15–18 | `docs/DEMO_HOSTING.md` |
 | Observability, load test | measured on the local stack | `docs/OBSERVABILITY.md`, `docs/PERFORMANCE.md` |
 | Helm on Kubernetes (kind), Jenkins | whole stack on kind and the full Jenkins pipeline green in CI (`analysis/m10/jenkins-run.log`) | `docs/KUBERNETES.md`, `docs/JENKINS.md` |
 | Azure (AKS, ACR, Key Vault) | Terraform validated and Checkov-clean; **never applied** | `docs/AZURE.md`, owner step 9 |
@@ -126,17 +146,17 @@ and version next to the reviewer's final choice.
 
 | | Source | Status |
 |---|---|---|
-| FAERS (adverse event reports) | FDA quarterly files, 2004Q1 onward; legacy AERS layout handled | ETL tested on fixtures; full run is owner step 4 (Databricks) — [dataset card](docs/DATASET_CARD_FAERS.md) |
-| VAERS (vaccine reports with narratives) | HHS VAERS datasets | coder training data; owner step 6 — [dataset card](docs/DATASET_CARD_VAERS.md) |
-| Drug names → ingredients | NLM RxNorm (RxNav API) | client with cache and rate limit; tested with a mocked API |
+| FAERS (adverse event reports) | FDA quarterly files, 2004Q1 onward; legacy AERS layout handled | **real**: 2019Q1–2026Q2 loaded in the build container (30 quarters, 10,848,477 unique cases); 2004 onward is owner step 4 (Databricks) — [dataset card](docs/DATASET_CARD_FAERS.md) |
+| VAERS (vaccine reports with narratives) | HHS VAERS datasets | coder training and evaluation data; the files sit behind a CAPTCHA, so owner step 14 — [dataset card](docs/DATASET_CARD_VAERS.md) |
+| Drug names → ingredients | NLM RxNorm (RxNav API) | **real**: the 20,000 most frequent names (99.2% of mentions) looked up; 98.5% of mentions mapped — `analysis/m2/rxnorm_map_run.json` |
 | Reference sets | OHDSI MethodEvaluation (OMOP, EU-ADR) | **real**: OMOP 399 pairs (165+/234−), EU-ADR 93 pairs (43+/50−) — `analysis/m2/refsets.json` |
 | Pharmacy patients | Synthea-format synthetic CSV | demo data only |
 
 | Model | What it does | Design |
 |---|---|---|
 | Baselines | PRR, ROR, IC (shrunk), EBGM/EB05 (MGPS) | `ml/.../signals`, ADR-005 |
-| **SafetyFormer** | self-supervised set Transformer trained from scratch on FAERS reports; scores drug–event pairs | ADR-005, ADR-006 (time-travel test), [model card](ml/signals/MODEL_CARD.md) |
-| MedDRA coder | biomedical encoder + head, merged with retrieval over PT names | ADR-007, [model card](ml/coder/MODEL_CARD.md) |
+| **SafetyFormer** | self-supervised set Transformer trained from scratch on FAERS reports; scores drug–event pairs | ADR-005, ADR-006 (time-travel test), [model card](ml/signals/MODEL_CARD.md), [real-data results](ml/MODEL_CARD_safetyformer.md) |
+| MedDRA coder | biomedical encoder + head, merged with retrieval over PT names; the demo runs a zero-shot version (no training labels) over the 3,000 most reported PTs | ADR-007, [model card](ml/coder/MODEL_CARD.md) |
 | Seriousness triage | LightGBM; never sees outcome fields or outcome-revealing terms | [model card](ml/triage/MODEL_CARD_SERIOUSNESS.md) |
 | Duplicate detection | LightGBM on pair features (a proxy: FAERS versions of one case) | [model card](ml/triage/MODEL_CARD_DUPLICATES.md) (states the proxy) |
 
@@ -158,10 +178,16 @@ MedDRA dictionary file is in the repository; only PT strings that appear in publ
 | Model parity Java vs Python | identical token ids and features, scores within 1e-5 (coder 1e-4), identical top-5 | synthetic fixture bundle |
 | Tracing | one trace across pharmacy, intake, Kafka and all case-service stages (182 spans) | local stack |
 
-**Models on real data:** pending. The AUCs of the baselines and SafetyFormer on OMOP/EU-ADR, the time-travel
-lead times, the coder's F1 and top-5 recall, and the triage and duplicate metrics all need FAERS/VAERS, which
-the build environment cannot download. The code, notebooks and owner steps to produce them are in place
-(`OWNER_STEPS.md` 4–7); no number is reported before it is measured.
+**Models on real data** (scope for all rows: subset: FAERS 2019Q1–2026Q2; AUCs with 95% bootstrap intervals):
+
+| Model | Result | File |
+|---|---|---|
+| PRR / ROR / IC / EBGM, primary-suspect drugs | OMOP (388 pairs): 0.759 / 0.759 / **0.821** / 0.765; EU-ADR (92 pairs): 0.916 / 0.916 / 0.919 / 0.910. Counting every drug role is clearly worse (OMOP IC 0.688) | `analysis/p2/README.md` |
+| SafetyFormer (d = 128, 2 layers, 10,000 steps on CPU) | OMOP 0.765 (0.719–0.811), EU-ADR 0.813 (0.721–0.897): **does not beat the classic methods** on the same pairs | `analysis/p3/safetyformer.json`, [card](ml/MODEL_CARD_safetyformer.md) |
+| Seriousness triage (LightGBM, 1,000,000 cases, test from 2025-01-01) | ROC AUC 0.960, PR-AUC 0.969; within US reports 0.924 / 0.883, within non-US 0.923 | `analysis/p4/triage.json` |
+| Duplicates (LightGBM, proxy label: versions of one case) | PR-AUC 0.998; precision 0.984, recall 0.979 at the best-F1 threshold. Measures follow-up matching, an easy task, not general duplicate detection | `analysis/p4/duplicates.json` |
+| MedDRA coder (zero-shot) | not evaluated: needs narratives with human-assigned PTs (VAERS, owner step 14) | `analysis/p4/coder.json` |
+| Time-travel test | not computed: the reference sets carry no dates and FDA's label-change database (SrLC) refuses automated downloads | `analysis/p2/README.md` |
 
 ## Run it
 
