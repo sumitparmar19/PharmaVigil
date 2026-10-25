@@ -73,8 +73,11 @@ await shot("case");
 await grab();
 await grab();
 
+const ranked = page.waitForResponse((r) => r.url().includes("/api/signals/top") && r.ok(), { timeout: 60_000 });
 await page.goto("/signals");
 await page.getByText(/Data scope:/).waitFor();
+await ranked;
+await page.waitForTimeout(800); // let the table render
 await shot("signals");
 await grab();
 await grab();
