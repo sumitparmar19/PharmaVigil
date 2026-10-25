@@ -60,6 +60,30 @@ def cmd_safetyformer(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_safetyformer_onnx(args: argparse.Namespace) -> int:
+    """Export a trained SafetyFormer checkpoint to ONNX, check it against PyTorch and record the file hash."""
+    import hashlib
+    import json
+
+    from .export.onnx_export import export_safetyformer, safetyformer_parity
+    from .safetyformer.train import load_checkpoint
+    from .safetyformer.views import query_batch
+
+    model, vocab = load_checkpoint(Path(args.checkpoint))
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    sample = query_batch(vocab, vocab.drug_tokens[:8])
+    export_safetyformer(model, out, sample)
+    parity, _ = safetyformer_parity(model, out, sample)
+    report = {"scope": args.scope, "checkpoint": Path(args.checkpoint).name, "onnx": out.name,
+              "onnx_bytes": out.stat().st_size, "onnx_sha256": hashlib.sha256(out.read_bytes()).hexdigest(),
+              "parity": parity, "inputs": ["tokens", "types", "roles", "query_pos"], "outputs": ["log_probs"]}
+    Path(args.report).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.report).write_text(json.dumps(report, indent=2))
+    print(json.dumps(report))
+    return 0 if parity["max_abs_diff"] < 1e-3 else 1
+
+
 def cmd_time_travel(args: argparse.Namespace) -> int:
     import pandas as pd
 
@@ -189,6 +213,13 @@ def build_parser() -> argparse.ArgumentParser:
     tt.add_argument("--first-year", type=int, required=True)
     tt.add_argument("--last-year", type=int, required=True)
     tt.set_defaults(func=cmd_time_travel)
+
+    so = sub.add_parser("safetyformer-onnx", help="P3: export a trained SafetyFormer to ONNX with parity and SHA-256")
+    so.add_argument("--checkpoint", default=str(REPO / "ml" / "artifacts" / "safetyformer" / "safetyformer.pt"))
+    so.add_argument("--out", default=str(REPO / "ml" / "artifacts" / "safetyformer" / "safetyformer.onnx"))
+    so.add_argument("--report", default=str(REPO / "analysis" / "p3" / "safetyformer_onnx.json"))
+    so.add_argument("--scope", required=True)
+    so.set_defaults(func=cmd_safetyformer_onnx)
 
     lk = sub.add_parser("leakage", help="M4: shuffled vs time-ordered split")
     _add_m4_args(lk)

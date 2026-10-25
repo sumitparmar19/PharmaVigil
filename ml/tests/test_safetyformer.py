@@ -214,3 +214,16 @@ def test_pt_scores_for_given_pairs_match_the_full_table(trained, corpus) -> None
     for r in got.iloc[:50].itertuples():
         assert r.safetyformer == pytest.approx(want[(r.rxcui, r.pt)], abs=1e-6)
     assert np.isnan(got["safetyformer"].iloc[-1])
+
+
+def test_safetyformer_onnx_command(trained, tmp_path) -> None:
+    import json
+
+    from pharmavigil_ml.cli import main
+
+    _, out = trained
+    report = tmp_path / "onnx.json"
+    assert main(["safetyformer-onnx", "--checkpoint", str(out / "safetyformer.pt"), "--out",
+                 str(tmp_path / "sf.onnx"), "--report", str(report), "--scope", "fixture"]) == 0
+    r = json.loads(report.read_text())
+    assert r["parity"]["max_abs_diff"] < 1e-4 and len(r["onnx_sha256"]) == 64 and r["scope"] == "fixture"
