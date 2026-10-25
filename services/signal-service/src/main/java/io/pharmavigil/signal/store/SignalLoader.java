@@ -4,6 +4,7 @@
 package io.pharmavigil.signal.store;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -120,8 +121,14 @@ public class SignalLoader {
     static String sha256(Path dir) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
+            // Streamed: the real FAERS export is well over 100 MB, more than the service's heap should hold.
+            byte[] chunk = new byte[1 << 16];
             for (String f : List.of(SIGNALS, TREND, META)) {
-                md.update(Files.readAllBytes(dir.resolve(f)));
+                try (InputStream in = Files.newInputStream(dir.resolve(f))) {
+                    for (int n; (n = in.read(chunk)) > 0; ) {
+                        md.update(chunk, 0, n);
+                    }
+                }
             }
             return HexFormat.of().formatHex(md.digest());
         } catch (IOException e) {
