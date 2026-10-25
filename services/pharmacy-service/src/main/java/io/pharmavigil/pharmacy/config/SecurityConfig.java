@@ -21,7 +21,7 @@ public class SecurityConfig {
     SecurityFilterChain api(HttpSecurity http, JwtAuthenticationConverter converter) throws Exception {
         SecurityAutoConfiguration.statelessJwt(http, converter)
                 .authorizeHttpRequests(a -> a
-                        .requestMatchers("/api/auth/login", "/actuator/health/**", "/actuator/prometheus",
+                        .requestMatchers("/api/auth/login", "/api/auth/demo", "/actuator/health/**", "/actuator/prometheus",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated());
         return http.build();

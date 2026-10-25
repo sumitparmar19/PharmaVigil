@@ -1,0 +1,309 @@
+{
+  "scope": "subset: FAERS 2019Q1\u20132026Q2",
+  "before": null,
+  "train_reports": 10302667,
+  "validation_reports": 542900,
+  "vocabulary": {
+    "drugs": 4174,
+    "pts": 17094
+  },
+  "training": {
+    "model": {
+      "vocab_size": 21286,
+      "n_pt": 17094,
+      "n_drug": 4174,
+      "d_model": 128,
+      "n_layers": 2,
+      "n_heads": 4,
+      "d_ff": 512,
+      "dropout": 0.1,
+      "masked_drug_objective": false
+    },
+    "history": [
+      {
+        "step": 500,
+        "train_loss": 7.270001182556152,
+        "seconds": 107.01026790000014,
+        "val_recall_at_10": 0.303,
+        "val_nll": 6.548213671875
+      },
+      {
+        "step": 1000,
+        "train_loss": 6.081890477180481,
+        "seconds": 216.62258537600064,
+        "val_recall_at_10": 0.3876,
+        "val_nll": 6.14767373046875
+      },
+      {
+        "step": 1500,
+        "train_loss": 5.8381438751220704,
+        "seconds": 327.5195154840003,
+        "val_recall_at_10": 0.4106,
+        "val_nll": 5.94133984375
+      },
+      {
+        "step": 2000,
+        "train_loss": 5.698594236373902,
+        "seconds": 434.8710097160001,
+        "val_recall_at_10": 0.4302,
+        "val_nll": 5.81884267578125
+      },
+      {
+        "step": 2500,
+        "train_loss": 5.623980182647705,
+        "seconds": 545.387506213,
+        "val_recall_at_10": 0.4322,
+        "val_nll": 5.734616357421875
+      },
+      {
+        "step": 3000,
+        "train_loss": 5.5758577289581295,
+        "seconds": 653.8644300300002,
+        "val_recall_at_10": 0.445,
+        "val_nll": 5.660895751953125
+      },
+      {
+        "step": 3500,
+        "train_loss": 5.534131364822388,
+        "seconds": 763.1518618569999,
+        "val_recall_at_10": 0.4494,
+        "val_nll": 5.624821240234375
+      },
+      {
+        "step": 4000,
+        "train_loss": 5.492120698928833,
+        "seconds": 869.5306178569999,
+        "val_recall_at_10": 0.4626,
+        "val_nll": 5.58282109375
+      },
+      {
+        "step": 4500,
+        "train_loss": 5.4707732076644895,
+        "seconds": 976.363995621,
+        "val_recall_at_10": 0.4616,
+        "val_nll": 5.562138623046875
+      },
+      {
+        "step": 5000,
+        "train_loss": 5.437200622558594,
+        "seconds": 1081.998634992,
+        "val_recall_at_10": 0.4624,
+        "val_nll": 5.538875830078125
+      },
+      {
+        "step": 5500,
+        "train_loss": 5.4284879322052,
+        "seconds": 1187.2794305839998,
+        "val_recall_at_10": 0.468,
+        "val_nll": 5.513253076171875
+      },
+      {
+        "step": 6000,
+        "train_loss": 5.414323914527893,
+        "seconds": 1295.0362462480007,
+        "val_recall_at_10": 0.4674,
+        "val_nll": 5.497674267578125
+      },
+      {
+        "step": 6500,
+        "train_loss": 5.397941658020019,
+        "seconds": 1399.688369843001,
+        "val_recall_at_10": 0.474,
+        "val_nll": 5.485439501953125
+      },
+      {
+        "step": 7000,
+        "train_loss": 5.380423957824707,
+        "seconds": 1505.0093333269997,
+        "val_recall_at_10": 0.476,
+        "val_nll": 5.473087939453125
+      },
+      {
+        "step": 7500,
+        "train_loss": 5.38479563331604,
+        "seconds": 1612.8344309759996,
+        "val_recall_at_10": 0.4754,
+        "val_nll": 5.467169384765625
+      },
+      {
+        "step": 8000,
+        "train_loss": 5.375554712295532,
+        "seconds": 1719.2583595609995,
+        "val_recall_at_10": 0.4736,
+        "val_nll": 5.45851015625
+      },
+      {
+        "step": 8500,
+        "train_loss": 5.3737209005355835,
+        "seconds": 1823.577584392,
+        "val_recall_at_10": 0.4766,
+        "val_nll": 5.4559048828125
+      },
+      {
+        "step": 9000,
+        "train_loss": 5.352818748474121,
+        "seconds": 1929.2315207709999,
+        "val_recall_at_10": 0.4762,
+        "val_nll": 5.4538109375
+      },
+      {
+        "step": 9500,
+        "train_loss": 5.356495219230652,
+        "seconds": 2036.5849088989999,
+        "val_recall_at_10": 0.4778,
+        "val_nll": 5.45283046875
+      },
+      {
+        "step": 10000,
+        "train_loss": 5.363389700889587,
+        "seconds": 2142.2132042409994,
+        "val_recall_at_10": 0.4766,
+        "val_nll": 5.452430810546875
+      }
+    ],
+    "train_reports": 10302667,
+    "parameters": 5327814,
+    "checkpoint": "/home/user/Pharmacy-Managment/ml/artifacts/safetyformer/safetyformer.pt",
+    "checkpoint_sha256": "31e325c717649e4a0fa922d5bcd12c956933e50706e0afdeaea6e6839b7a9a20",
+    "device": "cpu"
+  },
+  "train_config": {
+    "steps": 10000,
+    "batch_size": 256,
+    "lr": 0.0003,
+    "warmup_steps": 200,
+    "weight_decay": 0.01,
+    "seed": 13,
+    "eval_every": 500,
+    "eval_reports": 5000,
+    "drug_loss_weight": 0.5,
+    "d_model": 128,
+    "n_layers": 2,
+    "n_heads": 4,
+    "d_ff": 512,
+    "dropout": 0.1,
+    "min_count": 5,
+    "masked_drug_objective": false,
+    "device": "auto",
+    "views": {
+      "p_single_drug": 0.3,
+      "p_no_drug": 0.05,
+      "p_hide_all_pts": 0.5,
+      "p_unknown_context": 0.3,
+      "max_drugs": 12,
+      "max_pts": 12,
+      "masked_drug_rate": 0.0
+    }
+  },
+  "reference_sets": {
+    "omop": {
+      "pairs": 399,
+      "scorable_pairs": 388,
+      "scorable_positives": 161,
+      "scorable_negatives": 227,
+      "unscorable_pairs": 11,
+      "methods": {
+        "prr": {
+          "auc": 0.7585301119106904,
+          "ci_low": 0.7070255424521849,
+          "ci_high": 0.8068429009221002
+        },
+        "prr_lo": {
+          "auc": 0.8144580950556817,
+          "ci_low": 0.7722726899608723,
+          "ci_high": 0.8548697567515801
+        },
+        "ror": {
+          "auc": 0.7585574739376694,
+          "ci_low": 0.7067987796535967,
+          "ci_high": 0.8069400361178757
+        },
+        "ror_lo": {
+          "auc": 0.8178236243740935,
+          "ci_low": 0.7764915724956906,
+          "ci_high": 0.8576446083125837
+        },
+        "ic": {
+          "auc": 0.8208060853148001,
+          "ci_low": 0.7792565053219142,
+          "ci_high": 0.8596536651435139
+        },
+        "ic025": {
+          "auc": 0.7833748324075849,
+          "ci_low": 0.7362625523298765,
+          "ci_high": 0.8274040960954386
+        },
+        "ebgm": {
+          "auc": 0.7650149123047036,
+          "ci_low": 0.712300599228391,
+          "ci_high": 0.814695118614387
+        },
+        "eb05": {
+          "auc": 0.7841956932169536,
+          "ci_low": 0.7371678933975429,
+          "ci_high": 0.8277587763701534
+        },
+        "safetyformer": {
+          "auc": 0.7648781021698088,
+          "ci_low": 0.719262866993187,
+          "ci_high": 0.8106082578597422
+        }
+      }
+    },
+    "euadr": {
+      "pairs": 93,
+      "scorable_pairs": 92,
+      "scorable_positives": 42,
+      "scorable_negatives": 50,
+      "unscorable_pairs": 1,
+      "methods": {
+        "prr": {
+          "auc": 0.9157142857142856,
+          "ci_low": 0.8494999999999999,
+          "ci_high": 0.9685952380952381
+        },
+        "prr_lo": {
+          "auc": 0.9299999999999999,
+          "ci_low": 0.8585595238095239,
+          "ci_high": 0.9809523809523808
+        },
+        "ror": {
+          "auc": 0.9161904761904762,
+          "ci_low": 0.8513928571428571,
+          "ci_high": 0.9685952380952382
+        },
+        "ror_lo": {
+          "auc": 0.9304761904761905,
+          "ci_low": 0.8585714285714287,
+          "ci_high": 0.9809642857142856
+        },
+        "ic": {
+          "auc": 0.919047619047619,
+          "ci_low": 0.8518571428571428,
+          "ci_high": 0.9704880952380952
+        },
+        "ic025": {
+          "auc": 0.9199999999999999,
+          "ci_low": 0.8457142857142858,
+          "ci_high": 0.9785833333333334
+        },
+        "ebgm": {
+          "auc": 0.9095238095238095,
+          "ci_low": 0.8288035714285713,
+          "ci_high": 0.9714285714285714
+        },
+        "eb05": {
+          "auc": 0.9204761904761904,
+          "ci_low": 0.8471190476190475,
+          "ci_high": 0.9785833333333332
+        },
+        "safetyformer": {
+          "auc": 0.8128571428571428,
+          "ci_low": 0.7209166666666668,
+          "ci_high": 0.8966785714285714
+        }
+      }
+    }
+  },
+  "disclaimer": "Spontaneous reports do not prove that a drug caused a reaction."
+}

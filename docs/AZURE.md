@@ -111,6 +111,10 @@ GitHub…") and whether any line said `ERROR` (if so, the full error text).
 
 ### 6. Deploy the application
 
+The deploy does not build anything: it copies the six images that *Demo images* already published to GHCR for
+`main` (the same multi-arch images the live demo runs) into the registry Terraform created. They exist once the
+Phase 2 pull request is merged and are readable once the packages are public (`OWNER_STEPS.md`, step 16).
+
 1. Open **Actions → Azure deploy → Run workflow**, choose part **application**, click **Run workflow**.
 2. Approve it as in step 4.2 and wait until it is green (about 20 minutes).
 

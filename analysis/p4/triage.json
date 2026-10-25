@@ -1,0 +1,194 @@
+{
+  "scope": "subset: FAERS 2019Q1\u20132026Q2",
+  "test_from": "2025-01-01",
+  "train_reports": 798550,
+  "test_reports": 201450,
+  "test_serious_rate": 0.55018118639861,
+  "pr_auc": 0.9685182249990181,
+  "roc_auc": 0.9596506672157444,
+  "brier": 0.07809062587844755,
+  "calibration": [
+    {
+      "bin": "0.0-0.1",
+      "n": 46504,
+      "mean_predicted": 0.04476222106700541,
+      "observed_rate": 0.027589024600034404
+    },
+    {
+      "bin": "0.1-0.2",
+      "n": 21670,
+      "mean_predicted": 0.1444813934467097,
+      "observed_rate": 0.12478080295339179
+    },
+    {
+      "bin": "0.2-0.3",
+      "n": 13493,
+      "mean_predicted": 0.24625645749865646,
+      "observed_rate": 0.25072259690209736
+    },
+    {
+      "bin": "0.3-0.4",
+      "n": 10519,
+      "mean_predicted": 0.34491663864291505,
+      "observed_rate": 0.3911968818328738
+    },
+    {
+      "bin": "0.4-0.5",
+      "n": 6849,
+      "mean_predicted": 0.4472951222875401,
+      "observed_rate": 0.5086873996203826
+    },
+    {
+      "bin": "0.5-0.6",
+      "n": 5577,
+      "mean_predicted": 0.5494546898586088,
+      "observed_rate": 0.6365429442352519
+    },
+    {
+      "bin": "0.6-0.7",
+      "n": 5257,
+      "mean_predicted": 0.65003757960427,
+      "observed_rate": 0.7380635343351721
+    },
+    {
+      "bin": "0.7-0.8",
+      "n": 6953,
+      "mean_predicted": 0.753442907417649,
+      "observed_rate": 0.861067165252409
+    },
+    {
+      "bin": "0.8-0.9",
+      "n": 9513,
+      "mean_predicted": 0.8576353104978034,
+      "observed_rate": 0.9026595185535583
+    },
+    {
+      "bin": "0.9-1.0",
+      "n": 75115,
+      "mean_predicted": 0.9716665897861742,
+      "observed_rate": 0.9833055980829395
+    }
+  ],
+  "by_reporter_country": {
+    "US": {
+      "reports": 135257,
+      "serious_rate": 0.35246234945326305,
+      "pr_auc": 0.8828243637346247,
+      "roc_auc": 0.9236660227213845
+    },
+    "non-US": {
+      "reports": 66193,
+      "serious_rate": 0.9541945522940493,
+      "pr_auc": 0.9953408295940813,
+      "roc_auc": 0.9234293050732394
+    }
+  },
+  "top_features_mean_abs_shap": [
+    {
+      "feature": "country=US",
+      "mean_abs_shap": 1.2172644411300766
+    },
+    {
+      "feature": "n_pts",
+      "mean_abs_shap": 0.8062055066202312
+    },
+    {
+      "feature": "n_drugs",
+      "mean_abs_shap": 0.16778589846169273
+    },
+    {
+      "feature": "occp=CN",
+      "mean_abs_shap": 0.159473809464443
+    },
+    {
+      "feature": "age_band=unknown",
+      "mean_abs_shap": 0.1429766004873235
+    },
+    {
+      "feature": "drug=1876376",
+      "mean_abs_shap": 0.1395202356831288
+    },
+    {
+      "feature": "drug=9143",
+      "mean_abs_shap": 0.1353494851410258
+    },
+    {
+      "feature": "occp=other",
+      "mean_abs_shap": 0.10141963333282056
+    },
+    {
+      "feature": "pt=drug ineffective",
+      "mean_abs_shap": 0.09378569980587903
+    },
+    {
+      "feature": "pt=product dose omission issue",
+      "mean_abs_shap": 0.06196908598375074
+    },
+    {
+      "feature": "pt=off label use",
+      "mean_abs_shap": 0.05696276487772433
+    },
+    {
+      "feature": "occp=LW",
+      "mean_abs_shap": 0.056429879979897214
+    },
+    {
+      "feature": "drug=60223",
+      "mean_abs_shap": 0.05573686818111039
+    },
+    {
+      "feature": "pt=drug dependence",
+      "mean_abs_shap": 0.05179859605242441
+    },
+    {
+      "feature": "pt=no adverse event",
+      "mean_abs_shap": 0.05140307290496187
+    },
+    {
+      "feature": "pt=fatigue",
+      "mean_abs_shap": 0.051187749488182735
+    },
+    {
+      "feature": "pt=injection site pain",
+      "mean_abs_shap": 0.0498898145742727
+    },
+    {
+      "feature": "country=COUNTRY NOT SPECIFIED",
+      "mean_abs_shap": 0.0483599734297428
+    },
+    {
+      "feature": "pt=pneumonia",
+      "mean_abs_shap": 0.04789230309736617
+    },
+    {
+      "feature": "sex=M",
+      "mean_abs_shap": 0.045050925677533805
+    }
+  ],
+  "shap_rows": 50000,
+  "n_features": 852,
+  "params": {
+    "objective": "binary",
+    "learning_rate": 0.05,
+    "num_leaves": 63,
+    "min_data_in_leaf": 50,
+    "feature_fraction": 0.8,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 1,
+    "lambda_l2": 1.0,
+    "seed": 13,
+    "deterministic": true,
+    "num_threads": 4
+  },
+  "rounds": 400,
+  "inputs_never_read": [
+    "serious (label only)",
+    "outcomes",
+    "outcome-revealing PTs"
+  ],
+  "sampled_reports": 1000000,
+  "onnx_parity": {
+    "rows": 500,
+    "max_abs_diff": 2.3209912347610384e-07
+  }
+}

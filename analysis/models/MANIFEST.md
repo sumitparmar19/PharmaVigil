@@ -6,7 +6,18 @@ downloaded file is the one the numbers came from.
 
 | Model | File | SHA-256 | Data scope | Trained where | Evidence |
 |---|---|---|---|---|---|
-| — | — | — | — | — | No real-data model has been trained yet (FAERS download host blocked; see `analysis/PROGRESS.md`). |
+| coder labels and label embeddings | `coder.json` | `c3358989119adac385e7c323e2062f6eeca33fcd80b4cfef358fd559b81585e2` | subset: FAERS 2019Q1–2026Q2 (same) | build container, CPU (`pv-ml p4`) | `analysis/p4/coder.json` |
+| MedDRA coder, zero-shot (PubMedBERT embeddings, int8) | `coder.onnx` | `de154f2238b7a6b5d3d00170ff0171e6cef6a169f355c297e4b4cbd07bc930b4` | subset: FAERS 2019Q1–2026Q2 (label space: 3,000 most reported FAERS PTs) | build container, CPU (`pv-ml p4`) | `analysis/p4/coder.json` |
+| coder tokenizer vocabulary | `coder_vocab.txt` | `79489a52be45e6fa033521e8ce8e4f62aedc0a742ee2aa6fc04667e5b0b1454d` | subset: FAERS 2019Q1–2026Q2 (—) | build container, CPU (`pv-ml p4`) | `analysis/p4/coder.json` |
+| duplicates threshold and feature list | `duplicates.json` | `ddc45b067667bb28927a6d8375cb9dd056295097ef0d459fd09b8bb8b25ecae6` | subset: FAERS 2019Q1–2026Q2 (same) | build container, CPU (`pv-ml p4`) | `analysis/p4/duplicates.json` |
+| duplicates (LightGBM, 300 rounds) | `duplicates.onnx` | `75283c9e7b4eae4fb79bac5a67abf71c666c1075ebab685d1ebb0464a05efb65` | subset: FAERS 2019Q1–2026Q2 (versions of a random 300,000 cases) | build container, CPU (`pv-ml p4`) | `analysis/p4/duplicates.json` |
+| Python↔Java parity examples | `parity.json` | `dad5ee533d8abe73e4d7ff1798f3255dbbff0ac59c9c126e66d9e85ec1fc4dc0` | subset: FAERS 2019Q1–2026Q2 (—) | build container, CPU (`pv-ml p4`) | `analysis/p4/parity.json` |
+| seriousness triage (LightGBM, 400 rounds) | `seriousness.onnx` | `44b71f68b4b0151e6b047d3db7c7d5cd491d148156c1cc62548dbf16777cecc4` | subset: FAERS 2019Q1–2026Q2 (random 1,000,000 cases, time split 2025-01-01) | build container, CPU (`pv-ml p4`) | `analysis/p4/triage.json` |
+| seriousness feature spec | `seriousness_features.json` | `0d05fec284313218ba5f3b421c2622a85192c2e53c98a49267aec445eec810d9` | subset: FAERS 2019Q1–2026Q2 (same) | build container, CPU (`pv-ml p4`) | `analysis/p4/triage.json` |
+| SafetyFormer checkpoint (d=128, 2 layers, 10,000 steps) | `safetyformer.pt` | `31e325c717649e4a0fa922d5bcd12c956933e50706e0afdeaea6e6839b7a9a20` | subset: FAERS 2019Q1–2026Q2 | build container, CPU (`pv-ml safetyformer`) | `analysis/p3/safetyformer.json` |
+| SafetyFormer, ONNX | `safetyformer.onnx` | `fbf4d41138d6633d33fc56ee836356f805ca6a9104fab4493ad767b7b4f56b12` | same | `pv-ml safetyformer-onnx` | `analysis/p3/safetyformer_onnx.json` |
+
+The eight files above the SafetyFormer rows form the case-service bundle of the live demo (`bundle.json`, kind `trained`, SHA-256 `cc4fb48698a18c4fb5d505c009d66afb3f286832e8a541c7a461a4994dc4b7cb`); they ship in the demo-data release archive, not in git. The SafetyFormer files are not used by the services (the signal export carries its scores); they are kept with the release assets.
 
 ## Test fixtures (committed, synthetic)
 

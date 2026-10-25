@@ -1,0 +1,10 @@
+{
+  "seriousness": {
+    "rows": 500,
+    "max_abs_diff": 2.3209912347610384e-07
+  },
+  "duplicates": {
+    "rows": 500,
+    "max_abs_diff": 8.204104429143655e-08
+  }
+}

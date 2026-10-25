@@ -152,3 +152,63 @@ build environment cannot download FAERS; the code and notebooks to do it are rea
   database that the image ships pre-built, so Oracle had nothing to open. Without it, the kind workflow is green
   (whole stack on Strimzi Kafka, Playwright smoke test 2/2), and the same install script now also passes inside
   the Jenkins pipeline; the Azure deploy uses it too.
+
+## Phase 2: the live demo (hosting, memory, proof)
+
+26. *Why Oracle Cloud Always Free and not AKS for the always-on demo?* A demo must run every day for months at no
+    cost. Always Free gives one Ampere A1 server with 2 OCPUs and 12 GB (Oracle cut it from 4/24 in June 2026), which
+    is enough for the whole stack in docker compose; AKS stays a one-day proof of the Kubernetes path (owner step 9)
+    because even the smallest node costs money every hour.
+27. *How do you fit Oracle, Kafka, Artemis, five JVMs and Grafana into 12 GB?* An explicit memory limit on every
+    container (total of the limits 8.3 GiB, under the 9 GB target), JVM heaps as a percentage of the limit with the
+    serial GC and capped metaspace, Kafka 384 MB heap, Artemis 256 MB, an int8-quantized coder, and a swap file for
+    safety. The real usage is measured with `docker stats` during a replay (`ops/demo/measure.sh`, `analysis/p6/`).
+28. *Why multi-arch images?* The demo server is arm64; CI builds every image for amd64 and arm64 with buildx (the UI
+    bundle is built once on the native platform) and a native arm64 runner starts the whole stack and runs a replay
+    to the regulator's answer before anything is deployed.
+29. *How does the "Run the pipeline" button stay honest?* It sends real FAERS reports through the real intake (SOAP
+    with WS-Security and REST), and every counter is counted from case-service's own audit trail. Replayed cases are
+    auto-reviewed so they can reach the regulator, but through the normal review calls as "demo-auto-review",
+    labelled as such on the case page.
+30. *How is a public demo protected?* No sign-up, shared read-mostly accounts, rate limits per IP and account, a
+    cooldown and size cap on replays, 16 KB request bodies, no uploads or SOAP from the internet, no outbound calls
+    from user input, secrets generated on the server, and a nightly reset.
+31. *How do you know it still works next week?* A Playwright test runs against the public URL every day and the
+    README shows its badge; `/api/status` reports each service, Kafka lag and the loaded model versions.
+
+## Phase 2: results on real FAERS (scope: subset FAERS 2019Q1–2026Q2)
+
+32. *What data did you actually process?* 30 quarterly FDA files: 12,902,877 report rows, 10,848,477 unique cases
+    after FDA's de-duplication rule (latest version, deleted cases removed), 98.5% of drug mentions mapped to an
+    RxNorm ingredient. Spark + Delta in a 4-CPU container: silver 6 min, gold 6 min; the slow step was 45,179 RxNav
+    calls (one hour). (`analysis/p1/data_counts.json`)
+33. *Which signal method won?* None clearly. On 388 OMOP pairs IC has the best point estimate (AUC 0.821) and the
+    lower-bound PRR/ROR are about 0.81, but the intervals overlap. The bigger effect is the counting rule: using
+    only primary-suspect drugs beats counting every drug on the report (0.821 vs 0.688). (`analysis/p2/README.md`)
+34. *Did your Transformer beat the baselines?* No. The CPU-sized SafetyFormer reached 0.765 on OMOP (IC 0.821) and
+    0.813 on EU-ADR (baselines about 0.92) on the same pairs, and the README says so. Possible reasons: a small
+    model, a quarter of one pass over the data, and a score that mixes in what a drug is prescribed for. The GPU
+    run is the next test. (`analysis/p3/safetyformer.json`)
+35. *What is the leakage check and what did it show?* Train and test once on a random split and once on a split by
+    date (test = 2025 onward). The random split overstated recall@10 by 0.061 (0.498 vs 0.437), because reports
+    from the same period share drugs, reactions and reporting waves. That is why every split here is by date.
+36. *Your triage AUC is 0.96; is that real?* Partly a reporting rule. FDA receives foreign reports mostly when they
+    are serious (95% of non-US test reports vs 35% of US ones), and the reporter country is the top feature. Within
+    US reports alone the AUC is 0.924, within non-US 0.923; both numbers are in the model card next to the 0.96.
+37. *Tell me about a bug you found only on real data.* The EBGM prior: two runs on identical data gave different
+    priors, because the optimizer started once and stopped in different local optima depending on the row order
+    the database returned (likelihoods 4,432,544 vs 4,499,742). Fix: sort the pairs, try five starts on a fixed
+    sample, refine the best, and record every start's likelihood. Others: a dense matrix and Python tuples that
+    did not fit in 15 GiB, an unreadable schema folder that stopped every submission, Artemis blocking a nearly full
+    disk.
+38. *Why is the duplicate model's 0.998 not impressive?* Its positives are follow-up versions of one FAERS case,
+    which repeat most of the first report. It measures follow-up matching; genuine cross-case duplicates are not
+    labelled in FAERS, and the model card says so.
+39. *How does the coder work without labels?* Zero-shot retrieval: a pretrained biomedical sentence encoder
+    (Apache-2.0) embeds the reported term and the 3,000 most reported FAERS terms, and ranks by cosine similarity.
+    Exact wording scores 1.0, lay wording is weak ("a high fever" ranks "rheumatic fever" first), so the auto-code
+    threshold is high and everything else goes to manual coding. It is not evaluated until labelled VAERS data
+    arrives.
+40. *Does the real stack fit the free server?* Measured with the real models and 810,403 signal pairs: 5,748 MiB
+    idle, 6,055 MiB peak during a 200-report replay, every report acknowledged in 42 s (`analysis/p6/`); the free
+    VM has 12 GB.

@@ -50,11 +50,7 @@ def run_triage(gold: Path, out_dir: Path, models_dir: Path, test_from: date, sco
 
 def run_duplicates(versions_path: Path, out_dir: Path, models_dir: Path, scope: str,
                    sample_cases: int | None = None) -> dict[str, object]:
-    versions = load_versions(versions_path)
-    if sample_cases:
-        keep = pd.Series(versions["caseid"].unique()).sample(min(sample_cases, versions["caseid"].nunique()),
-                                                             random_state=13)
-        versions = versions[versions["caseid"].isin(set(keep))]
+    versions = load_versions(versions_path, sample_cases=sample_cases)
     res = train_duplicates(versions, models_dir, scope=scope)
     onnx_path = export_lightgbm(res.booster, len(PAIR_FEATURES), models_dir / "duplicates.onnx")
     probe = res.x_test[:500]

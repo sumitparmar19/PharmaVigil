@@ -1,0 +1,14 @@
+{
+  "distinct_name_keys": 225813,
+  "total_mentions": 46107190,
+  "keys_requested": 20000,
+  "mentions_in_requested_keys": 45757357,
+  "share_of_mentions_requested": 0.9924126150389994,
+  "results_by_method": {
+    "exact": 7196,
+    "approximate": 8221,
+    "none": 4583
+  },
+  "api_calls": 45179,
+  "cached_mapping_rows": 18813
+}

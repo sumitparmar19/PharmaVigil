@@ -58,6 +58,16 @@ def test_map_reference_drugs() -> None:
     assert list(out["rxcui"]) == ["1", "2", "2"]
 
 
+def test_map_reference_drugs_default_synonyms() -> None:
+    """The documented reference-name table applies by default; a drug class stays unmatched."""
+    ref = pd.DataFrame({"exposure_name": ["Thyroxine", "Olmesartan medoxomil", "Regular Insulin, Human",
+                                          "Endopeptidases"]})
+    ing = pd.DataFrame({"rxcui": ["10", "20", "30"],
+                        "ingredient": ["levothyroxine", "olmesartan", "insulin, regular, human"]})
+    out = map_reference_drugs(ref, ing)
+    assert list(out["rxcui"][:3]) == ["10", "20", "30"] and pd.isna(out["rxcui"][3])
+
+
 def test_auc_ci_perfect_separation() -> None:
     res = auc_with_ci(np.array([0, 0, 1, 1]), np.array([0.1, 0.2, 0.8, 0.9]), n_boot=50)
     assert res["auc"] == 1.0 and res["ci_low"] == 1.0

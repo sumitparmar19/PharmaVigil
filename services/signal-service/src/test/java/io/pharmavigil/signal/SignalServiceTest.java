@@ -110,6 +110,21 @@ class SignalServiceTest {
     }
 
     @Test
+    void searchFindsADrugsPairsAndShowsTheReferenceSetLabel() throws Exception {
+        mvc.perform(get("/api/signals/search").param("q", "DRU"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.method").value("search"))
+                .andExpect(jsonPath("$.signals[?(@.pt == 'acute kidney injury' && @.rxcui == 'rx1')].reference")
+                        .value("OMOP positive"))
+                .andExpect(jsonPath("$.disclaimer").value(org.hamcrest.Matchers.containsString("do not prove")));
+        mvc.perform(get("/api/signals/search").param("q", "no-such-drug"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.signals.length()").value(0));
+        mvc.perform(get("/api/signals/search").param("q", "%")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.signals.length()").value(0)); // wildcards are not special
+        mvc.perform(get("/api/signals/search").param("q", " ")).andExpect(status().isBadRequest());
+    }
+
+    @Test
     void onlyAdminsReload() throws Exception {
         mvc.perform(post("/api/signals/reload")).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/signals/reload").header("Authorization",

@@ -47,6 +47,27 @@ function Reaction({ r, index, detail, onDone }: { r: ReactionView; index: number
   );
 }
 
+/** The E2B(R3) file of the case as case-service exports it (the same XML the regulator receives). */
+function E2bFile({ caseId }: { caseId: number }) {
+  const { api } = useAuth();
+  const [open, setOpen] = useState(false);
+  const xml = useQuery({ queryKey: ["e2b", caseId], queryFn: () => api.e2bXml(caseId), enabled: open });
+  return (
+    <section aria-label="E2B(R3) file" className="mt-6 rounded-lg border bg-white p-4 text-sm">
+      <div className="flex items-center gap-3">
+        <h2 className="text-lg font-medium">E2B(R3) file</h2>
+        <button type="button" className="rounded-md border px-2 py-1" onClick={() => setOpen(!open)}>
+          {open ? "Hide XML" : "Show XML"}
+        </button>
+      </div>
+      <ErrorNote error={xml.error} />
+      {open && xml.data && (
+        <pre className="mt-3 max-h-96 overflow-auto rounded bg-slate-900 p-3 text-xs text-slate-100">{xml.data}</pre>
+      )}
+    </section>
+  );
+}
+
 export function CaseDetailPage() {
   const { api } = useAuth();
   const id = Number(useParams().id);
@@ -152,6 +173,12 @@ export function CaseDetailPage() {
 
       <section aria-label="Approval and submission" className="mt-6 space-y-3 rounded-lg border bg-white p-4 text-sm">
         <h2 className="text-lg font-medium">Approval and submission</h2>
+        {c.audit.some((a) => a.actor === "demo-auto-review") && (
+          <p role="note" className="rounded bg-sky-50 p-2 text-sky-900">
+            Auto-reviewed for the demo: the demo accepted the model suggestions (or the terms as FDA coded them) so the
+            replay can reach the regulator. Every decision is stored with the model suggestion, as for a person.
+          </p>
+        )}
         <div className="flex gap-2">
           <button type="button" className="rounded-md bg-slate-900 px-3 py-2 text-white disabled:opacity-50"
             disabled={busy || c.head.status !== "IN_REVIEW" || !approved} onClick={() => approve.mutate()}>Approve case</button>
@@ -175,6 +202,7 @@ export function CaseDetailPage() {
           </table>
         )}
       </section>
+      <E2bFile caseId={id} />
       <p className="mt-4 text-sm text-slate-600">{c.disclaimer}</p>
     </Layout>
   );

@@ -1,0 +1,20 @@
+{
+  "scope": "subset: FAERS 2019Q1\u20132026Q2",
+  "checkpoint": "safetyformer.pt",
+  "onnx": "safetyformer.onnx",
+  "onnx_bytes": 21577654,
+  "onnx_sha256": "fbf4d41138d6633d33fc56ee836356f805ca6a9104fab4493ad767b7b4f56b12",
+  "parity": {
+    "rows": 8,
+    "max_abs_diff": 5.7220458984375e-06
+  },
+  "inputs": [
+    "tokens",
+    "types",
+    "roles",
+    "query_pos"
+  ],
+  "outputs": [
+    "log_probs"
+  ]
+}

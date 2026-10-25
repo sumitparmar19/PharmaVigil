@@ -22,6 +22,43 @@ the repo.
 | M11 | Azure infrastructure (code only) | ✅ validated (fmt, validate, terraform test, Checkov) locally and in CI; never applied (owner step 9) | `infra/azure`, `docs/AZURE.md` |
 | M12 | Docs, evidence, report | ✅ done | README, ADRs 1–10, `analysis/PROJECT_REPORT.md`, `analysis/COMPLETE_REPORT.md`, `RESUME_EVIDENCE.md`, `INTERVIEW_PREP.md` |
 
+## Phase 2 (real data, live demo, proof)
+
+| # | Step | Status | Evidence |
+|---|---|---|---|
+| P0 | Network re-test, housekeeping | ✅ done | "Start of Phase 2 (P0)" below |
+| P1 | Real FAERS through bronze → silver → gold, demo slice | ✅ done (VAERS waits on owner step 14) | `analysis/p1/data_counts.json`, `analysis/m2/*.json` |
+| P2 | PRR/ROR/IC/EBGM on OMOP and EU-ADR with bootstrap CIs | ✅ done; time-travel test not computable (SrLC blocks automated downloads) | `analysis/p2/README.md`, `analysis/p2/baselines.json` |
+| P3 | SafetyFormer (CPU-sized) on real FAERS, leakage check, ONNX | ✅ done; does not beat the classic methods; shuffled split overstates recall@10 by 0.061 | `analysis/p3/*.json`, `ml/MODEL_CARD_safetyformer.md` |
+| P4 | Triage, duplicates, zero-shot coder bundle | ✅ done; coder not evaluated (VAERS, owner step 14) | `analysis/p4/*.json`, model cards, `analysis/models/MANIFEST.md` |
+| P5 | Demo mode | ✅ done | `services/*/demo`, `frontend/src/pages/` |
+| P6 | Oracle Cloud Always Free hosting | ✅ files and measurements done; the server itself is owner steps 15–18 | `docs/DEMO_HOSTING.md`, `analysis/p6/` |
+| P7 | Live smoke test, `/api/status` | ✅ done (badge turns green once the server exists) | `.github/workflows/live-smoke.yml` |
+| P8 | README, project page, demo script, interview prep | ✅ done | `README.md`, `docs/site/`, `docs/img/` |
+| P9 | Azure from GHCR, resume evidence, report | ✅ done | `analysis/PHASE2_REPORT.md` |
+
+### P1: real FAERS (subset: FAERS 2019Q1–2026Q2)
+
+All numbers from `analysis/p1/data_counts.json` and `analysis/m2/` (written by the pipeline; nothing typed by hand).
+
+- 30 quarterly ASCII zips from fis.fda.gov (2019Q1–2026Q2), each zip's SHA-256 in `data_counts.json`
+  (`bronze_run.json` lists the first 29; 2026Q2 was loaded on its own when FDA published it).
+- 12,902,877 report rows → 12,902,673 unique report keys → 12,837,383 after FDA's deleted-case lists →
+  **10,848,477 unique cases** (latest version of each case). 12,837,383 report versions feed the duplicate model.
+- RxNorm: the 20,000 most frequent drug-name keys (99.2% of 46,107,190 mentions in silver) looked up in RxNav
+  (7,196 exact, 8,221 approximate, 4,583 not found; 45,179 API calls, cached). In the de-duplicated cases
+  40,904,129 of 41,528,250 drug mentions (98.5%) map to an ingredient; primary-suspect drugs 99.96%.
+- Gold: 4,182 ingredients, 22,231 preferred terms, 32,183,623 reaction rows, 1,921,617 distinct primary-suspect
+  drug–event pairs (5,255,053 with any role); 57.1% of cases are serious by FDA's outcome codes.
+- Gold keeps one row per (mention, ingredient), so combination products give several rows (44,605,375 rows);
+  the first counts run labelled that number "drug mentions", which was wrong and was fixed before committing.
+- Demo slice: 5,000 de-duplicated cases from 2026Q2 (seed 20260), structured fields only, no free text;
+  `replay_reports.jsonl` SHA-256 ff09fa855d8174ce6b53ae98b5a2a2bc18270f9b886bccfae315c5b3fc939fe9. It ships in the
+  demo-data archive, not in git.
+- Not done: VAERS 2019–2025. vaers.hhs.gov serves the data files only after a CAPTCHA, which must not be
+  bypassed; owner step 14 asks Sumit to download the zips by hand.
+- Run time on the build container (4 CPUs, 15 GiB): silver 6 min, RxNorm lookups 60 min, gold 6 min, counts 2 min.
+
 ## M0: bootstrap
 
 - Removed the previous application's files in one commit (`M0: start PharmaVigil fresh`).
@@ -414,6 +451,31 @@ from EMA in both the Java job and the schema job):
   only because the repository's Dependency graph is off (owner step 3).
 
 ## Environment re-tests
+
+### Start of Phase 2 (P0)
+
+Network access re-saved by Sumit (owner step 1). Tested from the build container with real downloads, not only
+home pages:
+
+| Host | Result | Used for |
+|---|---|---|
+| fis.fda.gov (FAERS quarterly zips) | ✅ 200, `faers_ascii_2025q4.zip` downloads | P1 |
+| api.fda.gov (openFDA) | ✅ 200 | — |
+| www.fda.gov | ✅ 200 | — |
+| vaers.hhs.gov | ✅ 200 (dataset page) | P1, P4 |
+| rxnav.nlm.nih.gov | ✅ 200 | P1 |
+| dailymed.nlm.nih.gov | ✅ 200 | label dates (P2 time travel) |
+| huggingface.co + us.aws.cdn.hf.co | ✅ 200 (model files resolve to the `hf.co` CDN) | P4 coder |
+| cdn-lfs.huggingface.co | ❌ refused (502 at the proxy); not needed, model files now come from `*.hf.co` | — |
+| download.pytorch.org | ✅ 200 | P3, P4 |
+| quay.io | ✅ 200 (Strimzi tags) | kind |
+| get.helm.sh, GitHub release assets | ✅ 200 | tools |
+| www.accessdata.fda.gov | ❌ 404 "abuse detection" page for automated requests (the server, not the proxy) | SrLC label changes |
+| database.ich.org | ❌ 403/404 | not needed (EMA copy of the E2B schemas is fetched in CI) |
+| www.ema.europa.eu | ❌ refused by the proxy | only CI needs it, and CI reaches it |
+| cloud.oracle.com, sslip.io | ❌ refused by the proxy | not needed from the container (P6 runs on the VM) |
+
+Container resources: 4 CPUs, 15 GiB memory, 26 GB free disk after clearing old Docker images.
 
 ### Start of M12
 

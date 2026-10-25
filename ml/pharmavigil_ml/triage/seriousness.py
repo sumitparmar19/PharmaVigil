@@ -23,6 +23,7 @@ from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_s
 
 from .features import FeatureSpec, build_spec, vectorize
 
+SHAP_ROWS = 50_000
 PARAMS = {
     "objective": "binary",
     "learning_rate": 0.05,
@@ -61,6 +62,19 @@ def load_frames(con: duckdb.DuckDBPyConnection, limit: int | None = None) -> Fra
     return Frames(reports.sort_values(["fda_dt", "primaryid"]).reset_index(drop=True), drugs, pts)
 
 
+def subgroup_metrics(y: np.ndarray, p: np.ndarray, is_us: np.ndarray) -> dict[str, dict[str, object]]:
+    """Test metrics within US and non-US reports. FDA receives foreign reports mostly when they are serious, so
+    the reporter country alone separates much of the label; the within-group numbers show what is left."""
+    out = {}
+    for name, m in (("US", is_us), ("non-US", ~is_us)):
+        yy, pp = y[m], p[m]
+        both = 0 < yy.mean() < 1 if len(yy) else False
+        out[name] = {"reports": int(m.sum()), "serious_rate": float(yy.mean()) if len(yy) else None,
+                     "pr_auc": float(average_precision_score(yy, pp)) if both else None,
+                     "roc_auc": float(roc_auc_score(yy, pp)) if both else None}
+    return out
+
+
 def calibration_table(y: np.ndarray, p: np.ndarray, bins: int = 10) -> list[dict[str, float]]:
     edges = np.linspace(0, 1, bins + 1)
     out = []
@@ -87,7 +101,10 @@ def train_seriousness(frames: Frames, test_from: date, out_dir: Path, rounds: in
 
     booster = lgb.train(PARAMS, lgb.Dataset(x_tr, y_tr, feature_name=_safe_names(spec)), num_boost_round=rounds)
     p = booster.predict(x_te)
-    contrib = booster.predict(x_te, pred_contrib=True)[:, :-1]
+    # Mean |SHAP| on a fixed random subset of the test set: the full contribution matrix (rows x features,
+    # float64) would not fit next to the training data on the build machine, and the ranking is stable well below.
+    shap_idx = np.random.default_rng(0).choice(len(x_te), size=min(SHAP_ROWS, len(x_te)), replace=False)
+    contrib = booster.predict(x_te[np.sort(shap_idx)], pred_contrib=True)[:, :-1]
     importance = np.abs(contrib).mean(axis=0)
     names = spec.columns()
     top = [{"feature": names[i], "mean_abs_shap": float(importance[i])} for i in np.argsort(-importance)[:20]]
@@ -104,7 +121,9 @@ def train_seriousness(frames: Frames, test_from: date, out_dir: Path, rounds: in
         "roc_auc": float(roc_auc_score(y_te, p)) if 0 < y_te.mean() < 1 else None,
         "brier": float(brier_score_loss(y_te, p)),
         "calibration": calibration_table(y_te, p),
+        "by_reporter_country": subgroup_metrics(y_te, p, test_r["reporter_country"].fillna("").to_numpy() == "US"),
         "top_features_mean_abs_shap": top,
+        "shap_rows": int(len(shap_idx)),
         "n_features": len(names),
         "params": {k: v for k, v in PARAMS.items() if k != "verbose"},
         "rounds": rounds,

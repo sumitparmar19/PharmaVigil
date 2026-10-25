@@ -50,13 +50,14 @@ def load_outcome_map(path: Path) -> dict[str, list[str]]:
 def run_variant(con, name: str, roles, inputs: BaselineInputs, outcome_pts) -> dict[str, object]:
     pairs = ct.pt_pair_counts(con, roles=roles, before=inputs.before)
     stats = score_pairs(pairs, prior=None)
-    prior = eb.fit_prior(stats["a"].to_numpy(), stats["expected"].to_numpy())
+    prior, prior_fit = eb.fit_prior_report(stats["a"].to_numpy(), stats["expected"].to_numpy())
     ingredients = ct.ingredient_names(con)
 
     result: dict[str, object] = {
         "observed_pairs": int(len(pairs)),
         "background_reports": int(pairs["n_total"].iloc[0]) if len(pairs) else 0,
         "ebgm_prior": prior.as_dict(),
+        "ebgm_prior_fit": prior_fit,
         "reference_sets": {},
     }
     if inputs.signals_dir is not None and len(stats):

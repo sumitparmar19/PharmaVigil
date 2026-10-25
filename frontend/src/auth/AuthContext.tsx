@@ -9,6 +9,8 @@ const STORAGE_KEY = "pv.session";
 interface AuthState {
   session: Session | null;
   api: ApiClient;
+  /** The same client without the token, for the public landing and evidence pages. */
+  publicApi: ApiClient;
   signIn: (username: string, password: string) => Promise<Session>;
   signOut: () => void;
   hasRole: (...roles: string[]) => boolean;
@@ -28,6 +30,7 @@ function stored(): Session | null {
 export function AuthProvider({ children, fetchImpl }: { children: ReactNode; fetchImpl?: typeof fetch }) {
   const [session, setSession] = useState<Session | null>(stored);
   const api = useMemo(() => new ApiClient(() => session?.token ?? null, fetchImpl), [session, fetchImpl]);
+  const publicApi = useMemo(() => new ApiClient(() => null, fetchImpl), [fetchImpl]);
 
   const signIn = useCallback(async (username: string, password: string) => {
     const s = await new ApiClient(() => null, fetchImpl).login(username, password);
@@ -44,7 +47,8 @@ export function AuthProvider({ children, fetchImpl }: { children: ReactNode; fet
   const hasRole = useCallback((...roles: string[]) => !!session && roles.some((r) => session.roles.includes(r)),
     [session]);
 
-  const value = useMemo(() => ({ session, api, signIn, signOut, hasRole }), [session, api, signIn, signOut, hasRole]);
+  const value = useMemo(() => ({ session, api, publicApi, signIn, signOut, hasRole }),
+    [session, api, publicApi, signIn, signOut, hasRole]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

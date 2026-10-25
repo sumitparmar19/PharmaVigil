@@ -1,0 +1,214 @@
+{
+  "generatedAt": "2026-10-25",
+  "repository": "https://github.com/sumitparmar19/PharmaVigil",
+  "sections": [
+    {
+      "title": "Real FAERS data (bronze → silver → gold)",
+      "items": [
+        {
+          "label": "Quarters loaded",
+          "value": "30 (2019Q1–2026Q2)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p1/data_counts.json",
+          "status": "measured"
+        },
+        {
+          "label": "FAERS report rows",
+          "value": "12,902,877",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p1/data_counts.json",
+          "status": "measured"
+        },
+        {
+          "label": "Unique cases after de-duplication",
+          "value": "10,848,477",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p1/data_counts.json",
+          "status": "measured",
+          "note": "FDA's rule: latest version of each case, deleted cases removed"
+        },
+        {
+          "label": "Drug mentions mapped to an RxNorm ingredient",
+          "value": "40,904,129 of NaN (NaN%)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p1/data_counts.json",
+          "status": "measured"
+        },
+        {
+          "label": "Distinct ingredients / preferred terms",
+          "value": "4,182 / 22,231",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p1/data_counts.json",
+          "status": "measured"
+        },
+        {
+          "label": "Drug–event pairs (primary suspect)",
+          "value": "1,921,617",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p1/data_counts.json",
+          "status": "measured"
+        }
+      ]
+    },
+    {
+      "title": "Signal detection: OMOP reference set (primary-suspect drugs)",
+      "items": [
+        {
+          "label": "Scorable pairs (positives / negatives)",
+          "value": "388 of 399 (161 / 227)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p2/baselines.json",
+          "status": "measured"
+        },
+        {
+          "label": "PRR AUC",
+          "value": "0.759 (95% CI 0.707–0.807)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p2/baselines.json",
+          "status": "measured"
+        },
+        {
+          "label": "ROR AUC",
+          "value": "0.759 (95% CI 0.707–0.807)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p2/baselines.json",
+          "status": "measured"
+        },
+        {
+          "label": "IC AUC",
+          "value": "0.821 (95% CI 0.779–0.860)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p2/baselines.json",
+          "status": "measured"
+        },
+        {
+          "label": "EBGM AUC",
+          "value": "0.765 (95% CI 0.712–0.815)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p2/baselines.json",
+          "status": "measured"
+        }
+      ]
+    },
+    {
+      "title": "Signal detection: EU-ADR reference set (primary-suspect drugs)",
+      "items": [
+        {
+          "label": "Scorable pairs (positives / negatives)",
+          "value": "92 of 93 (42 / 50)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p2/baselines.json",
+          "status": "measured"
+        },
+        {
+          "label": "PRR AUC",
+          "value": "0.916 (95% CI 0.849–0.969)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p2/baselines.json",
+          "status": "measured"
+        },
+        {
+          "label": "ROR AUC",
+          "value": "0.916 (95% CI 0.851–0.969)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p2/baselines.json",
+          "status": "measured"
+        },
+        {
+          "label": "IC AUC",
+          "value": "0.919 (95% CI 0.852–0.970)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p2/baselines.json",
+          "status": "measured"
+        },
+        {
+          "label": "EBGM AUC",
+          "value": "0.910 (95% CI 0.829–0.971)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p2/baselines.json",
+          "status": "measured"
+        }
+      ]
+    },
+    {
+      "title": "SafetyFormer (learned signal scores) on the same pairs",
+      "items": [
+        {
+          "label": "OMOP: SafetyFormer AUC",
+          "value": "0.765 (95% CI 0.719–0.811)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p3/safetyformer.json",
+          "status": "measured"
+        },
+        {
+          "label": "OMOP: best baseline AUC on the same pairs",
+          "value": "IC 0.821 (95% CI 0.779–0.860)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p3/safetyformer.json",
+          "status": "measured"
+        },
+        {
+          "label": "EU-ADR: SafetyFormer AUC",
+          "value": "0.813 (95% CI 0.721–0.897)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p3/safetyformer.json",
+          "status": "measured"
+        },
+        {
+          "label": "EU-ADR: best baseline AUC on the same pairs",
+          "value": "IC 0.919 (95% CI 0.852–0.970)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p3/safetyformer.json",
+          "status": "measured"
+        }
+      ]
+    },
+    {
+      "title": "Case models (suggestions a reviewer confirms)",
+      "items": [
+        {
+          "label": "Seriousness triage ROC-AUC / PR-AUC (time-split test)",
+          "value": "0.960 / 0.969 (serious rate 55.0%)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p4/triage.json",
+          "status": "measured"
+        },
+        {
+          "label": "Duplicate detection PR-AUC; precision / recall at best F1",
+          "value": "0.998; 0.984 / 0.979",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
+          "file": "analysis/p4/duplicates.json",
+          "status": "measured",
+          "note": "proxy label: consecutive versions of one FAERS case"
+        },
+        {
+          "label": "MedDRA coder",
+          "value": "not measured yet",
+          "scope": "",
+          "file": "analysis/p4/coder.json",
+          "status": "pending",
+          "note": "zero-shot retrieval (no training labels); the 3000 most reported FAERS preferred terms in the scope. Accuracy needs narratives with human-assigned terms."
+        }
+      ]
+    },
+    {
+      "title": "Live demo memory (docker stats)",
+      "items": [
+        {
+          "label": "Idle / peak during a replay (amd64_real_data)",
+          "value": "5,749 MiB / 6,055 MiB",
+          "scope": "build container (x86_64, 4 vCPU, 15 GiB), real demo data v1 (trained FAERS models, 810,403 signal pairs), 200 replayed FAERS reports; permissive stand-in schema (the official one cannot be downloaded here); Artemis disk-usage limit lifted for this container's nearly full disk",
+          "file": "analysis/p6/memory_amd64_real_data.json",
+          "status": "measured"
+        },
+        {
+          "label": "Idle / peak during a replay (arm64_ci_fixture)",
+          "value": "5,428 MiB / 5,560 MiB",
+          "scope": "GitHub ubuntu-24.04-arm runner (native arm64), fixture models and 40 invented records",
+          "file": "analysis/p6/memory_arm64_ci_fixture.json",
+          "status": "measured"
+        }
+      ]
+    }
+  ]
+}

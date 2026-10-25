@@ -1,0 +1,68 @@
+{
+  "scope": "GitHub ubuntu-24.04-arm runner (native arm64), fixture models and 40 invented records",
+  "source": "Demo stack on arm64 workflow, run 40080257508 (commit 83a65af), ops/demo/measure.sh output copied from the job log",
+  "machine": {
+    "arch": "aarch64",
+    "cpus": 4
+  },
+  "reports_replayed": 40,
+  "seconds_until_all_answered": 11,
+  "intake": {
+    "runId": "qj3vbu4dsk",
+    "account": "demo-reviewer",
+    "startedAt": "2026-10-24T09:05:01.476419953Z",
+    "finishedAt": "2026-10-24T09:05:06.113455095Z",
+    "size": 40,
+    "sent": 40,
+    "accepted": 40,
+    "rejected": 0,
+    "viaSoap": 30,
+    "viaRest": 10,
+    "errors": []
+  },
+  "stages": {
+    "runId": "qj3vbu4dsk",
+    "received": 40,
+    "deduplicated": 40,
+    "codedByModel": 7,
+    "manualCoding": 33,
+    "triaged": 40,
+    "serious": 28,
+    "approved": 40,
+    "submitted": 40,
+    "acknowledged": 40,
+    "rejected": 0,
+    "possibleDuplicates": 35
+  },
+  "idle_mib": {
+    "artemis": 222.6,
+    "caddy": 25.7,
+    "case-service": 468.7,
+    "frontend": 5.9,
+    "grafana": 319.9,
+    "intake-gateway": 349.5,
+    "kafka": 361.8,
+    "oracle": 2688.0,
+    "pharmacy-service": 333.3,
+    "prometheus": 54.9,
+    "signal-service": 236.1,
+    "submission-gateway": 362.0
+  },
+  "peak_mib": {
+    "artemis": 219.9,
+    "caddy": 25.9,
+    "case-service": 526.6,
+    "frontend": 5.9,
+    "grafana": 319.9,
+    "intake-gateway": 388.4,
+    "kafka": 365.0,
+    "oracle": 2701.3,
+    "pharmacy-service": 336.8,
+    "prometheus": 54.9,
+    "signal-service": 236.4,
+    "submission-gateway": 378.9
+  },
+  "idle_total_mib": 5428.4,
+  "peak_total_mib": 5559.9,
+  "note": "docker stats memory usage (cgroup, page cache excluded); peak_total sums each container's own peak"
+}

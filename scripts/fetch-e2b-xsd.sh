@@ -39,6 +39,8 @@ while ((${#queue[@]})); do
   done < <(grep -oE '<xs:(include|import)[^>]*schemaLocation="[^"]+"' "$OUT/$rel" \
              | sed -E 's/.*schemaLocation="([^"]+)".*/\1/' || true)
 done
+# mktemp -d is mode 0700; the services run as a non-root user and must be able to read the (public) schemas.
+chmod -R a+rX "$OUT"
 rm -rf "$TARGET"
 mkdir -p "$(dirname "$TARGET")"
 mv "$OUT" "$TARGET"

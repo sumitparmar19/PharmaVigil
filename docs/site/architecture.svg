@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PharmaVigil architecture, generated from frontend/src/components/ArchitectureDiagram.tsx (same boxes and arrows). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 790 240" width="790" height="240" font-family="system-ui, sans-serif">
+<rect width="790" height="240" fill="#ffffff"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/></marker></defs>
+<line x1="160" y1="47" x2="210" y2="85" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="160" y1="137" x2="210" y2="100" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="360" y1="92" x2="410" y2="92" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="580" y1="92" x2="630" y2="92" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="705" y1="119" x2="705" y2="170" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="630" y1="197" x2="580" y2="197" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+<line x1="210" y1="197" x2="85" y2="75" stroke="#475569" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="10" y="20" width="150" height="54" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2"/>
+<text x="85" y="43" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">Pharmacy app</text>
+<text x="85" y="61" text-anchor="middle" font-size="10.5" fill="#475569">dispense · one-click report</text>
+<rect x="10" y="110" width="150" height="54" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2"/>
+<text x="85" y="133" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">Partners (SOAP)</text>
+<text x="85" y="151" text-anchor="middle" font-size="10.5" fill="#475569">E2B(R3) + WS-Security</text>
+<rect x="210" y="65" width="150" height="54" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2"/>
+<text x="285" y="88" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">intake-gateway</text>
+<text x="285" y="106" text-anchor="middle" font-size="10.5" fill="#475569">REST · SOAP · XSD check</text>
+<rect x="410" y="65" width="170" height="54" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2"/>
+<text x="495" y="88" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">Kafka (outbox)</text>
+<text x="495" y="106" text-anchor="middle" font-size="10.5" fill="#475569">dedup → coder → triage</text>
+<rect x="630" y="65" width="150" height="54" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2"/>
+<text x="705" y="88" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">case-service</text>
+<text x="705" y="106" text-anchor="middle" font-size="10.5" fill="#475569">ONNX models · review</text>
+<rect x="630" y="170" width="150" height="54" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2"/>
+<text x="705" y="193" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">submission-gateway</text>
+<text x="705" y="211" text-anchor="middle" font-size="10.5" fill="#475569">E2B(R3) over JMS</text>
+<rect x="410" y="170" width="170" height="54" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2"/>
+<text x="495" y="193" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">Mock regulator</text>
+<text x="495" y="211" text-anchor="middle" font-size="10.5" fill="#475569">schema check · ACK/NACK</text>
+<rect x="210" y="170" width="150" height="54" rx="8" fill="#ffffff" stroke="#334155" stroke-width="1.2"/>
+<text x="285" y="193" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">signal-service</text>
+<text x="285" y="211" text-anchor="middle" font-size="10.5" fill="#475569">PRR ROR IC EBGM · SafetyFormer</text>
+<text x="150" y="232" font-size="10.5" fill="#475569">signals from public FAERS data back to the counter (evidence, not a verdict)</text>
+</svg>

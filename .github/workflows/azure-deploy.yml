@@ -1,6 +1,7 @@
 # Manual deploy to Azure (M11, docs/AZURE.md). Runs in the protected "azure" environment, so the owner approves
 # every run. "infrastructure" applies infra/azure as the "apply" app registration (GitHub OIDC, no secrets);
-# "application" pushes the images to ACR and installs the chart on AKS as the deploy identity Terraform created.
+# "application" copies the GHCR images (the ones the live demo runs) into ACR and installs the chart on AKS as the
+# deploy identity Terraform created.
 name: Azure deploy
 
 on:
