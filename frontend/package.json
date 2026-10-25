@@ -12,7 +12,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "e2e:live": "playwright test -c playwright.live.config.ts",
-    "evidence": "node scripts/build-evidence.mjs"
+    "evidence": "node scripts/build-evidence.mjs",
+    "capture": "node scripts/capture-demo.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "5.104.5",
