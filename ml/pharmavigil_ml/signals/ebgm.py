@@ -18,8 +18,11 @@ from dataclasses import asdict, dataclass
 import numpy as np
 from scipy import optimize, special, stats
 
-# openEBGM's default starting point.
+# openEBGM's default starting point, plus further starts: on real FAERS the likelihood is flat enough that
+# L-BFGS-B from one start ends in different local optima depending on the order of the pairs.
 DEFAULT_START = (0.2, 0.1, 2.0, 4.0, 1 / 3)
+STARTS = (DEFAULT_START, (0.5, 0.5, 2.0, 1.0, 0.5), (1.0, 2.0, 3.0, 1.0, 0.8), (0.05, 0.05, 1.0, 1.0, 0.9),
+          (2.0, 4.0, 0.2, 0.1, 0.2))
 
 
 @dataclass(frozen=True)
@@ -60,23 +63,48 @@ def negative_log_likelihood(theta: np.ndarray, n: np.ndarray, e: np.ndarray, zer
     return float(-np.sum(log_marg))
 
 
-def fit_prior(n, e, start=DEFAULT_START, zero_truncated: bool = True, max_pairs: int | None = 2_000_000,
-              seed: int = 0) -> Prior:
+def fit_prior(n, e, start=None, zero_truncated: bool = True, max_pairs: int | None = 2_000_000,
+              seed: int = 0, screen_pairs: int = 200_000) -> Prior:
     """Fit the gamma-mixture prior. Very large inputs are subsampled (documented in ADR-005)."""
+    return fit_prior_report(n, e, start, zero_truncated, max_pairs, seed, screen_pairs)[0]
+
+
+def fit_prior_report(n, e, start=None, zero_truncated: bool = True, max_pairs: int | None = 2_000_000,
+                     seed: int = 0, screen_pairs: int = 200_000) -> tuple[Prior, dict[str, object]]:
+    """Fit the prior and say how: the pairs are sorted first (so the result does not depend on the order a
+    query returned them in), every start in STARTS (or the one given) is fitted on a fixed random sample of
+    `screen_pairs` pairs, and the start with the lowest negative log-likelihood is refined on all pairs."""
     n = np.asarray(n, dtype=float)
     e = np.asarray(e, dtype=float)
     keep = (n >= 1) if zero_truncated else np.ones_like(n, dtype=bool)
     n, e = n[keep], e[keep]
+    order = np.lexsort((e, n))
+    n, e = n[order], e[order]
+    rng = np.random.default_rng(seed)
     if max_pairs is not None and len(n) > max_pairs:
-        idx = np.random.default_rng(seed).choice(len(n), size=max_pairs, replace=False)
+        idx = np.sort(rng.choice(len(n), size=max_pairs, replace=False))
         n, e = n[idx], e[idx]
     bounds = [(1e-5, 50), (1e-5, 50), (1e-5, 50), (1e-5, 50), (1e-4, 1 - 1e-4)]
-    result = optimize.minimize(
-        negative_log_likelihood, np.asarray(start), args=(n, e, zero_truncated),
-        method="L-BFGS-B", bounds=bounds,
-    )
-    a1, b1, a2, b2, p = result.x
-    return Prior(float(a1), float(b1), float(a2), float(b2), float(p))
+
+    def fit(x0, nn, ee):
+        r = optimize.minimize(negative_log_likelihood, np.asarray(x0, float), args=(nn, ee, zero_truncated),
+                              method="L-BFGS-B", bounds=bounds)
+        return r.x, float(r.fun)
+
+    starts = STARTS if start is None else (tuple(start),)
+    if len(starts) > 1 and len(n) > screen_pairs:
+        sidx = np.sort(rng.choice(len(n), size=screen_pairs, replace=False))
+        sn, se = n[sidx], e[sidx]
+    else:
+        sn, se = n, e
+    screened = [(tuple(x0), *fit(x0, sn, se)) for x0 in starts]
+    best_start, best_x, _ = min(screened, key=lambda t: t[2])
+    x, nll = fit(best_x, n, e) if len(starts) > 1 and len(n) > screen_pairs else (best_x, screened[0][2])
+    a1, b1, a2, b2, p = x
+    report = {"pairs": int(len(n)), "screen_pairs": int(min(screen_pairs, len(n))),
+              "starts": [{"start": list(s0), "nll_on_screen": round(v, 3)} for s0, _, v in screened],
+              "chosen_start": list(best_start), "nll": round(nll, 3)}
+    return Prior(float(a1), float(b1), float(a2), float(b2), float(p)), report
 
 
 def posterior_weight(n, e, prior: Prior) -> np.ndarray:

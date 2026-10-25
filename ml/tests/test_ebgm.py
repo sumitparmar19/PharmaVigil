@@ -46,3 +46,22 @@ def test_quantile_matches_single_component_gamma() -> None:
     prior = eb.Prior(2.0, 1.0, 2.0, 1.0, 0.5)  # identical components → plain gamma posterior
     q = eb.posterior_quantile(np.array([4.0]), np.array([2.0]), prior, 0.05)
     assert q[0] == pytest.approx(stats.gamma.ppf(0.05, 6.0, scale=1 / 3.0), rel=1e-6)
+
+
+def test_fit_does_not_depend_on_pair_order() -> None:
+    """The same pairs in another order give the same prior (pairs are sorted before fitting)."""
+    n, e, _ = _simulate(n_pairs=6000, seed=5)
+    perm = np.random.default_rng(9).permutation(len(n))
+    a = eb.fit_prior(n, e, screen_pairs=2000)
+    b = eb.fit_prior(n[perm], e[perm], screen_pairs=2000)
+    assert a == b
+
+
+def test_fit_report_keeps_the_best_start() -> None:
+    n, e, _ = _simulate(n_pairs=6000, seed=6)
+    prior, report = eb.fit_prior_report(n, e, screen_pairs=2000)
+    nlls = [s["nll_on_screen"] for s in report["starts"]]
+    assert len(nlls) == len(eb.STARTS)
+    chosen = next(s["nll_on_screen"] for s in report["starts"] if s["start"] == report["chosen_start"])
+    assert chosen == pytest.approx(min(nlls), abs=1e-3)
+    assert np.isfinite(report["nll"]) and 0 < prior.p < 1
