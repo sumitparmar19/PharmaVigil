@@ -11,6 +11,15 @@ it is up. The landing page shows the two shared demo accounts (`demo-pharmacist`
 password; there is nothing to sign up for. "Run the pipeline" sends 200 real FAERS reports through the whole system
 and shows each stage's counter as it moves.
 
+![A 200-report replay moving through the pipeline](docs/img/demo.gif)
+
+| Landing page | Run the pipeline | One case, end to end | Signals |
+|---|---|---|---|
+| [![Landing page](docs/img/landing.png)](docs/img/landing.png) | [![Pipeline counters](docs/img/pipeline.png)](docs/img/pipeline.png) | [![Acknowledged case with its E2B(R3) file](docs/img/case.png)](docs/img/case.png) | [![Signals ranked by method](docs/img/signals.png)](docs/img/signals.png) |
+
+Screenshots from the demo stack with the real demo data, recorded by `frontend/scripts/capture-demo.mjs` (the
+demo password is hidden in the images; the live page shows it).
+
 **Headline numbers** (each from a committed result file, with its data scope):
 
 | | Result | Scope and file |
