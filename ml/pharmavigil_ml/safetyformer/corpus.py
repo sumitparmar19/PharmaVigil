@@ -134,7 +134,7 @@ def _days(d: date | None) -> int | None:
 
 
 def load_corpus(con: duckdb.DuckDBPyConnection, before: date | None = None, min_count: int = 5,
-                vocab: Vocab | None = None) -> Corpus:
+                vocab: Vocab | None = None, keep_tables: bool = False) -> Corpus:
     """Build the corpus (and, unless given, the vocabulary) from gold views `src_report*`.
 
     Only reports with at least one mapped drug and at least one PT are kept, and only those received
@@ -175,7 +175,12 @@ def load_corpus(con: duckdb.DuckDBPyConnection, before: date | None = None, min_
         FROM sf_reports r JOIN d USING (primaryid) JOIN p USING (primaryid)
         ORDER BY r.fda_dt, r.primaryid
     """).to_arrow_table()
-    return _corpus_from_arrow(vocab, table)
+    corpus = _corpus_from_arrow(vocab, table)
+    del table
+    if not keep_tables:  # the temp tables hold the whole corpus a second time
+        for name in ("sf_reports", "sf_drugs", "sf_pts"):
+            con.execute(f"DROP TABLE IF EXISTS {name}")
+    return corpus
 
 
 def _corpus_from_arrow(vocab: Vocab, table) -> Corpus:

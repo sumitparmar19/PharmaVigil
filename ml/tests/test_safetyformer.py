@@ -171,7 +171,7 @@ def test_arrow_loader_matches_row_loader(gold, corpus) -> None:
     from pharmavigil_ml.safetyformer.corpus import _to_corpus
 
     con = ct.connect(gold)
-    load_corpus(con, min_count=3, vocab=corpus.vocab)  # recreates the temp tables and vocab views
+    load_corpus(con, min_count=3, vocab=corpus.vocab, keep_tables=True)  # keeps the temp tables for the query
     rows = con.execute("""
         WITH d AS (SELECT primaryid, list(v.tok ORDER BY v.tok) AS dt, list(role ORDER BY v.tok) AS dr
                    FROM sf_drugs JOIN sf_drug_vocab v USING (rxcui) GROUP BY primaryid),
