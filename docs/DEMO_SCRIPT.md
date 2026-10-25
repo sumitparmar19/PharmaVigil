@@ -46,7 +46,8 @@ disproportionality statistics and my own Transformer model side by side, and a b
 positive or negative in a published reference set. Spontaneous reports do not prove that a drug caused a
 reaction, so it is evidence, never a verdict."
 *Open **Evidence**.* "Every number in the project is here, with the data it was measured on and a link to the
-file that produced it. Thanks for watching; the code is on GitHub."
+file that produced it, including the ones that did not go my way: on these reference sets the classic IC
+statistic beat my Transformer. Thanks for watching; the code is on GitHub."
 
 ## 60-second version (interviews)
 
