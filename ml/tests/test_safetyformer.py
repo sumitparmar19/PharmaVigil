@@ -198,3 +198,19 @@ def test_subset_matches_per_row_selection(corpus) -> None:
         assert np.array_equal(d_ids, s_ids) and np.array_equal(d_roles, s_roles)
         assert np.array_equal(corpus.pts(int(idx[k])), sub.pts(k))
     assert len(corpus.subset(np.zeros(len(corpus), dtype=bool))) == 0
+
+
+def test_pt_scores_for_given_pairs_match_the_full_table(trained, corpus) -> None:
+    """Scoring only the observed pairs gives the same numbers as the full drug × PT table."""
+    import pandas as pd
+
+    res, _ = trained
+    table, bg = log_prob_table(res["model_obj"], corpus.vocab)
+    full = pt_scores(table, bg, corpus.vocab)
+    pairs = full.sample(50, random_state=2)[["rxcui", "pt"]].reset_index(drop=True)
+    pairs = pd.concat([pairs, pd.DataFrame({"rxcui": ["no-such-drug"], "pt": ["nausea"]})], ignore_index=True)
+    got = pt_scores(table, bg, corpus.vocab, pairs=pairs)
+    want = full.set_index(["rxcui", "pt"])["safetyformer"]
+    for r in got.iloc[:50].itertuples():
+        assert r.safetyformer == pytest.approx(want[(r.rxcui, r.pt)], abs=1e-6)
+    assert np.isnan(got["safetyformer"].iloc[-1])

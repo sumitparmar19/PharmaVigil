@@ -36,8 +36,19 @@ def log_prob_table(model: SafetyFormer, vocab: Vocab, batch: int = 1024) -> tupl
     return table, background
 
 
-def pt_scores(table: np.ndarray, background: np.ndarray, vocab: Vocab) -> pd.DataFrame:
-    """Long table of (rxcui, pt, safetyformer) for every vocabulary drug and PT."""
+def pt_scores(table: np.ndarray, background: np.ndarray, vocab: Vocab,
+              pairs: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Long table of (rxcui, pt, safetyformer) for every vocabulary drug and PT, or, with `pairs`
+    (columns rxcui, pt, ...), the score of just those pairs (NaN where the drug or PT is not in the
+    vocabulary): on real FAERS the full table has tens of millions of rows, the observed pairs far fewer."""
+    if pairs is not None:
+        rows = pairs["rxcui"].map({r: i for i, r in enumerate(vocab.drug_rxcuis())})
+        cols = pairs["pt"].map({p: i for i, p in enumerate(vocab.pt_names())})
+        ok = rows.notna() & cols.notna()
+        score = np.full(len(pairs), np.nan)
+        r, c = rows[ok].to_numpy(np.int64), cols[ok].to_numpy(np.int64)
+        score[ok.to_numpy()] = table[r, c] - background[c]
+        return pairs.assign(safetyformer=score)
     pmi = table - background[None, :]
     rx = np.repeat(np.array(vocab.drug_rxcuis(), dtype=object), vocab.n_pt)
     pt = np.tile(np.array(vocab.pt_names(), dtype=object), len(vocab.drug_tokens))

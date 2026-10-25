@@ -4,6 +4,7 @@ analysis/m4/ (every file carries its data-scope label)."""
 
 from __future__ import annotations
 
+import gc
 import json
 from dataclasses import dataclass
 from datetime import date
@@ -56,14 +57,18 @@ def train_and_evaluate(inp: M4Inputs) -> dict[str, object]:
     train_c, val_c = _time_split(corpus)
     res = train(train_c, inp.train, val=val_c, out_dir=inp.models_dir, tracking_uri=inp.tracking_uri)
     model = res.pop("model_obj")
-    table, background = log_prob_table(model, corpus.vocab)
+    # The scoring below needs only the vocabulary; the corpus (the full report table) is released first.
+    vocab, n_train, n_val = corpus.vocab, len(train_c), len(val_c)
+    del corpus, train_c, val_c
+    gc.collect()
+    table, background = log_prob_table(model, vocab)
     outcome_pts = load_outcome_map(inp.outcome_map)
 
     # Baselines on exactly the same window and reference pairs.
     pairs = ct.pt_pair_counts(con, roles=ct.PRIMARY_SUSPECT, before=inp.before)
     stats = score_pairs(pairs, prior=None)
     prior = eb.fit_prior(stats["a"].to_numpy(), stats["expected"].to_numpy())
-    sf_outcomes = outcome_scores(table, background, corpus.vocab, outcome_pts)
+    sf_outcomes = outcome_scores(table, background, vocab, outcome_pts)
     ingredients = ct.ingredient_names(con)
     sets = {}
     for set_name in ("omop", "euadr"):
@@ -80,17 +85,16 @@ def train_and_evaluate(inp: M4Inputs) -> dict[str, object]:
         all_pairs.to_csv(inp.out_dir / f"scores_{set_name}.csv", index=False)
 
     if len(stats):
-        pt_table = pt_scores(table, background, corpus.vocab)
-        observed = stats[stats["a"] >= 3][["rxcui", "pt", "a"]]
-        pt_table.merge(observed, on=["rxcui", "pt"], how="inner").to_parquet(
+        observed = stats.loc[stats["a"] >= 3, ["rxcui", "pt", "a"]].reset_index(drop=True)
+        pt_scores(table, background, vocab, pairs=observed).dropna(subset=["safetyformer"]).to_parquet(
             inp.models_dir / "safetyformer_pt_scores.parquet", index=False)
 
     report = {
         "scope": inp.scope,
         "before": inp.before.isoformat() if inp.before else None,
-        "train_reports": len(train_c),
-        "validation_reports": len(val_c),
-        "vocabulary": {"drugs": len(corpus.vocab.drug_tokens), "pts": corpus.vocab.n_pt},
+        "train_reports": n_train,
+        "validation_reports": n_val,
+        "vocabulary": {"drugs": len(vocab.drug_tokens), "pts": vocab.n_pt},
         "training": {k: v for k, v in res.items() if k not in ("config",)},
         "train_config": res["config"],
         "reference_sets": sets,
