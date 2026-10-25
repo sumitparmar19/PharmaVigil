@@ -186,6 +186,7 @@ MedDRA dictionary file is in the repository; only PT strings that appear in publ
 | SafetyFormer (d = 128, 2 layers, 10,000 steps on CPU) | OMOP 0.765 (0.719–0.811), EU-ADR 0.813 (0.721–0.897): **does not beat the classic methods** on the same pairs | `analysis/p3/safetyformer.json`, [card](ml/MODEL_CARD_safetyformer.md) |
 | Seriousness triage (LightGBM, 1,000,000 cases, test from 2025-01-01) | ROC AUC 0.960, PR-AUC 0.969; within US reports 0.924 / 0.883, within non-US 0.923 | `analysis/p4/triage.json` |
 | Duplicates (LightGBM, proxy label: versions of one case) | PR-AUC 0.998; precision 0.984, recall 0.979 at the best-F1 threshold. Measures follow-up matching, an easy task, not general duplicate detection | `analysis/p4/duplicates.json` |
+| SafetyFormer leakage check | a shuffled train/test split overstates masked-reaction recall@10 by 0.061 (0.498 vs 0.437 time-ordered), so all splits here are by date | `analysis/p3/leakage.json` |
 | MedDRA coder (zero-shot) | not evaluated: needs narratives with human-assigned PTs (VAERS, owner step 14) | `analysis/p4/coder.json` |
 | Time-travel test | not computed: the reference sets carry no dates and FDA's label-change database (SrLC) refuses automated downloads | `analysis/p2/README.md` |
 

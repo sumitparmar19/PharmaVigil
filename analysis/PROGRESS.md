@@ -29,6 +29,7 @@ the repo.
 | P0 | Network re-test, housekeeping | ✅ done | "Start of Phase 2 (P0)" below |
 | P1 | Real FAERS through bronze → silver → gold, demo slice | ✅ done (VAERS waits on owner step 14) | `analysis/p1/data_counts.json`, `analysis/m2/*.json` |
 | P2 | PRR/ROR/IC/EBGM on OMOP and EU-ADR with bootstrap CIs | ✅ done; time-travel test not computable (SrLC blocks automated downloads) | `analysis/p2/README.md`, `analysis/p2/baselines.json` |
+| P3 | SafetyFormer (CPU-sized) on real FAERS, leakage check, ONNX | ✅ done; does not beat the classic methods; shuffled split overstates recall@10 by 0.061 | `analysis/p3/*.json`, `ml/MODEL_CARD_safetyformer.md` |
 | P4 | Triage, duplicates, zero-shot coder bundle | ✅ done; coder not evaluated (VAERS, owner step 14) | `analysis/p4/*.json`, model cards, `analysis/models/MANIFEST.md` |
 
 ### P1: real FAERS (subset: FAERS 2019Q1–2026Q2)

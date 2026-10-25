@@ -135,31 +135,31 @@
       "items": [
         {
           "label": "OMOP: SafetyFormer AUC",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.765 (95% CI 0.719–0.811)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p3/safetyformer.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "OMOP: best baseline AUC on the same pairs",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "IC 0.821 (95% CI 0.779–0.860)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p3/safetyformer.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "EU-ADR: SafetyFormer AUC",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.813 (95% CI 0.721–0.897)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p3/safetyformer.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "EU-ADR: best baseline AUC on the same pairs",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "IC 0.919 (95% CI 0.852–0.970)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p3/safetyformer.json",
-          "status": "pending"
+          "status": "measured"
         }
       ]
     },

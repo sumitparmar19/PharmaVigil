@@ -1,0 +1,17 @@
+{
+  "scope": "subset: FAERS 2019Q1\u20132026Q2",
+  "test_start": "2025-01-01",
+  "n_test": 2180698,
+  "n_train": 8664869,
+  "time_ordered": {
+    "reports": 5000,
+    "recall_at_10": 0.437,
+    "nll": 5.740964697265625
+  },
+  "shuffled": {
+    "reports": 5000,
+    "recall_at_10": 0.4984,
+    "nll": 5.272663671875
+  },
+  "recall_at_10_optimism": 0.06140000000000001
+}

@@ -47,7 +47,17 @@ A full-size run on a GPU (owner steps 4–5) is the next test; it may or may not
 
 ## Leakage check
 
-**Pending**: the time-ordered vs shuffled comparison (two more trainings of 5,000 steps, test from 2025-01-01) is running; its result goes into `analysis/p3/leakage.json` and this section.
+Does a random train/test split flatter the model? Two more models of the same size were trained for 5,000 steps
+each on 8,664,869 reports and tested on 2,180,698 (`analysis/p3/leakage.json`, masked-reaction prediction on 5,000 test
+reports each):
+
+| Split | Test reports | recall@10 | NLL |
+|---|---|---|---|
+| Time-ordered: train before 2025-01-01, test on and after | 2025-01-01 onward | 0.437 | 5.74 |
+| Shuffled: a random test set of the same size from all years | all years | 0.498 | 5.27 |
+
+The shuffled split overstates recall@10 by **0.061** (about 14% relative): reports from the same period share
+drugs, reactions and reporting waves. Every result in this project therefore uses time-ordered splits.
 
 ## Export
 
