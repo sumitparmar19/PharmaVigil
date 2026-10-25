@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24",
+  "generatedAt": "2026-10-25",
   "repository": "https://github.com/sumitparmar19/PharmaVigil",
   "sections": [
     {
@@ -55,38 +55,38 @@
       "items": [
         {
           "label": "Scorable pairs (positives / negatives)",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "388 of 399 (161 / 227)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p2/baselines.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "PRR AUC",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.759 (95% CI 0.707–0.807)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p2/baselines.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "ROR AUC",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.759 (95% CI 0.707–0.807)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p2/baselines.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "IC AUC",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.821 (95% CI 0.779–0.860)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p2/baselines.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "EBGM AUC",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.765 (95% CI 0.712–0.815)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p2/baselines.json",
-          "status": "pending"
+          "status": "measured"
         }
       ]
     },
@@ -95,38 +95,38 @@
       "items": [
         {
           "label": "Scorable pairs (positives / negatives)",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "92 of 93 (42 / 50)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p2/baselines.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "PRR AUC",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.916 (95% CI 0.849–0.969)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p2/baselines.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "ROR AUC",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.916 (95% CI 0.851–0.969)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p2/baselines.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "IC AUC",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.919 (95% CI 0.852–0.970)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p2/baselines.json",
-          "status": "pending"
+          "status": "measured"
         },
         {
           "label": "EBGM AUC",
-          "value": "not measured yet",
-          "scope": "",
+          "value": "0.910 (95% CI 0.829–0.971)",
+          "scope": "subset: FAERS 2019Q1–2026Q2",
           "file": "analysis/p2/baselines.json",
-          "status": "pending"
+          "status": "measured"
         }
       ]
     },

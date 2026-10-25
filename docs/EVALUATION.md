@@ -42,7 +42,7 @@ separately).
 
 | Scope | Status |
 |---|---|
-| subset: FAERS 2019Q1 to the latest quarter | **pending full data**: the FAERS download host is blocked in the build container (`analysis/PROGRESS.md`) |
+| subset: FAERS 2019Q1–2026Q2 | ✅ measured: primary-suspect drugs, OMOP 388 scorable pairs, IC AUC 0.821 (0.779–0.860), PRR 0.759, ROR 0.759, EBGM 0.765; EU-ADR 92 pairs, all methods about 0.91–0.93. Every method and the any-role variant: `analysis/p2/README.md`, `analysis/p2/baselines.json` |
 | full: FAERS 2004Q1 to the latest quarter | **pending owner step** (Databricks run, then `pv-ml baselines`) |
 
 The harness itself is tested end to end on synthetic reports with planted associations
