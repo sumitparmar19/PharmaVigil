@@ -12,7 +12,7 @@ Not for clinical or regulatory use. Spontaneous reports do not prove that a drug
 |---|---|---|
 | The whole platform | one Oracle Cloud **Always Free** Ampere A1 VM (arm64, 2 OCPUs, 12 GB, Ubuntu 24.04) | `docker-compose.demo.yml`, started by systemd |
 | Images | GHCR `ghcr.io/sumitparmar19/pharmavigil-*`, linux/amd64 + linux/arm64 | built by *Demo images* on every push to main, tagged with the commit SHA and `demo` |
-| Models, signal export, replay sample | release asset `demo-data-v1` (`pharmavigil-demo-data.tar.gz`) | SHA-256 pinned in `ops/demo/demo-data.lock`, checked before unpacking |
+| Models, signal export, replay sample | release asset `demo-data-v1` (`pharmavigil-demo-data.tar.gz`, 145,042,617 bytes) | SHA-256 `e97066696eb2fa3abda2ad2d7113b5d0abf0de1c4214d0b4eed7ee15c3cee021`, pinned in `ops/demo/demo-data.lock` and checked before unpacking; built reproducibly by `ops/demo/build-demo-data.sh` (same inputs, same hash) |
 | ICH E2B(R3) schemas | downloaded on the VM from EMA's published copy | `scripts/fetch-e2b-xsd.sh`; never committed or baked into images |
 | HTTPS | Caddy with a Let's Encrypt certificate for `<ip-with-dashes>.sslip.io` | no domain to buy |
 | Secrets | `ops/demo/.env` on the VM, created by `ops/demo/make-env.sh` with random values | never in git, chat, CI logs or images |
@@ -48,11 +48,16 @@ Measured usage (`docker stats`, from `ops/demo/measure.sh`; each file under `ana
 | Measurement | Scope | Idle | Peak during the replay | Result |
 |---|---|---|---|---|
 | `memory_arm64_ci_fixture.json` | GitHub ubuntu-24.04-arm runner (native arm64), fixture models and 40 invented records | 5,428 MiB | 5,560 MiB | 40 of 40 reports acknowledged by the mock regulator, 11 s |
+| `memory_amd64_real_data.json` | build container (x86_64, 4 vCPU, 15 GiB), **real demo data** (models trained on FAERS, 810,403 signal pairs), 200 replayed FAERS reports | 5,748 MiB | 6,055 MiB | 200 of 200 acknowledged, 42 s; 158 coded by the model, 42 sent to manual coding |
 
-Largest containers in that run: Oracle 2,701 MiB (of 2,800), case-service 527 MiB, intake-gateway 388 MiB.
+Largest containers in the arm64 run: Oracle 2,701 MiB (of 2,800), case-service 527 MiB, intake-gateway 388 MiB. With the real data the largest are Oracle 2,489 MiB, case-service 866 MiB (the int8 coder and
+3,000 label embeddings), signal-service 503 MiB and intake-gateway 443 MiB; every container stayed under its limit.
+Two things differ from the server in that run: the E2B(R3) schema was a permissive stand-in (the official set cannot be
+downloaded in the build container; CI and the server use it), and Artemis's disk-usage limit was lifted because the build
+container's disk was above 90% full (on the server's 200 GB disk the default limit applies). Signal-service ran the
+version that read its export whole for the hash; the shipped version streams it, so its number is if anything high.
 Grafana sat at its 320 MiB limit because it downloads and updates plugins at start; that is now switched off
-(`GF_PLUGINS_PREINSTALL_DISABLED`). The run with the real models and the real replay sample is added once the
-demo-data archive exists.
+(`GF_PLUGINS_PREINSTALL_DISABLED`).
 
 ## Deploy, roll back, reset
 

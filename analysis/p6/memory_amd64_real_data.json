@@ -1,0 +1,67 @@
+{
+  "scope": "build container (x86_64, 4 vCPU, 15 GiB), real demo data v1 (trained FAERS models, 810,403 signal pairs), 200 replayed FAERS reports; permissive stand-in schema (the official one cannot be downloaded here); Artemis disk-usage limit lifted for this container's nearly full disk",
+  "machine": {
+    "arch": "x86_64",
+    "cpus": 4
+  },
+  "reports_replayed": 200,
+  "seconds_until_all_answered": 42,
+  "intake": {
+    "runId": "jvwpeviufi",
+    "account": "demo-reviewer",
+    "startedAt": "2026-10-25T02:58:55.051403944Z",
+    "finishedAt": "2026-10-25T02:59:15.222004982Z",
+    "size": 200,
+    "sent": 200,
+    "accepted": 200,
+    "rejected": 0,
+    "viaSoap": 150,
+    "viaRest": 50,
+    "errors": []
+  },
+  "stages": {
+    "runId": "jvwpeviufi",
+    "received": 200,
+    "deduplicated": 200,
+    "codedByModel": 158,
+    "manualCoding": 42,
+    "triaged": 200,
+    "serious": 173,
+    "approved": 200,
+    "submitted": 200,
+    "acknowledged": 200,
+    "rejected": 0,
+    "possibleDuplicates": 0
+  },
+  "idle_mib": {
+    "artemis": 229.0,
+    "caddy": 12.5,
+    "case-service": 755.3,
+    "frontend": 4.8,
+    "grafana": 265.8,
+    "intake-gateway": 377.3,
+    "kafka": 359.4,
+    "oracle": 2486.3,
+    "pharmacy-service": 347.9,
+    "prometheus": 46.2,
+    "signal-service": 501.6,
+    "submission-gateway": 362.4
+  },
+  "peak_mib": {
+    "artemis": 240.9,
+    "caddy": 14.1,
+    "case-service": 866.1,
+    "frontend": 4.8,
+    "grafana": 265.6,
+    "intake-gateway": 442.9,
+    "kafka": 432.7,
+    "oracle": 2489.3,
+    "pharmacy-service": 352.1,
+    "prometheus": 46.5,
+    "signal-service": 502.7,
+    "submission-gateway": 396.9
+  },
+  "idle_total_mib": 5748.5,
+  "peak_total_mib": 6054.6,
+  "note": "docker stats memory usage (cgroup, page cache excluded); peak_total sums each container's own peak"
+}

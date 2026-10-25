@@ -270,7 +270,7 @@ build container cannot fetch the files itself.
 ## 15. Publish the demo data as a GitHub release: OPEN (after the Phase 2 pull request is merged)
 
 **Why:** the live demo needs the trained models, the FAERS signal export and the replay sample (built in the
-build session, about the size given in `docs/DEMO_HOSTING.md`). The build session cannot create releases, so it
+build session; one file of about 145 MB whose SHA-256 is already pinned in `ops/demo/demo-data.lock`). The build session cannot create releases, so it
 sends you the file in the chat; GitHub keeps it as a release asset, outside git.
 
 1. In the Claude Code chat, find the message with the attached file `pharmavigil-demo-data.tar.gz` and download it.
