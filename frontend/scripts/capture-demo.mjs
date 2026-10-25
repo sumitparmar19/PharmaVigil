@@ -24,13 +24,21 @@ const context = await browser.newContext({ baseURL: base, ignoreHTTPSErrors: tru
 const page = await context.newPage();
 const shot = (name) => page.screenshot({ path: join(out, `${name}.png`), fullPage: false });
 
+const demo = await (await context.request.get("/api/auth/demo")).json();
 await page.goto("/");
-await page.getByRole("region", { name: "Demo accounts" }).waitFor();
+const accounts = page.getByRole("region", { name: "Demo accounts" });
+await accounts.waitFor();
+// No password in an image, even the public demo one: the live page shows it, the screenshots do not. A style rule
+// (not a text change, which React would undo on its next render) hides the cell's text and shows a note instead.
+await accounts.getByText(demo.password, { exact: true }).evaluate((el) => el.setAttribute("data-pv-masked", ""));
+await page.addStyleTag({ content: `[data-pv-masked]{font-size:0!important}
+[data-pv-masked]::after{content:"(shown on the live page)";font-size:14px;font-family:ui-monospace,monospace}` });
+const masked = await accounts.locator("[data-pv-masked]").evaluate((el) => getComputedStyle(el).fontSize);
+if (masked !== "0px") throw new Error("password cell not masked");
 await shot("landing");
 await grab();
 await grab();
 
-const demo = await (await context.request.get("/api/auth/demo")).json();
 await page.goto("/login");
 await page.getByLabel("Username").fill("demo-reviewer");
 await page.getByLabel("Password").fill(demo.password);
