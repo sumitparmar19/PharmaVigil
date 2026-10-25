@@ -91,3 +91,6 @@ crash.log
 ops/demo/data/
 ops/demo/.env
 playwright-live-report/
+
+# DuckDB spill files written while large queries run (data; never committed)
+.tmp/
