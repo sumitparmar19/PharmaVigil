@@ -81,7 +81,7 @@ owner can switch it on.
 
 ---
 
-## 4. Run the full FAERS history on Databricks Free Edition: OPEN
+## 4. Run the full FAERS history on Databricks Free Edition: OPEN (after the Phase 2 pull request is merged)
 
 **Why:** the full 2004Q1 onward history is too large for the build container. The same code runs on
 Databricks as notebooks.
@@ -93,8 +93,7 @@ Databricks as notebooks.
 4. In **Git repository URL**, paste `https://github.com/sumitparmar19/PharmaVigil` and click
    **Create Git folder**.
 5. In the Git folder, open `data` → `notebooks` → `databricks` → `00_setup_and_check`.
-6. At the top, set the **git_ref** box to `claude/determined-wozniak-8tf7pa` (until the pull request
-   is merged, then `main`).
+6. At the top, set the **git_ref** box to `main`.
 7. Click **Run all**. When it finishes, the last cell shows three status lines.
 8. If all three show `200`, open `01_faers_bronze`, set **git_ref** the same way, set **last** to the
    newest quarter listed at https://fis.fda.gov/extensions/FPD-QDE-FAERS/FPD-QDE-FAERS.html, and click
@@ -124,8 +123,8 @@ last cell of `02_faers_silver_gold`.
    from step 4.
 6. In the right panel: **Session options** → **Accelerator** → **GPU T4 x2**; **Internet** → **On**;
    **Input** → **Add Input** → search `pharmavigil-faers-gold` → **Add**.
-7. In the first code cell, set `GIT_REF` to `claude/determined-wozniak-8tf7pa` until the pull request is
-   merged, and set `SCOPE` to the quarters you loaded in step 4 (for example `full: FAERS 2004Q1–2026Q2`).
+7. In the first code cell, set `GIT_REF` to `main` and `SCOPE` to the quarters you loaded in step 4 (for
+   example `full: FAERS 2004Q1–2026Q2`).
 8. Click **Run All**. When it finishes, open the **Output** tab and download
    `pharmavigil_m4_evidence.zip`.
 
@@ -149,8 +148,7 @@ blocked in the build container. Kaggle has both and a free GPU.
 5. In Kaggle, click **Create** → **New Notebook** → **File** → **Import Notebook**, and choose the file.
 6. Right panel: **Accelerator** → **GPU T4 x2**; **Internet** → **On**; **Add Input** →
    `pharmavigil-vaers`.
-7. In the first code cell, set `GIT_REF` to `claude/determined-wozniak-8tf7pa` until the pull request is
-   merged, and `TEST_YEAR` to `2025`.
+7. In the first code cell, set `GIT_REF` to `main` and `TEST_YEAR` to `2025`.
 8. Click **Run All**. When it finishes, download `pharmavigil_m5_coder.zip` from the **Output** tab.
 
 **Send back to the planning chat:** `pharmavigil_m5_coder.zip` and the `sha256sum` line from the last
@@ -167,8 +165,8 @@ transfers. Labels must be yours, never an AI model's.
 2. For each row, type in the `sumit_pts` column the MedDRA Preferred Terms you would code for the
    narrative, separated by `;` (for example `Myalgia; Muscular weakness`). Use the MedDRA browser once
    your licence is active (step 8); until then, use the PT names you know from FAERS.
-3. Save as CSV with the same file name and commit it to the pull-request branch (GitHub: open the file →
-   **Edit** pencil → paste → **Commit changes**).
+3. Save as CSV with the same file name and commit it on `main` (GitHub: open the file → **Edit** pencil →
+   paste → **Commit changes**).
 
 **Send back to the planning chat:** the commit link.
 
