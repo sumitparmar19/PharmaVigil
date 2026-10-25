@@ -36,7 +36,7 @@ def _register(con: duckdb.DuckDBPyConnection, name: str, path: Path) -> None:
 
 def connect(gold_dir: Path) -> duckdb.DuckDBPyConnection:
     """Open DuckDB with views report / report_drug / report_reaction over a gold directory. DuckDB's memory is
-    capped (PV_DUCKDB_MEMORY, default 4GB; larger work spills to disk) so a model trained in the same process
+    capped (PV_DUCKDB_MEMORY, default 7GB; larger work spills to disk) so a model trained in the same process
     keeps the rest of the machine."""
     con = duckdb.connect()
     con.execute(f"SET memory_limit = '{_memory_limit()}'")
@@ -49,7 +49,7 @@ def _memory_limit() -> str:
     import os
     import re
 
-    value = os.environ.get("PV_DUCKDB_MEMORY", "4GB").strip()
+    value = os.environ.get("PV_DUCKDB_MEMORY", "7GB").strip()
     if not re.fullmatch(r"\d+(\.\d+)?\s*(KB|MB|GB|TB|KiB|MiB|GiB|TiB)", value, re.IGNORECASE):
         raise ValueError(f"PV_DUCKDB_MEMORY must look like 4GB, got {value!r}")
     return value
