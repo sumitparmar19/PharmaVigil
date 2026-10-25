@@ -164,3 +164,37 @@ def test_onnx_other_batch_and_length(trained, corpus, tmp_path) -> None:
     b = ViewMaker(corpus, ViewConfig(p_hide_all_pts=0, p_single_drug=0), seed=4).batch(np.arange(9))
     parity, _ = safetyformer_parity(res["model_obj"], path, (b.tokens, b.types, b.roles, b.query_pos))
     assert parity["max_abs_diff"] < 1e-4
+
+
+def test_arrow_loader_matches_row_loader(gold, corpus) -> None:
+    """The columnar loader gives exactly the corpus the original row-by-row conversion gives."""
+    from pharmavigil_ml.safetyformer.corpus import _to_corpus
+
+    con = ct.connect(gold)
+    load_corpus(con, min_count=3, vocab=corpus.vocab)  # recreates the temp tables and vocab views
+    rows = con.execute("""
+        WITH d AS (SELECT primaryid, list(v.tok ORDER BY v.tok) AS dt, list(role ORDER BY v.tok) AS dr
+                   FROM sf_drugs JOIN sf_drug_vocab v USING (rxcui) GROUP BY primaryid),
+             p AS (SELECT primaryid, list(v.tok ORDER BY v.tok) AS pt
+                   FROM sf_pts JOIN sf_pt_vocab v USING (pt) GROUP BY primaryid)
+        SELECT r.primaryid, r.fda_dt, r.age_band, r.sex, r.serious, d.dt, d.dr, p.pt
+        FROM sf_reports r JOIN d USING (primaryid) JOIN p USING (primaryid)
+        ORDER BY r.fda_dt, r.primaryid
+    """).fetchall()
+    ref = _to_corpus(corpus.vocab, rows)
+    for name in ("fda_days", "context", "drug_offsets", "drug_ids", "drug_roles", "pt_offsets", "pt_ids"):
+        assert np.array_equal(getattr(ref, name), getattr(corpus, name)), name
+    assert list(ref.report_ids) == list(corpus.report_ids)
+
+
+def test_subset_matches_per_row_selection(corpus) -> None:
+    mask = np.random.default_rng(4).random(len(corpus)) < 0.3
+    sub = corpus.subset(mask)
+    idx = np.flatnonzero(mask)
+    assert len(sub) == len(idx)
+    for k in (0, len(idx) // 2, len(idx) - 1):
+        d_ids, d_roles = corpus.drugs(int(idx[k]))
+        s_ids, s_roles = sub.drugs(k)
+        assert np.array_equal(d_ids, s_ids) and np.array_equal(d_roles, s_roles)
+        assert np.array_equal(corpus.pts(int(idx[k])), sub.pts(k))
+    assert len(corpus.subset(np.zeros(len(corpus), dtype=bool))) == 0

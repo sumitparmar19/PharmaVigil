@@ -109,10 +109,8 @@ class Corpus:
         idx = np.flatnonzero(mask)
         d_lens = np.diff(self.drug_offsets)[idx]
         p_lens = np.diff(self.pt_offsets)[idx]
-        d_take = np.concatenate([np.arange(self.drug_offsets[i], self.drug_offsets[i + 1]) for i in idx]) \
-            if len(idx) else np.array([], dtype=np.int64)
-        p_take = np.concatenate([np.arange(self.pt_offsets[i], self.pt_offsets[i + 1]) for i in idx]) \
-            if len(idx) else np.array([], dtype=np.int64)
+        d_take = _gather(self.drug_offsets, idx, d_lens)
+        p_take = _gather(self.pt_offsets, idx, p_lens)
         return Corpus(
             vocab=self.vocab, report_ids=self.report_ids[idx], fda_days=self.fda_days[idx],
             context=self.context[idx],
@@ -120,6 +118,15 @@ class Corpus:
             drug_roles=self.drug_roles[d_take],
             pt_offsets=np.concatenate([[0], np.cumsum(p_lens)]), pt_ids=self.pt_ids[p_take],
         )
+
+
+def _gather(offsets: np.ndarray, idx: np.ndarray, lens: np.ndarray) -> np.ndarray:
+    """Positions of every element of the selected CSR rows, in row order (vectorized; no per-row arrays)."""
+    if len(idx) == 0:
+        return np.array([], dtype=np.int64)
+    starts = np.repeat(offsets[idx], lens)
+    first = np.repeat(np.concatenate([[0], np.cumsum(lens)[:-1]]), lens)
+    return starts + (np.arange(int(lens.sum()), dtype=np.int64) - first)
 
 
 def _days(d: date | None) -> int | None:
@@ -159,7 +166,7 @@ def load_corpus(con: duckdb.DuckDBPyConnection, before: date | None = None, min_
 
     con.register("sf_drug_vocab", _frame({"rxcui": vocab.drug_rxcuis(), "tok": vocab.drug_tokens}))
     con.register("sf_pt_vocab", _frame({"pt": vocab.pt_names(), "tok": vocab.pt_tokens}))
-    rows = con.execute("""
+    table = con.sql("""
         WITH d AS (SELECT primaryid, list(v.tok ORDER BY v.tok) AS dt, list(role ORDER BY v.tok) AS dr
                    FROM sf_drugs JOIN sf_drug_vocab v USING (rxcui) GROUP BY primaryid),
              p AS (SELECT primaryid, list(v.tok ORDER BY v.tok) AS pt
@@ -167,8 +174,48 @@ def load_corpus(con: duckdb.DuckDBPyConnection, before: date | None = None, min_
         SELECT r.primaryid, r.fda_dt, r.age_band, r.sex, r.serious, d.dt, d.dr, p.pt
         FROM sf_reports r JOIN d USING (primaryid) JOIN p USING (primaryid)
         ORDER BY r.fda_dt, r.primaryid
-    """).fetchall()
-    return _to_corpus(vocab, rows)
+    """).to_arrow_table()
+    return _corpus_from_arrow(vocab, table)
+
+
+def _corpus_from_arrow(vocab: Vocab, table) -> Corpus:
+    """Columnar version of `_to_corpus`: the list columns become CSR arrays straight from Arrow's offsets, so
+    the 10.8M real FAERS reports never exist as Python tuples (which needed more memory than the machine has)."""
+    import pandas as pd
+    import pyarrow as pa
+    import pyarrow.compute as pc
+
+    def tokens(col: str, kind: str, allowed, default: str) -> np.ndarray:
+        values = table[col].to_pandas()
+        ids = {v: vocab.index[context_token(kind, v)] for v in allowed}
+        return values.map(lambda v: ids.get(v, ids[default])).to_numpy(np.int64)
+
+    def csr(col: str) -> tuple[np.ndarray, pa.Array]:
+        arr = table[col].combine_chunks()
+        offsets = arr.offsets.to_numpy().astype(np.int64)
+        return offsets - offsets[0], arr.flatten()
+
+    n = table.num_rows
+    context = np.empty((n, 3), dtype=np.int64)
+    context[:, 0] = tokens("age_band", "age", AGE_BANDS, "unknown")
+    context[:, 1] = tokens("sex", "sex", SEXES, "UNK")
+    serious = table["serious"].to_pandas()
+    serious_ids = {k: vocab.index[context_token("serious", k)] for k in ("serious", "non-serious", "unknown")}
+    context[:, 2] = np.where(serious.isna(), serious_ids["unknown"],
+                             np.where(serious.fillna(False).astype(bool), serious_ids["serious"],
+                                      serious_ids["non-serious"]))
+    days = pc.cast(table["fda_dt"], pa.int32()).to_numpy(zero_copy_only=False)
+    fda_days = np.where(pd.isna(days), 0, days).astype(np.int64)
+    d_off, d_vals = csr("dt")
+    _, r_vals = csr("dr")
+    p_off, p_vals = csr("pt")
+    roles = pd.Series(r_vals.to_pandas()).map(lambda r: ROLES.get(r, 0)).to_numpy(np.int64)
+    return Corpus(
+        vocab=vocab, report_ids=table["primaryid"].to_numpy(zero_copy_only=False).astype(object),
+        fda_days=fda_days, context=context, drug_offsets=d_off,
+        drug_ids=d_vals.to_numpy(zero_copy_only=False).astype(np.int64), drug_roles=roles,
+        pt_offsets=p_off, pt_ids=p_vals.to_numpy(zero_copy_only=False).astype(np.int64),
+    )
 
 
 def _frame(cols: dict[str, list]) -> object:
