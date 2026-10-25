@@ -94,3 +94,6 @@ playwright-live-report/
 
 # DuckDB spill files written while large queries run (data; never committed)
 .tmp/
+
+# Temporary GIF frames written by frontend/scripts/capture-demo.mjs
+docs/img/.frames/
